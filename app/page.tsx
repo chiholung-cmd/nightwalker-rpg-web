@@ -1,133 +1,202 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import { GameState, initialGameState, storyNodes } from '../lib/gameData'
+
+const SAVE_KEY = 'nightwalker-save-v1'
+
+function clamp(value: number, min = 0, max = 100) {
+  return Math.max(min, Math.min(max, value))
+}
+
+function applyStatChanges(state: GameState, changes: Partial<GameState['stats']>): GameState {
+  return {
+    ...state,
+    stats: {
+      hp: clamp(state.stats.hp + (changes.hp ?? 0)),
+      san: clamp(state.stats.san + (changes.san ?? 0)),
+      sta: clamp(state.stats.sta + (changes.sta ?? 0)),
+      pollution: clamp(state.stats.pollution + (changes.pollution ?? 0)),
+      corruption: clamp(state.stats.corruption + (changes.corruption ?? 0)),
+    },
+  }
+}
+
 export default function HomePage() {
+  const [gameState, setGameState] = useState<GameState>(initialGameState)
+  const [freeAction, setFreeAction] = useState('')
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem(SAVE_KEY)
+    if (saved) {
+      try {
+        setGameState(JSON.parse(saved))
+      } catch {
+        setGameState(initialGameState)
+      }
+    }
+    setLoaded(true)
+  }, [])
+
+  useEffect(() => {
+    if (loaded) {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(gameState))
+    }
+  }, [gameState, loaded])
+
+  const currentNode = useMemo(() => {
+    return storyNodes[gameState.currentNodeId] ?? storyNodes['mirror-room-01']
+  }, [gameState.currentNodeId])
+
+  function choose(choiceId: string) {
+    const choice = currentNode.choices.find((item) => item.id === choiceId)
+    if (!choice) return
+
+    setGameState((prev) => {
+      const next = applyStatChanges(prev, choice.statChanges)
+      return {
+        ...next,
+        currentNodeId: choice.nextNodeId,
+        history: [
+          ...prev.history,
+          `${currentNode.title} → ${choice.id}｜${choice.label}`,
+        ].slice(-20),
+      }
+    })
+  }
+
+  function resetGame() {
+    localStorage.removeItem(SAVE_KEY)
+    setGameState(initialGameState)
+  }
+
+  function submitFreeAction() {
+    if (!freeAction.trim()) return
+
+    setGameState((prev) => ({
+      ...prev,
+      stats: {
+        ...prev.stats,
+        san: clamp(prev.stats.san - 2),
+        sta: clamp(prev.stats.sta - 3),
+      },
+      history: [
+        ...prev.history,
+        `自由行動｜${freeAction.trim()}`,
+      ].slice(-20),
+      currentNodeId: 'free-action-placeholder',
+    }))
+    setFreeAction('')
+  }
+
   return (
-    <main style={{
-      background: '#090909',
-      color: '#f5f5f5',
-      minHeight: '100vh',
-      padding: '16px',
-      fontFamily: 'sans-serif'
-    }}>
-      <div style={{
-        maxWidth: '480px',
-        margin: '0 auto'
-      }}>
+    <main className="page-shell">
+      <section className="game-frame">
+        <header className="title-card">
+          <div className="eyebrow">NIGHT PATROL TERMINAL</div>
+          <h1>夜行者</h1>
+          <p>手機版驚悚文字 RPG Prototype</p>
+        </header>
 
-        <div style={{
-          border: '1px solid #2a2a2a',
-          padding: '12px',
-          borderRadius: '12px',
-          marginBottom: '16px',
-          background: '#111'
-        }}>
-          <div style={{ fontSize: '22px', fontWeight: 'bold' }}>
-            夜行者 NIGHTWALKER
-          </div>
-          <div style={{ opacity: 0.7, marginTop: '4px' }}>
-            AI Horror Text RPG
-          </div>
-        </div>
+        <section className="status-card">
+          <div className="section-title">【{gameState.protagonist}】</div>
+          <div className="title-line">稱號：{gameState.title}</div>
 
-        <div style={{
-          border: '1px solid #2a2a2a',
-          padding: '12px',
-          borderRadius: '12px',
-          marginBottom: '16px',
-          background: '#111'
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-            【林夜】
+          <StatBar label="HP" value={gameState.stats.hp} tone="red" />
+          <StatBar label="SAN" value={gameState.stats.san} tone="blue" />
+          <StatBar label="STA" value={gameState.stats.sta} tone="green" />
+
+          <div className="stat-grid">
+            <div>污染值：{gameState.stats.pollution}%</div>
+            <div>異常侵蝕：{gameState.stats.corruption}%</div>
           </div>
 
-          <div>HP：84 / 100</div>
-          <div>SAN：61 / 100</div>
-          <div>STA：73 / 100</div>
-          <div>污染值：18%</div>
-          <div>稱號：仍然選擇活下去的人</div>
-        </div>
-
-        <div style={{
-          border: '1px solid #2a2a2a',
-          padding: '16px',
-          borderRadius: '12px',
-          lineHeight: 1.8,
-          background: '#111',
-          marginBottom: '16px'
-        }}>
-          <div style={{
-            color: '#9ca3af',
-            marginBottom: '12px'
-          }}>
-            深夜 02:14｜夜巡局醫療層
+          <div className="tag-row">
+            {gameState.status.map((item) => (
+              <span className="tag" key={item}>{item}</span>
+            ))}
           </div>
+        </section>
 
-          <p>
-            病房內所有鏡子正在滲血。
-          </p>
+        <section className="story-card">
+          <div className="location-line">{currentNode.location}</div>
+          <h2>{currentNode.title}</h2>
+          {currentNode.text.map((paragraph, index) => (
+            <p key={`${currentNode.id}-${index}`}>{paragraph}</p>
+          ))}
+        </section>
 
-          <p>
-            葉晴站在病床旁，身後的鏡子裡，另一個『她』正慢慢露出笑容。
-          </p>
+        <section className="choice-list">
+          {currentNode.choices.map((choice) => (
+            <button key={choice.id} className="choice-button" onClick={() => choose(choice.id)}>
+              <strong>{choice.id}｜{choice.label}</strong>
+              <span>消耗：{choice.cost}</span>
+              <span>風險：{choice.risk}</span>
+            </button>
+          ))}
+        </section>
 
-          <p>
-            周成握緊制靈刀。
-          </p>
+        <section className="free-card">
+          <div className="section-title">自由行動</div>
+          <textarea
+            value={freeAction}
+            onChange={(event) => setFreeAction(event.target.value)}
+            placeholder="輸入你想做的行動。例如：我叫周成砸掉天花板上的鏡子，同時把抗污染藥劑交給葉晴。"
+          />
+          <button className="primary-button" onClick={submitFreeAction}>提交自由行動</button>
+        </section>
 
-          <p>
-            而你發現。
-          </p>
+        <section className="info-grid">
+          <Panel title="背包">
+            {gameState.inventory.map((item) => <div key={item}>・{item}</div>)}
+          </Panel>
 
-          <p>
-            病房的門——
-          </p>
+          <Panel title="隊友狀態">
+            {gameState.companions.map((npc) => (
+              <div className="npc-row" key={npc.name}>
+                <strong>{npc.name}</strong>
+                <span>HP {npc.hp}｜SAN {npc.san}｜信任 {npc.trust}</span>
+                <em>{npc.status}</em>
+              </div>
+            ))}
+          </Panel>
+        </section>
 
-          <p style={{ color: '#ef4444', fontWeight: 'bold' }}>
-            不知道甚麼時候已經消失了。
-          </p>
-        </div>
+        <section className="history-card">
+          <div className="section-title">行動紀錄</div>
+          {gameState.history.length === 0 ? (
+            <p>尚未開始行動。</p>
+          ) : (
+            gameState.history.map((item, index) => <p key={`${item}-${index}`}>#{index + 1} {item}</p>)
+          )}
+        </section>
 
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}>
-
-          <button style={buttonStyle}>
-            A｜衝向葉晴
-            <br />
-            STA -15｜受傷風險：高
-          </button>
-
-          <button style={buttonStyle}>
-            B｜觀察鏡中規則
-            <br />
-            SAN -8｜污染風險：中
-          </button>
-
-          <button style={buttonStyle}>
-            C｜拔出制靈槍
-            <br />
-            消耗：1發制靈彈
-          </button>
-
-          <button style={buttonStyle}>
-            D｜自由輸入行動
-            <br />
-            AI動態生成
-          </button>
-
-        </div>
-      </div>
+        <button className="reset-button" onClick={resetGame}>重置存檔</button>
+      </section>
     </main>
   )
 }
 
-const buttonStyle = {
-  background: '#18181b',
-  color: '#f5f5f5',
-  border: '1px solid #27272a',
-  padding: '14px',
-  borderRadius: '12px',
-  textAlign: 'left' as const,
-  lineHeight: 1.6,
-  fontSize: '14px'
+function StatBar({ label, value, tone }: { label: string; value: number; tone: 'red' | 'blue' | 'green' }) {
+  return (
+    <div className="stat-bar-wrap">
+      <div className="stat-bar-head">
+        <span>{label}</span>
+        <span>{value}/100</span>
+      </div>
+      <div className="stat-bar-bg">
+        <div className={`stat-bar-fill ${tone}`} style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  )
+}
+
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mini-panel">
+      <div className="section-title">{title}</div>
+      {children}
+    </section>
+  )
 }
