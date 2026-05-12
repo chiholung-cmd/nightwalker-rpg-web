@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import clientPromise from '../../../lib/mongodb'
+import { getMongoClient } from '../../../lib/mongodb'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    const client = await clientPromise
+    const client = await getMongoClient()
     const db = client.db('nightwalker')
 
     await db.collection('saves').updateOne(
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
-    const client = await clientPromise
+    const client = await getMongoClient()
     const db = client.db('nightwalker')
 
     const save = await db.collection('saves').findOne({
