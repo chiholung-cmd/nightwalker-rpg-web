@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { GameState, initialGameState, storyNodes } from '../lib/gameData'
 
-const SAVE_KEY = 'nightwalker-save-v1'
+const SAVE_KEY = 'nightwalker-save-v2'
 
 function clamp(value: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, value))
@@ -26,6 +26,8 @@ export default function HomePage() {
   const [gameState, setGameState] = useState<GameState>(initialGameState)
   const [freeAction, setFreeAction] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [dialogueIndex, setDialogueIndex] = useState(0)
+  const [seedStatus, setSeedStatus] = useState('')
 
   useEffect(() => {
     const saved = localStorage.getItem(SAVE_KEY)
@@ -42,12 +44,25 @@ export default function HomePage() {
   useEffect(() => {
     if (loaded) {
       localStorage.setItem(SAVE_KEY, JSON.stringify(gameState))
+      fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gameState),
+      }).catch(() => undefined)
     }
   }, [gameState, loaded])
 
   const currentNode = useMemo(() => {
     return storyNodes[gameState.currentNodeId] ?? storyNodes['mirror-room-01']
   }, [gameState.currentNodeId])
+
+  const activeText = currentNode.text[Math.min(dialogueIndex, currentNode.text.length - 1)]
+  const canAdvance = dialogueIndex < currentNode.text.length - 1
+  const isDanger = gameState.stats.san <= 45 || gameState.stats.pollution >= 45
+
+  function advanceDialogue() {
+    if (canAdvance) setDialogueIndex((value) => value + 1)
+  }
 
   function choose(choiceId: string) {
     const choice = currentNode.choices.find((item) => item.id === choiceId)
@@ -61,14 +76,16 @@ export default function HomePage() {
         history: [
           ...prev.history,
           `${currentNode.title} → ${choice.id}｜${choice.label}`,
-        ].slice(-20),
+        ].slice(-30),
       }
     })
+    setDialogueIndex(0)
   }
 
   function resetGame() {
     localStorage.removeItem(SAVE_KEY)
     setGameState(initialGameState)
+    setDialogueIndex(0)
   }
 
   function submitFreeAction() {
@@ -84,119 +101,132 @@ export default function HomePage() {
       history: [
         ...prev.history,
         `自由行動｜${freeAction.trim()}`,
-      ].slice(-20),
+      ].slice(-30),
       currentNodeId: 'free-action-placeholder',
     }))
+    setDialogueIndex(0)
     setFreeAction('')
   }
 
+  async function seedDatabase() {
+    setSeedStatus('同步中...')
+    try {
+      const response = await fetch('/api/seed', { method: 'POST' })
+      const data = await response.json()
+      setSeedStatus(data.success ? 'MongoDB 已寫入夜行者世界資料' : '同步失敗')
+    } catch {
+      setSeedStatus('同步失敗')
+    }
+  }
+
   return (
-    <main className="page-shell">
-      <section className="game-frame">
-        <header className="title-card">
-          <div className="eyebrow">NIGHT PATROL TERMINAL</div>
-          <h1>夜行者</h1>
-          <p>手機版驚悚文字 RPG Prototype</p>
-        </header>
+    <main className={`rpg-screen ${isDanger ? 'san-danger' : ''}`}>
+      <div className="scene-bg">
+        <div className="scene-fog" />
+        <div className="scene-grid" />
+      </div>
 
-        <section className="status-card">
-          <div className="section-title">【{gameState.protagonist}】</div>
-          <div className="title-line">稱號：{gameState.title}</div>
+      <header className="top-hud">
+        <div>
+          <div className="hud-kicker">NIGHTWALKER OS</div>
+          <div className="hud-title">鏡中人事件</div>
+        </div>
+        <div className="hud-status">{currentNode.location}</div>
+      </header>
 
-          <StatBar label="HP" value={gameState.stats.hp} tone="red" />
-          <StatBar label="SAN" value={gameState.stats.san} tone="blue" />
-          <StatBar label="STA" value={gameState.stats.sta} tone="green" />
+      <section className="cinema-stage">
+        <div className="character-card left">
+          <div className="portrait-fake linye">林夜</div>
+          <div className="char-name">林夜</div>
+          <div className="char-role">半死人 / 共鳴者</div>
+        </div>
 
-          <div className="stat-grid">
-            <div>污染值：{gameState.stats.pollution}%</div>
-            <div>異常侵蝕：{gameState.stats.corruption}%</div>
+        <div className="battle-center">
+          <div className="boss-card">
+            <div className="boss-label">異常威脅</div>
+            <div className="boss-name">鏡中人</div>
+            <div className="boss-phase">Phase 1｜鏡手增殖</div>
+            <div className="boss-bar"><span style={{ width: `${Math.min(100, gameState.stats.pollution + gameState.stats.corruption + 35)}%` }} /></div>
           </div>
+        </div>
 
-          <div className="tag-row">
-            {gameState.status.map((item) => (
-              <span className="tag" key={item}>{item}</span>
-            ))}
+        <div className="character-card right">
+          <div className="portrait-fake yeqing">葉晴</div>
+          <div className="char-name">葉晴</div>
+          <div className="char-role">靈視觀測者 / 鏡像侵蝕</div>
+        </div>
+      </section>
+
+      <section className="player-hud">
+        <StatPill label="HP" value={gameState.stats.hp} />
+        <StatPill label="SAN" value={gameState.stats.san} />
+        <StatPill label="STA" value={gameState.stats.sta} />
+        <StatPill label="污染" value={gameState.stats.pollution} suffix="%" />
+      </section>
+
+      <section className="vn-panel" onClick={advanceDialogue}>
+        <div className="speaker-row">
+          <div>
+            <div className="speaker-name">{currentNode.title}</div>
+            <div className="speaker-sub">點擊對話框繼續文字</div>
           </div>
-        </section>
+          {isDanger && <div className="risk-badge">SAN WARNING</div>}
+        </div>
+        <p className="dialogue-text">{activeText}</p>
+        {canAdvance && <div className="continue-mark">▼</div>}
+      </section>
 
-        <section className="story-card">
-          <div className="location-line">{currentNode.location}</div>
-          <h2>{currentNode.title}</h2>
-          {currentNode.text.map((paragraph, index) => (
-            <p key={`${currentNode.id}-${index}`}>{paragraph}</p>
-          ))}
-        </section>
-
-        <section className="choice-list">
+      {!canAdvance && (
+        <section className="choice-deck">
           {currentNode.choices.map((choice) => (
-            <button key={choice.id} className="choice-button" onClick={() => choose(choice.id)}>
-              <strong>{choice.id}｜{choice.label}</strong>
-              <span>消耗：{choice.cost}</span>
-              <span>風險：{choice.risk}</span>
+            <button key={choice.id} className="rpg-choice" onClick={() => choose(choice.id)}>
+              <div className="choice-id">{choice.id}</div>
+              <div className="choice-main">
+                <strong>{choice.label}</strong>
+                <span>消耗：{choice.cost}</span>
+                <span>風險：{choice.risk}</span>
+              </div>
             </button>
           ))}
         </section>
+      )}
 
-        <section className="free-card">
-          <div className="section-title">自由行動</div>
-          <textarea
-            value={freeAction}
-            onChange={(event) => setFreeAction(event.target.value)}
-            placeholder="輸入你想做的行動。例如：我叫周成砸掉天花板上的鏡子，同時把抗污染藥劑交給葉晴。"
-          />
-          <button className="primary-button" onClick={submitFreeAction}>提交自由行動</button>
-        </section>
+      <section className="bottom-panels">
+        <div className="mini-rpg-panel">
+          <b>隊友</b>
+          {gameState.companions.map((npc) => (
+            <span key={npc.name}>{npc.name}｜HP {npc.hp}｜SAN {npc.san}｜{npc.status}</span>
+          ))}
+        </div>
+        <div className="mini-rpg-panel">
+          <b>背包</b>
+          <span>{gameState.inventory.join(' / ')}</span>
+        </div>
+      </section>
 
-        <section className="info-grid">
-          <Panel title="背包">
-            {gameState.inventory.map((item) => <div key={item}>・{item}</div>)}
-          </Panel>
+      <section className="free-action-dock">
+        <textarea
+          value={freeAction}
+          onChange={(event) => setFreeAction(event.target.value)}
+          placeholder="自由行動：例如『我打碎輸液瓶反射鏡面，叫周成掩護葉晴撤離』"
+        />
+        <button onClick={submitFreeAction}>提交行動</button>
+      </section>
 
-          <Panel title="隊友狀態">
-            {gameState.companions.map((npc) => (
-              <div className="npc-row" key={npc.name}>
-                <strong>{npc.name}</strong>
-                <span>HP {npc.hp}｜SAN {npc.san}｜信任 {npc.trust}</span>
-                <em>{npc.status}</em>
-              </div>
-            ))}
-          </Panel>
-        </section>
-
-        <section className="history-card">
-          <div className="section-title">行動紀錄</div>
-          {gameState.history.length === 0 ? (
-            <p>尚未開始行動。</p>
-          ) : (
-            gameState.history.map((item, index) => <p key={`${item}-${index}`}>#{index + 1} {item}</p>)
-          )}
-        </section>
-
-        <button className="reset-button" onClick={resetGame}>重置存檔</button>
+      <section className="dev-dock">
+        <button onClick={seedDatabase}>同步過往世界資料到 MongoDB</button>
+        <button onClick={resetGame}>重置</button>
+        {seedStatus && <span>{seedStatus}</span>}
       </section>
     </main>
   )
 }
 
-function StatBar({ label, value, tone }: { label: string; value: number; tone: 'red' | 'blue' | 'green' }) {
+function StatPill({ label, value, suffix = '' }: { label: string; value: number; suffix?: string }) {
   return (
-    <div className="stat-bar-wrap">
-      <div className="stat-bar-head">
-        <span>{label}</span>
-        <span>{value}/100</span>
-      </div>
-      <div className="stat-bar-bg">
-        <div className={`stat-bar-fill ${tone}`} style={{ width: `${value}%` }} />
-      </div>
+    <div className="stat-pill">
+      <span>{label}</span>
+      <b>{value}{suffix}</b>
     </div>
-  )
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="mini-panel">
-      <div className="section-title">{title}</div>
-      {children}
-    </section>
   )
 }
