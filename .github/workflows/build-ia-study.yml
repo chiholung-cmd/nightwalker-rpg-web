@@ -1,0 +1,59 @@
+name: Build IA Study Site
+
+on:
+  push:
+    branches: [ia-study]
+    paths:
+      - '.github/workflows/build-ia-study.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout IA branch
+        uses: actions/checkout@v6
+        with:
+          ref: ia-study
+      - name: Rebuild IA study HTML from preserved Git blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ia
+          : > /tmp/ia/payload.b64
+          SHAS=(
+            aa4f40cdd651a5f65a7c9d5db7d9d7e7de96c921
+            2258a8b1ed779ef1a22d113414c51d1406c3f74b
+            e976673dc5b97b04b0dcb390c0e83977e63129e2
+            015b96d81369cd30049f85ec99c94a7ac4a1f5ee
+            3fa51959f98c9ab8f3eb77268ea177071f2785df
+            d312e5d654e31cad2015ddbb4e1b2cbfb70295d5
+          )
+          for sha in "${SHAS[@]}"; do
+            curl -fsSL -H 'Accept: application/vnd.github+json' \
+              "https://api.github.com/repos/chiholung-cmd/free-api-collection/git/blobs/$sha" \
+              | jq -r '.content' | tr -d '\n' | base64 -d >> /tmp/ia/payload.b64
+          done
+          base64 -d /tmp/ia/payload.b64 | gzip -d > index.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          b=p.read_bytes(); s=b.decode('utf-8')
+          assert len(b)==85535, len(b)
+          assert s.startswith('<!DOCTYPE html>')
+          assert 'const DATA=' in s
+          assert '快問快答' in s
+          assert s.rstrip().endswith('</html>')
+          print('Verified index.html:', len(b), 'bytes')
+          PY
+      - name: Commit complete site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Publish IA study site"
+          git push origin ia-study
