@@ -9,17 +9,159 @@
 :root{--navy:#0b2d5b;--blue:#0b5fc6;--blue2:#eaf3ff;--line:#dce8f7;--bg:#f4f8fd;--card:#fff;--text:#17233a;--muted:#65748b;--green:#16865c;--greenbg:#e8f7f0;--amber:#b56b00;--amberbg:#fff5df;--red:#b73a3a;--redbg:#fff0f0;--shadow:0 10px 30px rgba(26,65,119,.08)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang HK","Noto Sans HK","Microsoft JhengHei",sans-serif;line-height:1.55}button,input,select,textarea{font:inherit}a{color:var(--blue);text-decoration:none}.app{max-width:1120px;margin:auto;padding:18px 16px 80px}.hero{background:linear-gradient(135deg,#0a356d,#0b64c8);color:#fff;border-radius:22px;padding:24px;box-shadow:var(--shadow)}.hero h1{margin:0 0 5px;font-size:clamp(24px,5vw,38px);line-height:1.16}.hero p{margin:0;opacity:.88}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:15px;padding:12px}.stat b{display:block;font-size:22px}.stat span{font-size:12px;opacity:.86}.tabs{display:flex;gap:8px;overflow:auto;margin:16px 0 12px;padding-bottom:2px}.tab{border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:12px;white-space:nowrap;color:var(--navy);cursor:pointer;font-weight:700}.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}.panel{display:none}.panel.active{display:block}.toolbar{background:#fff;border:1px solid var(--line);border-radius:17px;padding:13px;box-shadow:var(--shadow);position:sticky;top:8px;z-index:8}.filters{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:9px}input,select,textarea{border:1px solid #cddced;border-radius:11px;background:#fff;padding:10px 11px;color:var(--text);outline:none}input:focus,select:focus,textarea:focus{border-color:#6ba6e8;box-shadow:0 0 0 3px #e8f3ff}.btn{border:0;border-radius:11px;padding:10px 13px;cursor:pointer;font-weight:750}.btn.primary{background:var(--blue);color:#fff}.btn.secondary{background:var(--blue2);color:var(--navy)}.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--navy)}.btn.good{background:var(--greenbg);color:var(--green)}.btn.warn{background:var(--amberbg);color:var(--amber)}.btn.bad{background:var(--redbg);color:var(--red)}.meta-line{display:flex;justify-content:space-between;align-items:center;margin:13px 2px 8px;color:var(--muted);font-size:13px}.cards{display:grid;gap:10px}.qa{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(27,61,111,.045)}.qa summary{list-style:none;padding:15px;cursor:pointer}.qa summary::-webkit-details-marker{display:none}.rowtop{display:flex;gap:8px;align-items:flex-start}.badge{font-size:11px;font-weight:800;border-radius:999px;padding:4px 8px;white-space:nowrap}.badge.a{background:#e9f2ff;color:#0b57ad}.badge.b{background:#f1f4f8;color:#506176}.badge.cat{background:#f6f2ff;color:#6841a8}.qtext{font-size:16px;font-weight:800;flex:1}.state-dot{width:9px;height:9px;border-radius:50%;background:#c9d4e1;margin-top:7px}.state-dot.mastered{background:var(--green)}.state-dot.review{background:#e7a21a}.answer{border-top:1px solid var(--line);padding:15px;background:#fbfdff}.answer h4{margin:0 0 5px;color:var(--navy);font-size:13px}.answer p{margin:0 0 13px;white-space:pre-wrap}.keybox{background:#eef6ff;border-left:4px solid #3a84d8;padding:10px 12px;border-radius:8px;margin:8px 0 13px}.follow{background:#fff8e8;border-left:4px solid #e0a12a;padding:10px 12px;border-radius:8px}.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.source{font-size:12px;color:var(--muted);margin-top:12px;display:flex;gap:9px;flex-wrap:wrap}.flash-wrap{max-width:760px;margin:18px auto}.flash{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;min-height:390px;box-shadow:var(--shadow);display:flex;flex-direction:column}.flash .bigq{font-size:clamp(22px,5vw,31px);font-weight:850;line-height:1.35;margin:22px 0}.flash-answer{display:none;border-top:1px solid var(--line);padding-top:18px;margin-top:8px}.flash-answer.show{display:block}.flash-nav{display:flex;justify-content:space-between;gap:8px;margin-top:auto;padding-top:18px}.progressbar{height:8px;background:#e6edf6;border-radius:99px;overflow:hidden;margin-top:8px}.progressbar i{display:block;height:100%;background:var(--blue);width:0}.quiz{max-width:780px;margin:18px auto;background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow)}.quiz textarea{width:100%;min-height:130px;resize:vertical}.quiz-answer{display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:15px}.quiz-answer.show{display:block}.score-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.empty{text-align:center;padding:50px;color:var(--muted)}.small{font-size:12px;color:var(--muted)}.footer-note{text-align:center;color:var(--muted);font-size:12px;margin:28px 0}
 @media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr 1fr}.filters .search{grid-column:1/-1}.toolbar{top:5px}.app{padding:10px 10px 70px}.hero{padding:20px 18px;border-radius:18px}.flash,.quiz{padding:18px}.flash-nav{flex-wrap:wrap}}
+
+.gd-hero{background:linear-gradient(135deg,#eef6ff,#fff);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);margin:14px 0}
+.gd-hero h2{margin:0 0 6px;color:var(--navy)}
+.gd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 18px}
+.gd-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;box-shadow:0 4px 14px rgba(27,61,111,.04)}
+.gd-card h3,.gd-card h4{margin:0 0 7px;color:var(--navy)}
+.gd-card p{margin:0;color:#45556d}
+.gd-pill{display:inline-block;background:#eef6ff;color:#0b57ad;font-size:11px;font-weight:800;border-radius:999px;padding:4px 8px;margin-bottom:7px}
+.gd-section{margin:24px 0}
+.gd-section>h2{color:var(--navy);font-size:21px;margin-bottom:10px}
+.gd-framework{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.gd-phrase{background:#fbfdff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.gd-phrase b{display:block;color:var(--navy);margin-bottom:5px}
+.gd-phrase .say{background:#f1f7ff;border-radius:9px;padding:9px 10px;margin-top:7px;color:#24496f}
+.gd-danger{background:#fff4f4;border:1px solid #ffd8d8;border-radius:14px;padding:14px}
+.gd-danger b{color:#a73535}
+.gd-topic-list{display:grid;gap:10px}
+.gd-topic{background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.gd-topic summary{cursor:pointer;list-style:none;padding:15px;font-weight:800;color:var(--navy)}
+.gd-topic summary::-webkit-details-marker{display:none}
+.gd-topic .inside{border-top:1px solid var(--line);padding:14px;background:#fbfdff}
+.gd-topic .inside p{margin:6px 0}
+.gd-random{background:#0b2d5b;color:#fff;border-radius:17px;padding:18px;margin-top:12px;display:none}
+.gd-random.show{display:block}
+.gd-random .small{color:#dbeaff}
+.gd-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.gd-step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px}
+.gd-step b{display:block;color:var(--blue);font-size:13px;margin-bottom:4px}
+.gd-checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.gd-check{display:flex;gap:9px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px}
+.gd-check input{margin-top:4px}
+.gd-timer{font-variant-numeric:tabular-nums;font-size:28px;font-weight:850;color:var(--navy)}
+.gd-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+@media(max-width:720px){.gd-grid{grid-template-columns:1fr 1fr}.gd-framework{grid-template-columns:1fr}.gd-flow{grid-template-columns:1fr 1fr}.gd-checklist{grid-template-columns:1fr}}
+
 </style></head>
 <body><div class="app">
 <section class="hero"><h1>IA 入境事務助理｜考前溫習器</h1><p>高命中知識庫 · A必背 + B熟悉 · 最後整理：2026-08-27</p>
 <div class="stats"><div class="stat"><b id="totalCount">101</b><span>高命中題目</span></div><div class="stat"><b>43</b><span>A 必背</span></div><div class="stat"><b>58</b><span>B 熟悉</span></div><div class="stat"><b id="masteredCount">0</b><span>已掌握</span></div></div></section>
-<nav class="tabs"><button class="tab active" data-tab="list">📚 題庫溫習</button><button class="tab" data-tab="flash">🃏 卡片模式</button><button class="tab" data-tab="quiz">🎯 快問快答</button><button class="tab" data-tab="progress">📈 我的進度</button></nav>
+<nav class="tabs"><button class="tab active" data-tab="list">📚 題庫溫習</button><button class="tab" data-tab="flash">🃏 卡片模式</button><button class="tab" data-tab="quiz">🎯 快問快答</button><button class="tab" data-tab="gd">👥 小組討論</button><button class="tab" data-tab="progress">📈 我的進度</button></nav>
 
 <section id="list" class="panel active"><div class="toolbar"><div class="filters"><input class="search" id="search" placeholder="搜尋問題、答案或重點…"><select id="priorityFilter"><option value="">A + B 全部</option><option value="A">只看 A 必背</option><option value="B">只看 B 熟悉</option></select><select id="categoryFilter"><option value="">全部類別</option></select><button class="btn secondary" id="onlyReview">只看未熟</button></div></div><div class="meta-line"><span id="resultMeta"></span><button class="btn ghost" id="expandAll">展開全部答案</button></div><div class="cards" id="cards"></div></section>
 
 <section id="flash" class="panel"><div class="toolbar"><div class="filters"><select id="flashPriority"><option value="">A + B</option><option value="A">A 必背</option><option value="B">B 熟悉</option></select><select id="flashCategory"><option value="">全部類別</option></select><button class="btn secondary" id="shuffleFlash">隨機排序</button><button class="btn ghost" id="flashUnmastered">優先未熟</button></div></div><div class="flash-wrap"><div class="flash"><div><div id="flashMeta" class="small"></div><div class="progressbar"><i id="flashProgress"></i></div><div id="flashQuestion" class="bigq"></div><button class="btn primary" id="revealFlash">顯示答案</button> <button class="btn ghost" id="speakFlash">🔊 朗讀問題</button><div id="flashAnswer" class="flash-answer"></div></div><div class="flash-nav"><button class="btn ghost" id="prevFlash">← 上一題</button><div><button class="btn warn" id="reviewFlash">要再溫</button> <button class="btn good" id="masterFlash">已掌握 ✓</button></div><button class="btn ghost" id="nextFlash">下一題 →</button></div></div></div></section>
 
 <section id="quiz" class="panel"><div class="toolbar"><div class="filters"><select id="quizPriority"><option value="A">A 必背</option><option value="">A + B</option><option value="B">B 熟悉</option></select><select id="quizCategory"><option value="">全部類別</option></select><select id="quizCount"><option value="10">10題</option><option value="20">20題</option><option value="30">30題</option></select><button class="btn primary" id="startQuiz">開始新一輪</button></div></div><div class="quiz"><div id="quizMeta" class="small">按「開始新一輪」開始。</div><div id="quizQuestion" style="font-size:23px;font-weight:850;margin:14px 0"></div><textarea id="quizInput" placeholder="先用自己說法答；亦可以直接口答，之後再揭答案比較。"></textarea><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn primary" id="quizReveal">顯示標準答案</button><button class="btn ghost" id="quizSpeak">🔊 朗讀問題</button></div><div id="quizAnswer" class="quiz-answer"></div><div id="quizScore" class="score-row" style="display:none"><button class="btn good" data-score="2">✅ 答到</button><button class="btn warn" data-score="1">🟡 部分識</button><button class="btn bad" data-score="0">❌ 未識</button></div></div></section>
+
+
+<section id="gd" class="panel">
+  <div class="gd-hero">
+    <span class="gd-pill">GROUP DISCUSSION</span>
+    <h2>小組討論準備</h2>
+    <p>目標唔係「講最多」，而係令小組更有結構、更有效率咁去到共識。考官通常會留意你有冇清晰思考、聆聽及承接別人、處理分歧、推動討論、時間意識同團隊合作。</p>
+    <div class="gd-grid">
+      <div class="gd-card"><h3>① 結構</h3><p>先訂目標／準則，再討論選項，避免一開始散講。</p></div>
+      <div class="gd-card"><h3>② 協作</h3><p>承接隊友、邀請沉默成員，而唔係只展示自己。</p></div>
+      <div class="gd-card"><h3>③ 判斷</h3><p>有理據地比較利弊、風險、迫切性及可行性。</p></div>
+      <div class="gd-card"><h3>④ 表達</h3><p>短、清楚、有結論；一次最好集中一至兩點。</p></div>
+      <div class="gd-card"><h3>⑤ 時間</h3><p>知道幾時要收窄範圍、投票、整理共識。</p></div>
+      <div class="gd-card"><h3>⑥ 領導</h3><p>領導唔等於霸住講；係幫團隊向下一步行。</p></div>
+    </div>
+  </div>
+
+  <div class="gd-section">
+    <h2>1. 六大常見題型</h2>
+    <div class="gd-grid">
+      <div class="gd-card"><span class="gd-pill">Public Policy</span><h4>公共政策</h4><p>政策利弊、持份者、可行措施、社會平衡。</p></div>
+      <div class="gd-card"><span class="gd-pill">Trade-off</span><h4>取捨題</h4><p>兩個合理目標互相衝突；重點係建立取捨準則。</p></div>
+      <div class="gd-card"><span class="gd-pill">Crisis</span><h4>情境／危機</h4><p>先處理安全、秩序、程序，再處理效率與溝通。</p></div>
+      <div class="gd-card"><span class="gd-pill">Social Issues</span><h4>社會議題</h4><p>唔好極端化，要界定問題及提出可執行方案。</p></div>
+      <div class="gd-card"><span class="gd-pill">Resources</span><h4>資源分配</h4><p>先定共同評分準則，再排優先次序。</p></div>
+      <div class="gd-card"><span class="gd-pill">Ranking</span><h4>排序／決策</h4><p>用一致準則比較所有選項，最後清楚交代共識。</p></div>
+    </div>
+  </div>
+
+  <div class="gd-section">
+    <h2>2. 一套通用發言框架</h2>
+    <div class="gd-framework">
+      <div class="gd-phrase"><b>開場：先建立討論方法</b><div class="say">「不如我哋先界定今日要達成嘅目標，再用迫切性、影響範圍同可行性三個準則比較，最後留兩三分鐘做總結，大家覺得點？」</div></div>
+      <div class="gd-phrase"><b>提出觀點：結論 → 理由 → 影響</b><div class="say">「我會優先考慮A，主要有兩個原因。第一……第二……所以短期內對……影響最大。」</div></div>
+      <div class="gd-phrase"><b>承接別人：先認同再加值</b><div class="say">「我同意你頭先講嘅風險，我想補充一點，就係如果由執行角度睇……」</div></div>
+      <div class="gd-phrase"><b>禮貌反對：針對理據，唔針對人</b><div class="say">「我明白你個考慮，不過我有少少保留，因為如果我哋將……放第一，可能會忽略……」</div></div>
+      <div class="gd-phrase"><b>邀請沉默成員</b><div class="say">「我哋幾個都講咗唔少，不如聽下C對呢個優先次序有咩睇法？」</div></div>
+      <div class="gd-phrase"><b>時間管理</b><div class="say">「而家大概仲有四分鐘，不如我哋收窄到兩個主要方案，再確認大家共識。」</div></div>
+      <div class="gd-phrase"><b>推動共識</b><div class="say">「聽落大家其實都認同A同B，主要分歧係C定D。不如我哋用剛才嘅三個準則再比較一次？」</div></div>
+      <div class="gd-phrase"><b>總結</b><div class="say">「總結我哋嘅共識有三點：第一……第二……第三……我哋亦考慮過……但基於……所以暫時唔優先。」</div></div>
+    </div>
+  </div>
+
+  <div class="gd-section">
+    <h2>3. 實用英文句式</h2>
+    <div class="gd-framework">
+      <div class="gd-phrase"><b>Build on</b><div class="say">“I agree with your point, and I would like to add one more consideration…”</div></div>
+      <div class="gd-phrase"><b>Disagree politely</b><div class="say">“I understand the concern, but I see it slightly differently because…”</div></div>
+      <div class="gd-phrase"><b>Invite others</b><div class="say">“We have heard several views already. Perhaps we can hear from C as well?”</div></div>
+      <div class="gd-phrase"><b>Time / consensus</b><div class="say">“We have about three minutes left. Shall we narrow this down and confirm our final priority?”</div></div>
+    </div>
+  </div>
+
+  <div class="gd-section">
+    <h2>4. 最常見失分位</h2>
+    <div class="gd-grid">
+      <div class="gd-danger"><b>霸住講</b><p>講得多唔代表領導力高；長篇發言會壓縮其他人空間。</p></div>
+      <div class="gd-danger"><b>完全唔承接</b><p>每次只講自己準備好嘅point，成組就會似輪流演講。</p></div>
+      <div class="gd-danger"><b>過早爭做Leader</b><p>一開場就命令人分工，容易顯得強勢；先提出方法畀大家確認。</p></div>
+      <div class="gd-danger"><b>冇準則就排名</b><p>資源／排序題如果靠喜好揀，理據會非常薄弱。</p></div>
+      <div class="gd-danger"><b>只追求速度</b><p>危機題尤其唔可以犧牲安全、程序、身份核實去換效率。</p></div>
+      <div class="gd-danger"><b>尾段冇收口</b><p>剩兩三分鐘仍然開新論點，最後冇共識／冇summary。</p></div>
+    </div>
+  </div>
+
+  <div class="gd-section">
+    <h2>5. GD 練習題庫</h2>
+    <div class="gd-actions">
+      <button class="btn primary" id="gdRandomBtn">🎲 隨機抽一題</button>
+      <button class="btn ghost" id="gdSpeakBtn">🔊 朗讀抽中題目</button>
+    </div>
+    <div id="gdRandomBox" class="gd-random"></div>
+    <div id="gdTopics" class="gd-topic-list" style="margin-top:12px"></div>
+  </div>
+
+  <div class="gd-section">
+    <h2>6. 10–15分鐘實戰流程</h2>
+    <div class="gd-flow">
+      <div class="gd-step"><b>0:00–1:00</b>快速界定目標、題型、主要持份者／準則。</div>
+      <div class="gd-step"><b>1:00–5:00</b>每人提出核心觀點；主動承接至少一次。</div>
+      <div class="gd-step"><b>5:00–9:00</b>比較分歧、測試方案可行性、補充風險。</div>
+      <div class="gd-step"><b>9:00–11:00</b>收窄選項，推動優先次序／共同方案。</div>
+      <div class="gd-step"><b>11:00–12:00</b>確認共識、補遺、準備summary。</div>
+      <div class="gd-step"><b>最後1分鐘</b>清楚總結決定、原因及有保留的地方。</div>
+      <div class="gd-step"><b>個人目標</b>至少1次承接、1次推動、1次時間／共識意識。</div>
+      <div class="gd-step"><b>唔需要做</b>唔使每個topic都搶第一個講，亦唔使講最多。</div>
+    </div>
+    <div class="gd-card" style="margin-top:10px">
+      <div class="gd-actions"><span class="gd-timer" id="gdTimer">12:00</span><button class="btn primary" id="gdTimerStart">開始12分鐘</button><button class="btn ghost" id="gdTimerReset">重設</button></div>
+    </div>
+  </div>
+
+  <div class="gd-section">
+    <h2>7. 每次練習後自評</h2>
+    <div class="gd-checklist" id="gdChecklist">
+      <label class="gd-check"><input type="checkbox" data-gdcheck="structure"><span><b>建立結構</b><br>我有提出目標／準則／討論方法。</span></label>
+      <label class="gd-check"><input type="checkbox" data-gdcheck="build"><span><b>承接隊友</b><br>我至少一次引用或延伸別人意見。</span></label>
+      <label class="gd-check"><input type="checkbox" data-gdcheck="disagree"><span><b>處理分歧</b><br>我反對時有講理據，而且語氣合作。</span></label>
+      <label class="gd-check"><input type="checkbox" data-gdcheck="invite"><span><b>照顧團隊</b><br>有需要時我有邀請較少發言的人。</span></label>
+      <label class="gd-check"><input type="checkbox" data-gdcheck="time"><span><b>時間意識</b><br>尾段有主動收窄討論，而唔係再開新戰線。</span></label>
+      <label class="gd-check"><input type="checkbox" data-gdcheck="consensus"><span><b>推動共識</b><br>我有幫小組由意見走向決定。</span></label>
+      <label class="gd-check"><input type="checkbox" data-gdcheck="summary"><span><b>總結能力</b><br>我能用短句講清楚共識、原因及優先次序。</span></label>
+      <label class="gd-check"><input type="checkbox" data-gdcheck="concise"><span><b>控制長度</b><br>大部分單次發言控制在約30–60秒。</span></label>
+    </div>
+    <div style="margin-top:10px"><button class="btn bad" id="gdChecklistReset">清除GD自評</button></div>
+  </div>
+</section>
 
 <section id="progress" class="panel"><div class="quiz"><h2 style="margin-top:0">我的溫習進度</h2><div class="stats" style="color:var(--text)"><div class="stat" style="background:#eef6ff"><b id="pMastered">0</b><span>已掌握</span></div><div class="stat" style="background:#fff5df"><b id="pReview">0</b><span>要再溫</span></div><div class="stat" style="background:#f3f6fa"><b id="pNew">0</b><span>未標記</span></div><div class="stat" style="background:#eef9f4"><b id="quizAccuracy">-</b><span>自評答到率</span></div></div><h3>建議次序</h3><p>① 先完成 A 必背 → ② 用「快問快答」測自己 → ③ 將「部分識／未識」標記為要再溫 → ④ 最後補 B 熟悉。</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn secondary" id="exportProgress">匯出進度 JSON</button><button class="btn bad" id="resetProgress">清除本機進度</button></div><p class="small">進度只儲存在目前瀏覽器的 localStorage；HTML本身不會上傳你的答案。</p></div></section>
 <div class="footer-note">資料以題庫所列官方來源為準；時效性政策請於正式面試前再核實。</div></div>
@@ -54,5 +196,59 @@ function showQuiz(){if(!quizDeck.length)return;const x=quizDeck[qi];document.get
 document.getElementById('startQuiz').onclick=startQuiz;document.getElementById('quizReveal').onclick=()=>{if(!quizDeck.length)return;document.getElementById('quizAnswer').classList.add('show');document.getElementById('quizScore').style.display='grid'};document.getElementById('quizSpeak').onclick=()=>quizDeck[qi]&&speakText(quizDeck[qi].question);document.querySelectorAll('#quizScore button').forEach(b=>b.onclick=()=>{if(!quizDeck.length)return;const sc=+b.dataset.score,id=quizDeck[qi].id;if(sc===2){quizStats.correct++;state[id]='mastered'}else if(sc===1){quizStats.partial++;state[id]='review'}else{quizStats.wrong++;state[id]='review'}localStorage.setItem(QUIZ_KEY,JSON.stringify(quizStats));save();qi++;if(qi>=quizDeck.length){alert('完成今輪測驗！');qi=0;quizDeck.sort(()=>Math.random()-.5)}showQuiz()});
 document.getElementById('exportProgress').onclick=()=>{const payload={exportedAt:new Date().toISOString(),progress:state,quizStats};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='IA_study_progress.json';a.click();URL.revokeObjectURL(a.href)};
 document.getElementById('resetProgress').onclick=()=>{if(confirm('確定清除所有本機溫習進度？')){state={};quizStats={correct:0,partial:0,wrong:0};localStorage.removeItem(LS_KEY);localStorage.removeItem(QUIZ_KEY);refreshStats();renderList()}};
+
+const GD_TOPICS=[{"id":"GD-001","category":"公共政策","title":"旅遊業發展 vs 居民生活質素","prompt":"香港應否進一步擴大旅遊業，以帶動經濟，即使可能增加熱門地區的人流及對居民生活造成壓力？小組需要提出平衡方案。","direction":"先定共同目標：經濟收益與居民承受力並重。可討論分流旅客、地區承載力、錯峰措施、社區配套、旅遊收益回饋社區。","trap":"避免變成單純支持／反對旅客；要處理 trade-off。"},{"id":"GD-002","category":"資源分配","title":"五個政策範疇選三個優先","prompt":"政府有額外資源，只能在醫療、青年就業、長者服務、旅遊推廣、科技發展五項之中優先投放三項。請小組達成共識。","direction":"先訂評分準則，例如迫切性、受惠人數、長遠效益、不可逆風險，再逐項比較；最後清楚說明為何選三項及放棄其餘兩項。","trap":"最常見失分係每人各講喜好，冇先建立共同準則。"},{"id":"GD-003","category":"情境／危機","title":"繁忙管制站系統故障，大量旅客滯留","prompt":"繁忙時段一個主要管制站電腦系統突然故障，大量旅客滯留並開始不滿。你們作為前線團隊，需要制定即時處理方案。","direction":"優先次序：安全與秩序 → 啟動後備程序／通報 → 分流與增援 → 清晰資訊發布 → 特殊需要旅客 → 系統恢復後疏導及檢討。","trap":"唔好為求快而提出跳過身份核實或法定程序。"},{"id":"GD-004","category":"社會議題","title":"公共場所是否應限制使用手機","prompt":"有人認為公共場所過度使用手機影響安全、秩序及人際交流。香港應否在部分公共場所限制手機使用？","direction":"先界定『限制』及適用場景；比較安全、個人自由、執行成本、實際需要。可提出指定場所／指定行為，而非全面禁止。","trap":"避免極端二選一；最好提出具體、可執行的中間方案。"}];
+function renderGDTopics(){
+  const box=document.getElementById('gdTopics');
+  if(!box)return;
+  box.innerHTML=GD_TOPICS.map(function(t){
+    return '<details class="gd-topic"><summary>'+esc(t.id)+' · '+esc(t.category)+'｜'+esc(t.title)+'</summary><div class="inside"><p><b>題目：</b>'+esc(t.prompt)+'</p><div class="keybox"><b>建議思考方向：</b>'+esc(t.direction)+'</div><div class="follow"><b>小心失分：</b>'+esc(t.trap)+'</div></div></details>';
+  }).join('');
+}
+let gdCurrentTopic=null;
+const gdRandomBtn=document.getElementById('gdRandomBtn');
+if(gdRandomBtn)gdRandomBtn.onclick=function(){
+  gdCurrentTopic=GD_TOPICS[Math.floor(Math.random()*GD_TOPICS.length)];
+  const b=document.getElementById('gdRandomBox');
+  b.classList.add('show');
+  b.innerHTML='<div class="small">'+esc(gdCurrentTopic.id)+' · '+esc(gdCurrentTopic.category)+'</div><h3 style="margin:5px 0 8px">'+esc(gdCurrentTopic.title)+'</h3><div>'+esc(gdCurrentTopic.prompt)+'</div>';
+};
+const gdSpeakBtn=document.getElementById('gdSpeakBtn');
+if(gdSpeakBtn)gdSpeakBtn.onclick=function(){if(gdCurrentTopic)speakText(gdCurrentTopic.prompt);else alert('請先隨機抽一題。')};
+
+const GD_CHECK_KEY='iaGDChecklist_v1';
+let gdCheckState=JSON.parse(localStorage.getItem(GD_CHECK_KEY)||'{}');
+document.querySelectorAll('[data-gdcheck]').forEach(function(cb){
+  cb.checked=!!gdCheckState[cb.dataset.gdcheck];
+  cb.addEventListener('change',function(){
+    gdCheckState[cb.dataset.gdcheck]=cb.checked;
+    localStorage.setItem(GD_CHECK_KEY,JSON.stringify(gdCheckState));
+  });
+});
+const gdChecklistReset=document.getElementById('gdChecklistReset');
+if(gdChecklistReset)gdChecklistReset.onclick=function(){
+  gdCheckState={};localStorage.removeItem(GD_CHECK_KEY);
+  document.querySelectorAll('[data-gdcheck]').forEach(function(cb){cb.checked=false});
+};
+
+let gdTimerLeft=720,gdTimerInt=null;
+function paintGDTimer(){
+  const m=Math.floor(gdTimerLeft/60),s=gdTimerLeft%60;
+  const el=document.getElementById('gdTimer');
+  if(el)el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+const gdTimerStart=document.getElementById('gdTimerStart');
+if(gdTimerStart)gdTimerStart.onclick=function(){
+  if(gdTimerInt){clearInterval(gdTimerInt);gdTimerInt=null;gdTimerStart.textContent='繼續';return}
+  gdTimerStart.textContent='暫停';
+  gdTimerInt=setInterval(function(){
+    gdTimerLeft--;paintGDTimer();
+    if(gdTimerLeft<=0){clearInterval(gdTimerInt);gdTimerInt=null;gdTimerLeft=0;paintGDTimer();gdTimerStart.textContent='完成';alert('12分鐘完成。記得做下面GD自評。')}
+  },1000);
+};
+const gdTimerReset=document.getElementById('gdTimerReset');
+if(gdTimerReset)gdTimerReset.onclick=function(){if(gdTimerInt)clearInterval(gdTimerInt);gdTimerInt=null;gdTimerLeft=720;paintGDTimer();if(gdTimerStart)gdTimerStart.textContent='開始12分鐘'};
+renderGDTopics();paintGDTimer();
+
 refreshStats();renderList();buildFlashDeck();
 </script></body></html>
