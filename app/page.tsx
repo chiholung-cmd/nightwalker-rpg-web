@@ -13,9 +13,16 @@ type ReaderSettings = { images:boolean; largeText:boolean; typing:boolean }
 const DEFAULT_SETTINGS: ReaderSettings = {images:true,largeText:false,typing:true}
 const clamp = (v:number,max:number) => Math.max(0,Math.min(max,v))
 const WORLD_ART: Partial<Record<WorldTheme,string>> = {
+  // High-resolution photographs only. Never enlarge the old 70-180px portrait atlas.
+  nexus:'https://images.unsplash.com/photo-1770772411636-9bccbce0664a?auto=format&fit=crop&w=1800&q=83',
+  archive:'https://images.unsplash.com/photo-1770772411636-9bccbce0664a?auto=format&fit=crop&w=1800&q=83',
   gothic: 'https://images.unsplash.com/photo-1767779670933-9df4ea401954?auto=format&fit=crop&w=1600&q=82',
   arctic: 'https://images.unsplash.com/photo-1742458499886-1e953d2be323?auto=format&fit=crop&w=1600&q=82',
   cinema: 'https://images.unsplash.com/photo-1760170437237-a3654545ab4c?auto=format&fit=crop&w=1600&q=82'
+}
+const SPECIAL_ART:Record<string,string> = {
+  '午夜放映廳':'https://images.unsplash.com/photo-1768381937064-0cff674a09ca?auto=format&fit=crop&w=1800&q=83',
+  '霧中第七章':'https://images.unsplash.com/photo-1508107536691-b1449928187d?auto=format&fit=crop&w=1800&q=83'
 }
 const WORLD_LABEL:Record<WorldTheme,string> = {
   nexus:'主神空間', archive:'規則怪談', apartment:'現代驚悚',hospital:'鏡像懸疑',
@@ -31,10 +38,13 @@ const WORLD_LIST=[
   {name:'鏡城病院',category:'原創・懸疑',start:'hospital_arrival',clear:'鏡城病院',theme:'hospital' as WorldTheme},
   {name:'德古拉',category:'文學・1897',start:'gothic_start',clear:'德古拉',theme:'gothic' as WorldTheme},
   {name:'科學怪人',category:'文學・1818',start:'arctic_start',clear:'科學怪人',theme:'arctic' as WorldTheme},
-  {name:'第十三號放映室',category:'原創・電影',start:'cinema_start',clear:'第十三號放映室',theme:'cinema' as WorldTheme}
+  {name:'第十三號放映室',category:'原創・電影',start:'cinema_start',clear:'第十三號放映室',theme:'cinema' as WorldTheme},
+  {name:'沒有片尾的電影',category:'原創・電影懸疑',start:'film_arrival',clear:'午夜放映廳',theme:'cinema' as WorldTheme},
+  {name:'霧中第七章',category:'原創・小說怪談',start:'novel_arrival',clear:'霧中第七章',theme:'gothic' as WorldTheme}
 ]
-const ENTER_SCENES = new Set(['hub_arrival','hub_portals','lost_arrival','blood_arrival','hospital_arrival','gothic_start','arctic_start','cinema_start','fourth_threshold','rift_arrival'])
+const ENTER_SCENES = new Set(['hub_arrival','hub_portals','lost_arrival','blood_arrival','hospital_arrival','gothic_start','arctic_start','cinema_start','fourth_threshold','rift_arrival','film_arrival','film_final_frame','novel_arrival','novel_rewrite'])
 const EMOTIONS:Record<string,string>={calm:'平靜',worried:'憂慮',afraid:'驚恐',angry:'憤怒',sad:'悲傷',hopeful:'期待',mysterious:'難以捉摸'}
+const LINE_MOODS:Record<string,string>={neutral:'平靜',fear:'驚恐',sad:'悲傷',joy:'欣喜',anger:'憤怒',mystery:'疑惑',resolve:'堅定'}
 const expressionFor=(face:string|undefined,world:string,sceneId:string,bond:number)=>{
   if(face==='guide')return sceneId==='fourth_good'||bond>=3?'期待':sceneId.includes('question')||sceneId.includes('inner')?'憂慮':'神秘'
   if(face==='girl')return sceneId.includes('ending')?'期待':'不安'
@@ -95,9 +105,9 @@ export default function HomePage(){
   const shown=choiceList.slice(Math.min(choicePage,pages-1)*3,(Math.min(choicePage,pages-1)+1)*3)
   const canProceed= !blocked && g.hp>0 && g.sp>0
   const worldKey=scene.theme
-  const image= WORLD_ART[worldKey]
+  const image= SPECIAL_ART[scene.world] || WORLD_ART[worldKey]
   const showWorldImage=settings.images&&!!image&&!imageFailed&&ENTER_SCENES.has(g.scene)
-  const expression=scene.emotion?EMOTIONS[scene.emotion]:expressionFor(scene.face,scene.world,scene.id,g.bond)
+  const expression=scene.moods?.[idx]?LINE_MOODS[scene.moods[idx]]:(scene.emotion?EMOTIONS[scene.emotion]:expressionFor(scene.face,scene.world,scene.id,g.bond))
   useEffect(()=>{
     setChoicePage(0);setVisible(0);setSkipTyping(false);setImageFailed(false)
   },[g.scene,g.line])
@@ -234,7 +244,7 @@ export default function HomePage(){
           <label className="reader-setting"><span>對話逐字演出</span><input type="checkbox" checked={settings.typing} onChange={e=>setSettings(s=>({...s,typing:e.target.checked}))}/></label>
           <button className="reader-action" onClick={()=>{navigator.clipboard?.writeText(JSON.stringify(g)).then(()=>setFeedback('存檔資料已複製')).catch(()=>setFeedback('瀏覽器未授權複製'))}}>複製存檔資料</button>
           <button className="reader-danger" onClick={reset}>{confirmation?'確認清除所有劇情進度':'清除本機進度並重玩'}</button>
-          <div className="reader-credits"><strong>場景攝影授權</strong><small>Unsplash License · Zoshua Colah／Lawrence Krowdeed／Peter Herrmann。舊版低解像度人物圖已停用。</small></div>
+          <div className="reader-credits"><strong>場景攝影授權</strong><small>Unsplash License · Zoshua Colah、Lawrence Krowdeed、Peter Herrmann、Annie Spratt、Quentin Baret、y i。場景圖按世界進入或重要事件載入；低解析人物圖不再使用。</small></div>
         </>}
       </div>
     </section></div>}
