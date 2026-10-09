@@ -131,3 +131,62 @@
 @media(max-height:700px){.iw-top{height:44px;flex-basis:44px}.iw-stage{min-height:123px}.iw-status{height:44px;flex-basis:44px}.iw-dialogue{height:116px;flex-basis:116px;padding-top:7px}.iw-dialogue-head{height:30px}.iw-avatar{width:28px;height:28px;flex-basis:28px;font-size:18px}.iw-dialogue p{margin-top:4px;max-height:70px;line-height:1.6}.iw-actions{height:clamp(146px,27dvh,189px);flex-basis:clamp(146px,27dvh,189px);padding-top:6px}.iw-choice{min-height:47px;padding-block:5px}.iw-bottom-nav{height:47px;flex-basis:47px;padding-top:3px}.iw-bottom-nav button span{font-size:17px;line-height:19px}.iw-stat-track{margin-top:2px}}
 @media(max-height:550px){.iw-top{height:39px;flex-basis:39px}.iw-stage{min-height:105px}.iw-dialogue{height:105px;flex-basis:105px}.iw-actions{height:141px;flex-basis:141px}.iw-bottom-nav{height:42px;flex-basis:42px}.iw-status{height:40px;flex-basis:40px}}
 @media(prefers-reduced-motion:reduce){.iw-world-svg{animation:none}.iw-battle-fx *{animation-duration:.01ms!important}}
+
+/* v0.5 narrative presentation and permanent character growth */
+.iw-stage{isolation:isolate}
+.iw-world-svg{z-index:0}
+.iw-figure{position:absolute;z-index:1;right:-5%;bottom:-16px;height:87%;max-height:390px;width:auto;min-width:160px;pointer-events:none;transform-origin:center bottom;animation:iw-character-reveal .7s ease both,iw-character-idle 4.5s ease-in-out .7s infinite;filter:drop-shadow(0 8px 14px #000a) drop-shadow(0 0 17px #5367ad52)}
+.iw-figure-guide{height:90%;right:-8%;filter:drop-shadow(0 10px 15px #000a) drop-shadow(0 0 15px #a177df88)}
+.iw-figure-girl{height:76%;right:1%}
+.iw-figure-neighbor{height:92%;right:-5%;filter:drop-shadow(0 0 14px #c7487888)}
+.iw-figure-nurse{height:87%;right:-2%;filter:drop-shadow(0 0 14px #6dc7cb5e)}
+.iw-figure-clerk{height:91%;right:-4%;filter:drop-shadow(0 0 15px #ad577a9a)}
+.iw-char-rune{position:absolute;z-index:1;right:3%;top:27%;width:min(56%,240px);aspect-ratio:1;pointer-events:none;display:grid;place-items:center;filter:drop-shadow(0 0 21px #8e82da)}
+.iw-char-rune span{position:absolute;font-size:clamp(90px,30vw,180px);color:#b5b1e677;text-shadow:0 0 36px #9b80e9;animation:iw-rune-breathe 5s ease-in-out infinite}
+.iw-char-rune i{position:absolute;inset:5%;border:2px dashed #bbaff88a;border-radius:50%;animation:iw-rune-turn 28s linear infinite}
+.iw-char-rune b{position:relative;font-size:clamp(60px,19vw,110px);font-weight:400;color:#eee2ff9e;text-shadow:0 0 25px #8e90ef}
+.iw-vignette{z-index:2;pointer-events:none}
+.iw-stage-head,.iw-stage-bottom{z-index:4}
+.iw-dialogue-head{position:relative}
+.iw-dialogue-head strong{color:#f8e8fa;text-shadow:0 0 12px #ab8fe855}
+.iw-dialogue p.iw-talking{cursor:pointer;user-select:none;-webkit-user-select:none}
+.iw-cursor{color:#bad9f9;animation:iw-cursor-blink .7s linear infinite}
+.iw-dialogue p{max-height:81px;scrollbar-width:thin}
+.iw-actions .iw-next{background:linear-gradient(110deg,#263650,#242d4b 60%,#30254e);border-color:#747eaf}
+.iw-choice{border-color:#536581;background:linear-gradient(110deg,#233551,#18243b 69%,#20243d)}
+.iw-choice:focus-visible,.iw-app button:focus-visible{outline:2px solid #9ddff5;outline-offset:2px}
+.iw-choice:hover{border-color:#82a5ca}
+.iw-choice-count{color:#e4c7a4;background:#27354c;border-color:#5b789c}
+.iw-bottom-nav{grid-template-columns:repeat(6,minmax(0,1fr))}
+.iw-bottom-nav button{position:relative;min-width:0}
+.iw-nav-dot{position:absolute;top:0;left:54%;background:#f4b77a;width:6px;height:6px;border-radius:100%;box-shadow:0 0 11px #f1b57b}
+.iw-stat-label strong i{font-size:8px;color:#99afc7;font-weight:400;font-style:normal}
+.iw-character-info{display:flex;gap:14px;padding:15px 12px;background:linear-gradient(115deg,#292e50,#1d2940);border:1px solid #675f92;border-radius:11px;margin-bottom:13px}
+.iw-character-info>span{font-size:36px;color:#d5baf2;display:grid;place-items:center;width:53px;border-radius:9px;border:1px solid #806aa8;background:#4b3b6b}
+.iw-character-info>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.iw-character-info strong{font-size:14px;color:#fff4fc}
+.iw-character-info small{font-size:10px;color:#b7bad4}
+.iw-exp-track{height:7px;background:#131a2c;border-radius:20px;overflow:hidden;margin-top:4px}
+.iw-exp-track i{display:block;height:100%;background:linear-gradient(90deg,#8866cf,#d9a0f7);border-radius:20px;box-shadow:0 0 10px #c393f0}
+.iw-talent-row{display:flex;align-items:center;gap:10px;background:#1d2b43;border:1px solid #4e6082;border-radius:10px;margin:8px 0;padding:10px}
+.iw-talent-icon{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;border-radius:9px;background:radial-gradient(circle,#7462ad88,#313059);color:#efe1ff;font-size:22px}
+.iw-talent-row>div{flex:1;min-width:0}
+.iw-talent-row strong{display:block;font-size:12px;color:#eff5ff}
+.iw-talent-row strong small{font-size:9px;color:#c8a0e7;font-weight:400}
+.iw-talent-row p{font-size:10px;line-height:1.55;color:#9db4d0;margin:4px 0 0}
+.iw-talent-row button{white-space:nowrap;min-width:56px;border:1px solid #a780d2;border-radius:7px;background:#554174;color:#f9e7ff;font-size:10px;padding:9px 7px}
+.iw-talent-row button:disabled{opacity:.32}
+.iw-avatar{box-shadow:0 0 12px #b6a0ef44,inset 0 0 14px #e8acff19}
+.iw-avatar-guide{background:linear-gradient(135deg,#9784ae,#342440)}
+.iw-avatar-girl{background:linear-gradient(135deg,#b59b61,#493445)}
+.iw-avatar-clerk{background:linear-gradient(135deg,#a46a80,#261c2e)}
+.iw-avatar-nurse{background:linear-gradient(135deg,#9acbcc,#30515b)}
+.iw-avatar-neighbor{background:linear-gradient(135deg,#bf6889,#33253f)}
+@keyframes iw-character-reveal{from{opacity:0;transform:translateX(50px) scale(.92);filter:blur(7px)}to{opacity:1;transform:translateX(0) scale(1);filter:blur(0)}}
+@keyframes iw-character-idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes iw-rune-breathe{50%{opacity:.38;transform:scale(1.05)}}
+@keyframes iw-rune-turn{to{transform:rotate(360deg)}}
+@keyframes iw-cursor-blink{50%{opacity:0}}
+@media(max-height:700px){.iw-figure{height:91%;right:-8%}.iw-figure-girl{height:82%}.iw-char-rune{top:22%}}
+@media(max-width:370px){.iw-figure{height:82%;right:-12%}.iw-bottom-nav button span{font-size:17px}.iw-bottom-nav button small{font-size:8px}.iw-talent-row{gap:6px;padding:8px}.iw-talent-icon{width:29px;height:29px;flex-basis:29px}}
+@media(prefers-reduced-motion:reduce){.iw-figure,.iw-char-rune span,.iw-char-rune i,.iw-cursor{animation:none!important}}
