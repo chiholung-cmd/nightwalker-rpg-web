@@ -523,14 +523,19 @@ export function applyEffect(state: SaveState, effect?: Effect): SaveState {
   const cleared = effect.clearWorld && !state.cleared.includes(effect.clearWorld)
     ? [...state.cleared, effect.clearWorld] : state.cleared
   const firstClear=!!effect.clearWorld&&!state.cleared.includes(effect.clearWorld)
+  const futureHp=Math.max(0,Math.min(maxHp(state),state.hp+(effect.hp||0)))
+  const futureSp=Math.max(0,Math.min(maxSp(state),state.sp+(effect.sp||0)))
+  // First-clear healing happens after surviving a world, never during a film.
+  const afterHp=firstClear?Math.max(futureHp,Math.min(80,maxHp(state))):futureHp
+  const afterSp=firstClear?Math.max(futureSp,Math.min(70,maxSp(state))):futureSp
   const branches={D:state.branches?.D||0,C:state.branches?.C||0,B:state.branches?.B||0}
   const mastery={tech:state.mastery?.tech||0,occult:state.mastery?.occult||0,martial:state.mastery?.martial||0}
   if(effect.branch)branches[effect.branch]+=1
   if(effect.mastery)mastery[effect.mastery]+=1
   return awardXp({
     ...state,
-    hp: Math.max(0,Math.min(maxHp(state),state.hp+(effect.hp||0))),
-    sp: Math.max(0,Math.min(maxSp(state),state.sp+(effect.sp||0))),
+    hp:afterHp,
+    sp:afterSp,
     points: Math.max(0,state.points+(effect.points||0)),
     bond: Math.max(-5,Math.min(10,state.bond+(effect.bond||0))),
     items, flags, cleared,branches,mastery,
