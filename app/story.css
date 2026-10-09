@@ -218,3 +218,31 @@ button:disabled{opacity:.38;cursor:not-allowed}
 @media(max-width:365px){.reader-atmosphere-inner{right:35%;left:11px}.reader-actor{width:46%}.reader-world-symbol{width:90px;flex-basis:90px}.reader-speaking-avatar{height:33px;width:33px;flex-basis:33px}.reader-speaker-name{gap:3px}.reader-speaker-name>span{font-size:12px}}
 @media(max-height:715px){.reader-speaking-avatar{height:32px;width:32px;flex-basis:32px}.reader-speaking{min-height:34px;padding-bottom:5px}.reader-actor{height:94%}.reader-body{padding-top:6px}}
 @media(prefers-reduced-motion:reduce){.reader-actor{animation:none}}
+
+/* Cinematic trilogy mission-and-progression UI — compact portrait phone-first. */
+.reader-nav{grid-template-columns:repeat(6,minmax(0,1fr))}
+.reader-nav button{min-width:0;white-space:nowrap;font-size:9px}
+.reader-nav button span{font-size:18px}
+.reader-mission-card{margin:9px 0 15px;padding:12px;border:1px solid #6f5f7d;border-radius:10px;background:linear-gradient(130deg,#27273c,#1b2033);box-shadow:inset 0 1px #f5dfed16}
+.reader-mission-title{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:10px}
+.reader-mission-title strong{font-size:14px;color:#f2ddcb}
+.reader-mission-title span{font-size:10px;padding:3px 6px;color:#b9bdc9;border:1px solid #62566c;border-radius:5px;white-space:nowrap}
+.reader-mission-card>p{font-size:12px;line-height:1.65;color:#e9e0e5;margin:6px 0}
+.reader-mission-card>small{font-size:11px;color:#a8a7bb;line-height:1.55;display:block}
+.reader-mission-card h3{color:#d2b5d5;margin:14px 0 8px}
+.reader-reward{margin:11px 0;padding:9px;border:1px solid #786a54;background:#40352050;border-radius:6px;font-size:11px;color:#e5c692;line-height:1.5}
+.reader-mission-side{display:flex;gap:9px;align-items:start;border-top:1px solid #77718b30;padding:8px 0}
+.reader-mission-side>span{font-size:17px;line-height:1.1;flex:0 0 18px;color:#c7b8d9}
+.reader-mission-side>div{display:flex;flex-direction:column;gap:4px}
+.reader-mission-side strong{font-size:12px;color:#eae3e9;font-weight:600}
+.reader-mission-side small{font-size:10px;color:#9eabc4}
+.reader-growth{background:linear-gradient(120deg,#282944,#222239);border:1px solid #625475;border-radius:9px;margin:10px 0;padding:11px}
+.reader-growth>strong{font-size:14px;display:block;color:#e6d0e9;margin-bottom:8px}
+.reader-growth>div{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #55516855}
+.reader-growth>div span{font-size:11px;color:#f2e6ea}
+.reader-growth>div small{font-size:10px;color:#9da7c3;max-width:48%;text-align:right}
+.reader-growth>p{margin:11px 0 2px;color:#efcfa2;font-size:11px;line-height:1.5}
+.reader-world-item>div:last-child{min-width:0}
+.reader-world-item small{line-height:1.5}
+.reader-world-symbol{background-size:cover;background-position:center}
+@media(max-width:355px){.reader-nav button{font-size:8px}.reader-nav button span{font-size:17px}.reader-mission-card{padding:10px}}
