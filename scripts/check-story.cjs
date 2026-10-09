@@ -1,0 +1,51 @@
+/* Automated sanity checks for the branching story graph and permanent progression. */
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const path = require('node:path')
+const ts = require('typescript')
+const cache = new Map()
+function loadTypeScript(filename) {
+  const p = path.resolve(filename)
+  if(cache.has(p))return cache.get(p).exports
+  const module = {exports:{}}
+  cache.set(p,module)
+  const raw=fs.readFileSync(p,'utf8')
+  const output=ts.transpileModule(raw,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText
+  const localRequire=(specifier)=>{
+    if(specifier.startsWith('.'))return loadTypeScript(path.resolve(path.dirname(p),specifier)+'.ts')
+    return require(specifier)
+  }
+  new Function('require','module','exports',output)(localRequire,module,module.exports)
+  return module.exports
+}
+const {SCENES,INITIAL,availableChoices,applyEffect}=loadTypeScript('lib/infiniteStory.ts')
+const {spendTalent,talentRank,maxHp,awardXp}=loadTypeScript('lib/progression.ts')
+let choices=0,missing=[]
+for(const [id,scene] of Object.entries(SCENES)){
+  assert.equal(id,scene.id,'Scene ID mismatch: '+id)
+  assert(scene.lines.length>0,'Missing dialogue at '+id)
+  for(const choice of scene.choices){
+    choices++
+    if(choice.to&&!SCENES[choice.to])missing.push(id+' => '+choice.to)
+  }
+}
+assert.deepEqual(missing,[],'Dangling story links')
+assert(Object.keys(SCENES).length>=45,'Story should contain all four arcs')
+assert(!availableChoices(SCENES.hub_portals,INITIAL).some(c=>c.to==='fourth_threshold'),'Fourth door opened too early')
+let s=INITIAL
+for(const name of ['失物管理處','血月公寓','鏡城病院'])s=applyEffect(s,{clearWorld:name,points:20})
+assert(s.level>1&&s.talentPoints>0,'No talent XP on world clears')
+assert(availableChoices(SCENES.hub_portals,s).some(c=>c.to==='fourth_threshold'),'Fourth door not unlocked after three clears')
+const before=s.talentPoints
+s=spendTalent(s,'insight')
+assert.equal(talentRank(s,'insight'),1,'Talent did not unlock')
+assert.equal(s.talentPoints,before-1,'Talent point did not consume')
+assert(availableChoices(SCENES.guide_first,s).length>=3)
+const health=spendTalent(s,'vitality')
+assert(maxHp(health)>=maxHp(s),'HP talent did not work')
+const xp=awardXp(INITIAL,75)
+assert.equal(xp.level,2)
+const full=applyEffect(s,{clearWorld:'第四道門'})
+assert(full.cleared.includes('第四道門'))
+assert(!availableChoices(SCENES.hub_portals,full).some(c=>c.to==='fourth_threshold'),'Cleared fourth door should close')
+console.log('PASS: '+Object.keys(SCENES).length+' scenes, '+choices+' choices; graph, world gates, leveling, talent spending, end states')
