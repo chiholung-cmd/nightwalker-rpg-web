@@ -33,6 +33,10 @@ function CharacterArt({ boss }: { boss: boolean }) {
         <linearGradient id="nw-coat"><stop stopColor="#091324"/><stop offset=".55" stopColor="#344664"/><stop offset="1" stopColor="#13182c"/></linearGradient>
         <linearGradient id="nw-blade"><stop stopColor="#fff"/><stop offset=".55" stopColor="#86e9ff"/><stop offset="1" stopColor="#289bff"/></linearGradient>
         <radialGradient id="nw-aura"><stop stopColor="#c95596" stopOpacity=".55"/><stop offset="1" stopColor="#8143b6" stopOpacity="0"/></radialGradient>
+        <radialGradient id="nw-moon"><stop stopColor="#f0f5fd" stopOpacity=".7"/><stop offset="1" stopColor="#9eb2db" stopOpacity="0"/></radialGradient>
+        <linearGradient id="nw-clockmetal" x1="0" x2="1" y2="1"><stop stopColor="#e2cba4"/><stop offset=".44" stopColor="#6e5874"/><stop offset="1" stopColor="#241e39"/></linearGradient>
+        <linearGradient id="nw-clockrobe" x1="0" x2="1" y2="1"><stop stopColor="#38243b"/><stop offset=".55" stopColor="#121626"/><stop offset="1" stopColor="#402236"/></linearGradient>
+        <filter id="nw-rune-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
       <rect width="600" height="350" fill="url(#nw-wall)" />
       <g stroke="#4f6581" strokeWidth="1" opacity=".28"><path d="M0 28H600M0 118H600M0 216H600M72 0V260M205 0V260M393 0V260M536 0V260" /></g>
@@ -48,6 +52,11 @@ function CharacterArt({ boss }: { boss: boolean }) {
       <ellipse cx="170" cy="294" rx="64" ry="11" fill="#5ccff0" opacity=".2"/>
       <ellipse cx="440" cy="294" rx="74" ry="13" fill="#d9487b" opacity=".22"/>
       <circle className={boss ? 'nw-boss-aura active' : 'nw-boss-aura'} cx="441" cy="158" r="129" fill="url(#nw-aura)"/>
+      <g className="nw-dust" opacity=".75" fill="#b6b0e3">
+        {[[80,56],[144,74],[248,51],[355,92],[393,39],[540,58],[563,147],[277,207],[72,242],[511,253],[321,258],[212,112]].map(([x,y],i) =>
+          <circle key={i} cx={x} cy={y} r={i % 3 === 0 ? 1.9 : 1.2} style={{animationDelay: (i * .27) + 's'}}/>
+        )}
+      </g>
       <g className="nw-hero-art">
         <path d="M149 233L143 288H169L181 237M188 234L190 288H215L204 230" fill="#0a1829" stroke="#647c9a" strokeWidth="3"/>
         <path d="M140 284H170V298H133ZM190 284H216L223 297H190Z" fill="#101929" stroke="#3d597d" strokeWidth="2"/>
@@ -66,7 +75,7 @@ function CharacterArt({ boss }: { boss: boolean }) {
         <path d="M264 132L334 33" stroke="#fff" strokeWidth="2.5"/>
         <circle cx="226" cy="202" r="10" fill="#c1cedd"/>
       </g>
-      <g className="nw-enemy-art">
+      {!boss && <g className="nw-enemy-art">
         <path d="M423 236L409 289H434L447 243M457 234L462 289H486L474 230" fill="#1e1626" stroke="#824f6c" strokeWidth="3"/>
         <path d="M418 147L393 169L370 283L429 267L483 292L493 189L462 149Z" fill="#1c1926" stroke="#80556e" strokeWidth="3"/>
         <path d="M419 158L436 181L454 235L467 158M398 190L389 266M467 179L483 265" stroke="#a75f7e" strokeWidth="3" fill="none"/>
@@ -82,8 +91,44 @@ function CharacterArt({ boss }: { boss: boolean }) {
         <circle cx="361" cy="230" r="6" fill="#6a3f57"/>
         <rect x="436" y="171" width="31" height="40" rx="3" fill="#c6b9c3" stroke="#7b6575" strokeWidth="2" transform="rotate(12 451 189)"/>
         <text x="450" y="191" textAnchor="middle" fontSize="10" fill="#8b3758" transform="rotate(12 451 189)">NO.</text>
-        {boss && <g stroke="#c191b2" fill="none" opacity=".7"><circle cx="441" cy="117" r="57" strokeDasharray="7 7" strokeWidth="3"/><path d="M441 50V64M441 171V185M375 117H386M495 117H508" strokeWidth="3"/></g>}
-      </g>
+      </g>}
+      {boss && <g className="nw-clockboss-art">
+        {/* Boss 2 is a completely different silhouette: a suspended clock-headed judge, not a recolour. */}
+        <g className="nw-time-rings" fill="none" stroke="#d0a3ab">
+          <circle cx="446" cy="137" r="91" opacity=".45" strokeWidth="1.7" strokeDasharray="6 13"/>
+          <circle cx="446" cy="137" r="106" opacity=".25" strokeWidth="1.8"/>
+          {Array.from({length:12},(_,i)=>(
+            <path key={i} d="M446 33V43" strokeWidth="3" transform={`rotate(${i*30} 446 137)`}/>
+          ))}
+        </g>
+        <path d="M441 46L427 10L446 31L467 10L453 48" fill="#8e6e83" stroke="#c6a5a6" strokeWidth="2"/>
+        <path d="M421 185L385 203L361 291L416 277L448 289L502 279L487 209L462 188Z" fill="url(#nw-clockrobe)" stroke="#a16c83" strokeWidth="3"/>
+        <path d="M402 203Q388 246 384 288M482 212Q495 248 497 280" stroke="#d29c83" strokeWidth="3" opacity=".6"/>
+        <path d="M420 190L444 215L463 189L459 261L444 282L432 260Z" fill="#30213b" stroke="#8b7897" strokeWidth="2.5"/>
+        <path d="M439 220V276" stroke="#dbbb89" strokeWidth="4"/>
+        <path d="M397 205L366 215L345 252M482 208L515 218L538 254" stroke="#3c283f" strokeWidth="18" fill="none" strokeLinecap="round"/>
+        <path d="M396 204L368 215L346 250M482 208L516 220L537 255" stroke="#a06c82" strokeWidth="2.5" fill="none"/>
+        <path d="M342 253L325 276L345 264L354 284L358 259" stroke="#c1a3a9" strokeWidth="7" strokeLinecap="round" fill="none"/>
+        <path d="M537 252L528 285L543 270L553 281L545 254" stroke="#c1a3a9" strokeWidth="7" strokeLinecap="round" fill="none"/>
+        <path d="M440 179V204L451 213L462 201L457 176" fill="#63536a" stroke="#bfa1ab" strokeWidth="2"/>
+        <path d="M400 82L410 58L439 49L474 61L490 92L483 158L462 183L423 181L398 156Z" fill="#261d35" stroke="#ca9d85" strokeWidth="5"/>
+        <circle cx="445" cy="118" r="65" fill="#221d31" stroke="#a4898c" strokeWidth="9"/>
+        <circle cx="445" cy="118" r="57" fill="url(#nw-clockmetal)" stroke="#ead3a9" strokeWidth="3"/>
+        <circle cx="445" cy="118" r="44" fill="#1e2135" stroke="#d7b895" strokeWidth="2"/>
+        <circle cx="445" cy="118" r="37" fill="#161625" stroke="#815a76" strokeWidth="1.5"/>
+        {Array.from({length:12},(_,i)=>(
+          <path key={i} d="M445 67V80" stroke={i%3===0?"#fae8c0":"#8b7080"} strokeWidth={i%3===0?3:2} transform={`rotate(${i*30} 445 118)`}/>
+        ))}
+        <path className="nw-clock-hand-fast" d="M445 118L481 91" stroke="#ff8aaf" strokeWidth="5" strokeLinecap="round" filter="url(#nw-rune-glow)"/>
+        <path className="nw-clock-hand-slow" d="M445 118L427 86" stroke="#ecdbc0" strokeWidth="6" strokeLinecap="round"/>
+        <circle cx="445" cy="118" r="8" fill="#f5d4be" stroke="#a55383" strokeWidth="3"/>
+        <path d="M407 188L384 162L379 181L363 163M478 187L500 159L507 178L520 162" stroke="#d6aa94" strokeWidth="4" fill="none"/>
+        <path d="M418 185L406 197L422 226L444 205L462 225L481 198L468 185" fill="none" stroke="#ceae89" strokeWidth="3"/>
+        <g className="nw-rune" stroke="#f9a3c4" strokeWidth="2" fill="none" filter="url(#nw-rune-glow)">
+          <path d="M343 88L354 70L364 89L354 108Z M534 93L546 72L557 92L546 111Z"/>
+          <circle cx="353" cy="89" r="5"/><circle cx="546" cy="92" r="5"/>
+        </g>
+      </g>}
       <text x="300" y="14" fill="#9aa8ba" textAnchor="middle" letterSpacing="3" fontSize="10">LOST &amp; FOUND • 04:44</text>
     </svg>
   )
@@ -93,6 +138,8 @@ export default function HomePage() {
   const [g, setG] = useState<Game>(fresh)
   const [ready, setReady] = useState(false)
   const [anim, setAnim] = useState('')
+  const [hit, setHit] = useState<{ id: number; amount: number; side: 'hero' | 'enemy'; label: string } | null>(null)
+  const hitCounter = useRef(0)
   const [popup, setPopup] = useState<'bag' | 'info' | null>(null)
   const [muted, setMuted] = useState(true)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -130,6 +177,9 @@ export default function HomePage() {
       osc.onended = () => { void ctx.close() }
     } catch { /* browser does not support audio */ }
   }
+  const showHit = (amount: number, side: 'hero' | 'enemy', label = '') => {
+    if (amount > 0) setHit({ id: ++hitCounter.current, amount, side, label })
+  }
   const fx = (name: string) => {
     setAnim('')
     requestAnimationFrame(() => setAnim(name))
@@ -137,7 +187,7 @@ export default function HomePage() {
   }
   const reset = () => {
     if (timer.current) clearTimeout(timer.current)
-    lock.current = false; setAnim(''); setPopup(null); setG(fresh())
+    lock.current = false; setAnim(''); setHit(null); setPopup(null); setG(fresh())
   }
 
   const act = (type: Action) => {
@@ -172,6 +222,7 @@ export default function HomePage() {
       fx('seal'); audio(580)
     }
     s.enemyHp = Math.max(0, s.enemyHp - dmg)
+    showHit(dmg, 'enemy')
     if (dmg) s.message += ' 造成 ' + dmg + ' 傷害。'
     if (s.enemyHp === 0) {
       s.phase = 'won'; s.points += s.wave === 1 ? 75 : 140; s.level++
@@ -201,6 +252,7 @@ export default function HomePage() {
       if (hp) hp += next.marks * 3
       if (guard) { hp = Math.ceil(hp / 4); sp = Math.ceil(sp / 4); next.message = '防禦成功！' + next.message }
       next.hp = limit(next.hp - hp); next.sp = limit(next.sp - sp)
+      showHit(hp || sp, 'hero', hp ? 'HP' : 'SP')
       next.message += ' HP −' + hp + '，SP −' + sp
       if (next.hp <= 0 || next.sp <= 0) { next.phase = 'lost'; next.message += ' 你失去意識。' }
       next.turn++
@@ -221,6 +273,8 @@ export default function HomePage() {
   }
   const nextWave = () => {
     lock.current = false
+    setHit(null)
+    fx('intro')
     setG({ ...g, phase: 'fight', wave: 2, turn: 1, enemyHp: 145, weak: false,
       marks: 0, mirrorUsed: false, phoneUsed: false, speaker: '夜班裁定官',
       message: '「你根本唔應該通過第一關。」時鐘嘅指針開始倒轉。' })
@@ -243,7 +297,7 @@ export default function HomePage() {
           <button onClick={full} aria-label="全螢幕">⛶</button>
         </div>
       </header>
-      <section className={'nw-arena nw-' + anim}>
+      <section className={'nw-arena nw-' + anim + (g.wave === 2 ? ' nw-boss-stage' : '') + (g.phase === 'won' ? ' nw-victorious' : '')}>
         <CharacterArt boss={g.wave === 2} />
         <div className="nw-hud nw-left">
           <div className="nw-hudname"><b>無名生還者</b><small>Lv.{g.level}</small></div>
@@ -258,9 +312,14 @@ export default function HomePage() {
           <div className="nw-meter"><i className="nw-enemyhp" style={{ width: 100 * g.enemyHp / enemyMax(g) + '%' }} /></div>
           <div className="nw-hudrow"><span>{g.weak ? '弱點暴露' : '弱點未知'}</span><span>印記 {g.marks}</span></div>
         </div>
-        <div className="nw-vfx"><i className="nw-slash"/><i className="nw-sigil">✧</i><i className="nw-shield"/><i className="nw-beam"/><i className="nw-hit"/></div>
+        <div className="nw-vfx"><i className="nw-slash"/><i className="nw-sigil">✧</i><i className="nw-shield"/><i className="nw-beam"/><i className="nw-hit"/>
+          <i className="nw-spark nw-spark-one"/><i className="nw-spark nw-spark-two"/><i className="nw-spark nw-spark-three"/>
+          <div className="nw-ultimate-title">遺忘者印記 <span>FORGOTTEN SEAL</span></div>
+          <div className="nw-boss-intro"><span>WARNING · CLASS D ANOMALY</span><strong>夜班裁定官</strong><small>THE MIDNIGHT ARBITER</small></div>
+          {hit && <div key={hit.id} className={'nw-damage nw-damage-' + hit.side} aria-hidden="true"><small>{hit.label}</small>−{hit.amount}</div>}
+        </div>
         <div className="nw-arena-bottom">
-          <span>STAGE 02 · 04:44</span><span className="nw-intent">⚠ {intents[g.wave - 1][(g.turn - 1) % 4]}</span>
+          <span>{g.wave === 1 ? 'STAGE 02 · LOST & FOUND' : 'BOSS · THE ARBITER'}</span><span className="nw-intent">⚠ {intents[g.wave - 1][(g.turn - 1) % 4]}</span>
         </div>
       </section>
       <div className="nw-credits"><strong>✦ {g.points} 積分</strong><span>遺忘者印記 Lv.{g.level}</span></div>
@@ -268,7 +327,7 @@ export default function HomePage() {
         <div className="nw-speaker-icon">◇</div><div className="nw-dialogue-content"><b>{g.speaker}</b><p>{g.message}</p></div>
       </section>
       <section className="nw-controls">
-        <div className="nw-control-head"><span>▣ COMBAT COMMAND</span><span>{g.weak ? '弱點 +11' : '弱點：未分析'}</span></div>
+        <div className="nw-control-head"><span>▣ COMBAT COMMAND</span><span>{g.weak ? '◉ 弱點已識破 +11' : '◎ 敵方弱點：未知'}</span></div>
         <div className="nw-action-grid">
           <button disabled={actionDisabled('attack')} onClick={() => act('attack')}><b>⚔ 斬擊</b><small>{17 + (g.weak ? 11 : 0) + (g.weapon ? 6 : 0)} 傷害</small></button>
           <button disabled={actionDisabled('guard')} onClick={() => act('guard')}><b>◈ 防禦</b><small>減傷 75%</small></button>
