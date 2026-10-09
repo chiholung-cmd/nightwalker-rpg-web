@@ -420,3 +420,12 @@
 @media(prefers-reduced-motion:reduce){
   .iw-raster-frame,.iw-environment-art img{animation:none}
 }
+
+/* No-scroll paged decisions on compact portrait screens */
+.iw-choices-paged{overflow:hidden;display:flex;flex-direction:column;gap:7px;padding:0 1px}
+.iw-choices-paged .iw-choice{flex:1 1 0;min-height:0;height:auto;padding-block:5px}
+.iw-choice-pager{display:flex;align-items:center;justify-content:space-between;gap:7px;flex:0 0 29px}
+.iw-choice-pager button{border:1px solid #746182;border-radius:5px;background:linear-gradient(100deg,#2b2b45,#1e2236);color:#ecd2e6;padding:5px 10px;font-size:11px;font-weight:650}
+.iw-choice-pager button:disabled{opacity:.3}
+.iw-choice-pager span{color:#ab9fbd;font-size:10px;white-space:nowrap}
+@media(max-height:715px){.iw-choices-paged .iw-choice{min-height:0;max-height:none}.iw-choice-pager{flex-basis:27px}.iw-choice-text small{font-size:9px}}
