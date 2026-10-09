@@ -6,6 +6,7 @@ import {
   type Choice, type SaveState, type WorldTheme
 } from '../lib/infiniteStory'
 import { TALENTS, awardXp, combatDamage, maxHp, maxSp, spendTalent, talentRank, withProgress, xpToNext, type TalentId } from '../lib/progression'
+import { heroPortrait, guidePortrait } from '../lib/nightwalkerRaster'
 import './story.css'
 
 const SAVE_KEY = 'nightwalker-multiverse-story-v1'
@@ -317,22 +318,27 @@ export default function HomePage() {
   return <main className="iw-app">
     <header className="iw-top">
       <div className="iw-mark" aria-label="Nightwalker">◈</div>
-      <div className="iw-brand"><strong>NIGHTWALKER <em>∞</em></strong><small>無限流・多重世界</small></div>
+      <div className="iw-brand"><strong>NIGHTWALKER <em>∞</em></strong><small>無限流 · 命運由你決定</small></div>
       <div className="iw-world-id"><span>WORLD {String(game.cleared.length+game.riftCount).padStart(2,'0')}</span><small>{isBattle?'戰鬥遭遇':scene.world}</small></div>
       <button className="iw-top-button" aria-label="選單" onClick={()=>setOverlay('menu')}>☷</button>
     </header>
 
     <section className={'iw-stage iw-theme-'+theme+(isBattle?' iw-battle-active iw-fx-'+fx:'')}>
       <WorldBackdrop key={isBattle?'encounter-'+(fight?.enemy||'clerk'):scene.id} theme={theme} battle={isBattle} count={game.riftCount}/>
-      {!isBattle && <CharacterPortrait key={scene.id+'-'+(scene.face||'system')} face={scene.face} theme={theme}/>}
+      {!isBattle && (scene.face==='guide' || (scene.face==='system'&&scene.world==='主神中轉站')) ?
+        <div key={'raster-'+scene.id} className={'iw-raster-frame '+(scene.face==='guide'?'iw-raster-guide':'iw-raster-hero')} aria-hidden="true">
+          <img src={scene.face==='guide'?guidePortrait:heroPortrait} alt="" decoding="async" />
+        </div> :
+        !isBattle && <CharacterPortrait key={scene.id+'-'+(scene.face||'system')} face={scene.face} theme={theme}/>}
+      {isBattle && <div className="iw-battle-hero" aria-hidden="true"><img src={heroPortrait} alt="" decoding="async"/></div>}
       <div className="iw-vignette"/>
       <div className="iw-stage-head">
-        <div><span className="iw-stage-tag">{isBattle?'⚔ COMBAT': 'STORY MODE'}</span><strong>{isBattle?'規則異常・交戰中':scene.title}</strong></div>
+        <div><span className="iw-stage-tag">{isBattle?'⚔ BATTLE · 即時危機': '✦ STORY · '+(game.chapter<2?'第一章':'第二章')}</span><strong>{isBattle?'規則異常・交戰中':scene.title}</strong></div>
         {isBattle?<span className="iw-scene-counter">回合 {fight?.turn||1}</span>:<span className="iw-scene-counter">{game.cleared.length} 個世界通關</span>}
       </div>
       <div className="iw-stage-bottom">
         {isBattle?<div className="iw-foe"><small>ANOMALY ENCOUNTER</small><strong>{fight?enemyName(fight.enemy):'未知'}</strong><div className="iw-foe-bar"><i style={{width:((fight?.hp||0)/maxEnemyHP(fight?.enemy||'clerk')*100)+'%'}}/></div></div>:
-          <div className="iw-scene-quote"><span>✧</span> 你的選擇，將會留低痕跡。</div>}
+          <div className="iw-scene-quote"><span>✧</span> 每一個世界，都會記得你。</div>}
       </div>
       {isBattle&&<div className="iw-battle-fx"><i/><b>✦</b></div>}
     </section>
@@ -345,7 +351,7 @@ export default function HomePage() {
     </section>
 
     <section className="iw-dialogue">
-      <div className="iw-dialogue-head"><Avatar face={isBattle?'clerk':scene.face}/><div><strong>{isBattle?(fight?enemyName(fight.enemy):'戰鬥') : scene.speaker}</strong><small>{isBattle?'戰鬥情報・敵方攻擊可預判':scene.world+' ・ '+(currentLine+1)+'/'+lines.length}</small></div><span className="iw-type-indicator">{isBattle?'⚔':'●'}</span></div>
+      <div className="iw-dialogue-head"><Avatar face={isBattle?'clerk':scene.face}/><div><strong>{isBattle?(fight?enemyName(fight.enemy):'戰鬥') : scene.speaker}</strong><small>{isBattle?'BATTLE REPORT · 敵方回合':scene.world+' · 對話 '+(currentLine+1)+' / '+lines.length}</small></div><span className="iw-type-indicator">{isBattle?'⚔': '✧'}</span></div>
       <p className="iw-talking" onClick={()=>{if(mode==='story'){setTextInstant(true);setVisibleChars(fullText.length)}}}>{isBattle ? (fight?.message||'') : fullText.slice(0,visibleChars)}{mode==='story'&&visibleChars<fullText.length&&<span className="iw-cursor">▍</span>}</p>
     </section>
 
