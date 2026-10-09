@@ -184,7 +184,7 @@ export const STORM_WORLD: Record<string, Scene> = {
       '【世界通關】基本 200 積分、80 XP。完成救人與跨世界介入可獲追加支線憑證。'
     ],
     choices:[
-      {label:'改命結局：孔慈生還、風雲攜手',hint:'需救孔慈並促成風雲合擊',to:'fy_clear',requires:'fy_kongchi_saved',without:'fy_no_extra_reward',effect:{points:130,branch:'C',flags:['fy_kongchi_good_end'],items:['孔慈的平安書信'],journal:'你改變了1998電影孔慈原定的死亡命運。'}},
+      {label:'改命結局：孔慈生還、風雲攜手',hint:'需救孔慈並促成風雲合擊',to:'fy_clear',requiresAll:['fy_kongchi_saved','fy_joint_victory'],effect:{points:130,branch:'C',flags:['fy_kongchi_good_end'],items:['孔慈的平安書信'],journal:'你改變了1998電影孔慈原定的死亡命運。'}},
       {label:'義氣結局：秦霜保護同門',hint:'秦霜路線獎勵',to:'fy_clear',requires:'fy_qin_survived',effect:{points:85,branch:'D',flags:['fy_qin_good_end'],items:['天下會密令卷']} },
       {label:'武學結局：帶走親手記錄嘅身法心得',hint:'跨世界武學成長',to:'fy_clear',requires:'fy_wind_bodhi_help',effect:{points:60,flags:['fy_martial_end'],mastery:'martial'}},
       {label:'領取主線通關結算',hint:'無額外支線要求',to:'fy_clear',effect:{flags:['fy_normal_end']}}
