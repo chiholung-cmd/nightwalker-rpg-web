@@ -25,7 +25,7 @@ export const STORM_WORLD: Record<string, Scene> = {
       '你可以與秦霜建立合作，或者搶先摸清天下會嘅部署。'
     ],
     choices:[
-      {label:'向秦霜展示你知道雄霸可能離間弟子',hint:'秦霜信任支線',to:'fy_prophecy',effect:{flags:['fy_qinshuang_ally'],bond:1,journal:'你提醒秦霜雄霸可能利用孔慈婚事離間風雲。'}},
+      {label:'向秦霜展示你知道雄霸可能離間弟子',hint:'秦霜信任支線',to:'fy_prophecy',effect:{flags:['fy_qinshuang_ally'],relation:{id:'秦霜',delta:1},journal:'你提醒秦霜雄霸可能利用孔慈婚事離間風雲。'}},
       {label:'幫佢調查文丑丑送去書房嘅密令',hint:'掌握內部線索',to:'fy_prophecy',effect:{flags:['fy_xiongba_orders'],items:['天下會密令抄本'],sp:-8}},
       {label:'暫時按兵不動，觀察聶風同孔慈',hint:'人物線索',to:'fy_kongchi',effect:{flags:['fy_observer']}}
     ]
@@ -54,7 +54,7 @@ export const STORM_WORLD: Record<string, Scene> = {
       '你知道婚事即將宣布；保護孔慈未必只需要武功，更需要有人提早講出真相。'
     ],
     choices:[
-      {label:'懇請聶風先同孔慈私下講清楚意願',hint:'保護孔慈・解鎖和平路線',to:'fy_kongchi',effect:{flags:['fy_wind_listened','fy_respect_kongchi'],bond:1}},
+      {label:'懇請聶風先同孔慈私下講清楚意願',hint:'保護孔慈・解鎖和平路線',to:'fy_kongchi',effect:{flags:['fy_wind_listened','fy_respect_kongchi'],relation:{id:'聶風',delta:1}}},
       {label:'交出泥菩薩預言請聶風提防雄霸',hint:'需預言線索',to:'fy_cloud',requires:'fy_shared_prophecy',effect:{flags:['fy_wind_warned'],sp:-6}},
       {label:'勸聶風先重查凌雲窟父親死因',hint:'支線・雪飲刀線索',to:'fy_cave',effect:{flags:['fy_wind_cave_route']}}
     ]
@@ -69,7 +69,7 @@ export const STORM_WORLD: Record<string, Scene> = {
     ],
     choices:[
       {label:'尊重孔慈意願，幫佢準備安全離開婚宴',hint:'救孔慈必要線索之一',to:'fy_cloud',effect:{flags:['fy_kongchi_escape_plan'],items:['孔慈的書信'],sp:-8,journal:'你幫孔慈擬定撤離婚宴的路線，尊重她自己的決定。'}},
-      {label:'先通知步驚雲，要求佢唔好強行帶走孔慈',hint:'可降低誤會',to:'fy_cloud',effect:{flags:['fy_warned_cloud'],bond:1}},
+      {label:'先通知步驚雲，要求佢唔好強行帶走孔慈',hint:'可降低誤會',to:'fy_cloud',effect:{flags:['fy_warned_cloud'],relation:{id:'步驚雲',delta:1}}},
       {label:'唔干預孔慈嘅婚事，避免雄霸懷疑',hint:'保住自身安全但失去機會',to:'fy_cloud',effect:{flags:['fy_kongchi_left_alone']}}
     ]
   },
@@ -141,7 +141,7 @@ export const STORM_WORLD: Record<string, Scene> = {
     ],
     choices:[
       {label:'協助楚楚照護步驚雲，學習內息穩定法',hint:'武學路線・維持電影主角傳承',to:'fy_final_preparation',effect:{flags:['fy_cloud_recovered'],items:['麒麟氣息紀錄'],mastery:'martial',sp:-7,xp:30}},
-      {label:'嘗試偷取一小塊鍛造用特殊礦材',hint:'得道具但傷害信任',to:'fy_final_preparation',effect:{flags:['fy_took_ore'],items:['鍛劍礦屑'],bond:-1,hp:-8}},
+      {label:'嘗試偷取一小塊鍛造用特殊礦材',hint:'得道具但傷害信任',to:'fy_final_preparation',effect:{flags:['fy_took_ore'],items:['鍛劍礦屑'],relation:{id:'于岳',delta:-1},hp:-8}},
       {label:'尊重于岳決定，只帶走護送消息',hint:'仁義路線',to:'fy_final_preparation',effect:{flags:['fy_yuyue_trust'],xp:15}}
     ]
   },
@@ -156,7 +156,7 @@ export const STORM_WORLD: Record<string, Scene> = {
     choices:[
       {label:'用婚事證據同預言說服聶風步驚雲互信',hint:'需先揭露雄霸安排',to:'fy_climax',requires:'fy_cloud_saw_orders',effect:{flags:['fy_wind_cloud_united'],sp:-10}},
       {label:'由秦霜出面證明雄霸原本嘅殺局',hint:'需秦霜已知真相',to:'fy_climax',requires:'fy_qin_knows_prophecy',effect:{flags:['fy_qin_aids_final'],sp:-9}},
-      {label:'借助你保護孔慈嘅結果請風雲停手聆聽',hint:'需孔慈存活',to:'fy_climax',requires:'fy_kongchi_saved',effect:{flags:['fy_wind_cloud_united'],bond:1}},
+      {label:'借助你保護孔慈嘅結果請風雲停手聆聽',hint:'需孔慈存活',to:'fy_climax',requires:'fy_kongchi_saved',effect:{flags:['fy_wind_cloud_united'],relation:{id:'聶風',delta:1}}},
       {label:'自己去擋住天下會伏兵，爭取風雲對話',hint:'生命 -20・無條件可行',to:'fy_climax',effect:{flags:['fy_self_sacrifice'],hp:-20}},
       {label:'放棄介入，按照電影原本路線等風雲聯手',hint:'基本結局',to:'fy_climax',effect:{flags:['fy_follow_canon'],sp:-10}}
     ]
