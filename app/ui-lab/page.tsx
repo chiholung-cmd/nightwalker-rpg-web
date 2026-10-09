@@ -109,9 +109,16 @@ export default function UILabPage(){
  const [itemEquipped,setItemEquipped]=useState(false)
  const [showGuide,setShowGuide]=useState(true)
  const [animateText,setAnimateText]=useState(true)
+ const [storyPage,setStoryPage]=useState(0)
+ const [compactReading,setCompactReading]=useState(false)
  const panelRef=useRef<HTMLDivElement>(null)
  const chapter=STORIES[genre][tone]
- useEffect(()=>{setChoiceIndex(null);setHistory([]);setTyped('')},[genre,tone])
+ const pageSize=compactReading?2:3
+ const segmentPages=Array.from({length:Math.ceil(chapter.segments.length/pageSize)},(_,i)=>chapter.segments.slice(i*pageSize,(i+1)*pageSize))
+ const page=Math.min(storyPage,Math.max(0,segmentPages.length-1))
+ const visibleSegments=segmentPages[page]||[]
+ useEffect(()=>{setChoiceIndex(null);setHistory([]);setTyped('');setStoryPage(0)},[genre,tone])
+ useEffect(()=>{const check=()=>setCompactReading(window.innerHeight<760);check();window.addEventListener('resize',check);return()=>window.removeEventListener('resize',check)},[])
  useEffect(()=>{if(drawer){panelRef.current?.focus()}},[drawer])
  const action=(text:string,idx?:number)=>{
    if(!text.trim())return
@@ -121,7 +128,7 @@ export default function UILabPage(){
    setNotice('【UI 示範】已記錄行動。正式版本會由 AI 判斷結果，呢度唔會消耗存檔或 API。')
  }
  const enter=(g:Genre)=>{
-   setGenre(g);setTone('normal');setSection('story');setDrawer(null);setNotice('')
+   setGenre(g);setTone('normal');setSection('story');setDrawer(null);setNotice('');setStoryPage(0)
  }
  const spend=()=>{
    if(points<100)return
@@ -139,63 +146,57 @@ export default function UILabPage(){
        <button type="button" className="nwl-top-control" aria-label="系統設定" onClick={()=>setDrawer('settings')}><Icon name="menu" size={21}/></button>
      </header>
 
-     {section==='nexus'?<div className="nwl-scroll nwl-dashboard">
-       <div className="nwl-page-eyebrow"><span className="nwl-line"/> INTERWORLD SANCTUARY <span>輪迴間歇期</span></div>
-       <section className="nwl-nexus-hero" aria-label="主神空間">
+     {section==='nexus'?<div className="nwl-scroll nwl-dashboard nwl-dashboard-v2">
+       <section className="nwl-nexus-hero nwl-nexus-hero-v2" aria-label="主神空間科技中樞">
+         <div className="nwl-nexus-topline"><span><i/> NEXUS CONTROL CORE</span><span>NO. 0000 / ONLINE</span></div>
          <div className="nwl-cosmos" aria-hidden="true">
-           <div className="nwl-arc nwl-arc-a"/><div className="nwl-arc nwl-arc-b"/>
-           <div className="nwl-arc nwl-arc-c"/><div className="nwl-orb"><span/></div>
-           <div className="nwl-horizon"/>
+           <div className="nwl-arc nwl-arc-a"/><div className="nwl-arc nwl-arc-b"/><div className="nwl-arc nwl-arc-c"/>
+           <div className="nwl-orb"><span/></div><div className="nwl-horizon"/>
            <div className="nwl-pillar nwl-pillar-l"/><div className="nwl-pillar nwl-pillar-r"/>
+           <div className="nwl-core-floor"/><div className="nwl-core-scan"/>
          </div>
-         <div className="nwl-hero-overprint"><span>THE SUPREME SYSTEM</span><h1>主神空間</h1><p>每一段輪迴之間，你唯一可以停下來的地方。</p></div>
-         <div className="nwl-hero-hud"><span>◈ 中樞運作正常</span><span>SECURITY LV. 03</span></div>
+         <div className="nwl-hero-overprint"><span>SUPREME REINCARNATION SYSTEM</span><h1>主神空間</h1><p>「輪迴者，歡迎回來。」</p></div>
+         <div className="nwl-hero-hud"><span>◈ 中樞穩定 · 休整期</span><span>CORE / 001</span></div>
        </section>
-       <section className="nwl-return">
-         <div className="nwl-return-icon"><Icon name="check" size={18}/></div>
-         <div><div className="nwl-return-top">輪迴者已返回 <span>RETURN CONFIRMED</span></div><p>「你又返嚟啦。」主神嘅聲音從光球深處傳來。<br/>下一個世界尚未啟動，現在可以休整。</p></div>
-       </section>
-       <div className="nwl-section-heading"><div><span>01 / STATUS</span><h2>輪迴者檔案</h2></div><button type="button" onClick={()=>setDrawer('allies')}>查看詳情 <Icon name="chevron" size={13}/></button></div>
-       <section className="nwl-status">
-         <div className="nwl-status-head"><span className="nwl-rank">NO. 0000</span><strong>無名生還者</strong><span className="nwl-level">LV. {level}</span></div>
-         <div className="nwl-bars">
-           <div><div className="nwl-bar-top"><span><Icon name="heart" size={12}/> 生命值</span><b>{hp} / 100</b></div><div className="nwl-track"><i style={{width:hp+'%'}} className="nwl-health"/></div></div>
-           <div><div className="nwl-bar-top"><span><Icon name="eye" size={12}/> 理智值</span><b>{sp} / 100</b></div><div className="nwl-track"><i style={{width:sp+'%'}} className="nwl-sanity"/></div></div>
+       <section className="nwl-command-status" aria-label="角色即時狀態">
+         <div className="nwl-v2-character"><div className="nwl-avatar-mark">00</div><div><strong>無名生還者</strong><small>LV.{level} · 輪迴者</small></div></div>
+         <div className="nwl-v2-bars">
+           <div><span>HP <b>{hp}</b></span><div className="nwl-v2-meter"><i className="health" style={{width:hp+'%'}}/></div></div>
+           <div><span>SP <b>{sp}</b></span><div className="nwl-v2-meter"><i className="sanity" style={{width:sp+'%'}}/></div></div>
          </div>
-         <div className="nwl-status-foot"><span><Icon name="spark" size={15}/> 可用獎勵點</span><strong>{points.toLocaleString('en-US')}<small> PT</small></strong></div>
+         <button type="button" className="nwl-v2-points" onClick={()=>setDrawer('enhance')} aria-label="查看主神強化及積分"><Icon name="spark" size={14}/><strong>{points}</strong><small>PT</small></button>
        </section>
-       <div className="nwl-section-heading nwl-heading-tight"><div><span>02 / NEXUS FUNCTIONS</span><h2>主神系統</h2></div><small>選擇你要進行嘅事項</small></div>
-       <section className="nwl-feature-grid" aria-label="主神系統功能">
-         {FEATURE.map((f,i)=><button type="button" className={'nwl-feature nwl-feature-'+i} key={f.key} onClick={()=>setDrawer(f.key)}>
-           <div className="nwl-feature-icon"><Icon name={f.icon} size={22}/></div><span className="nwl-feature-arrow"><Icon name="chevron" size={13}/></span>
-           <strong>{f.label}</strong><small>{f.small}</small>
+       <div className="nwl-v2-functions-label"><span>MAIN SYSTEM</span><strong>主神系統</strong><span>06 / MODULES</span></div>
+       <section className="nwl-feature-grid nwl-feature-grid-v2" aria-label="主神系統功能">
+         {FEATURE.map((f,i)=><button type="button" className={'nwl-feature nwl-feature-v2 nwl-feature-'+i} key={f.key} onClick={()=>setDrawer(f.key)}>
+           <span className="nwl-feature-id">{String(i+1).padStart(2,'0')}</span>
+           <div className="nwl-feature-icon"><Icon name={f.icon} size={23}/></div>
+           <strong>{f.label}</strong><Icon name="chevron" size={13} className="nwl-feature-arrow-v2"/>
          </button>)}
        </section>
-       <div className="nwl-section-heading nwl-heading-tight"><div><span>03 / NEXT DESTINATION</span><h2>下一次輪迴</h2></div></div>
-       <section className="nwl-next">
-         <div className="nwl-next-halo" aria-hidden="true"/>
-         <div className="nwl-next-meta"><span>WORLD 01</span><span className="nwl-ready"><i/> 任務已就緒</span></div>
-         <h3>生化危機</h3><div className="nwl-next-en">RESIDENT EVIL <span>· 2002</span></div>
-         <p>蜂巢地下研究基地 · 科幻恐怖世界<br/>預定主線：生存並離開封鎖區域</p>
-         <button type="button" className="nwl-launch" onClick={()=>enter('horror')}><span>進入輪迴世界</span><Icon name="arrow" size={19}/></button>
+       <section className="nwl-next nwl-next-v2" aria-label="下一個世界入口">
+         <div className="nwl-next-copy"><span>WORLD 01 · READY</span><strong>生化危機 <small>2002</small></strong><small>蜂巢 · 第一輪迴世界</small></div>
+         <button type="button" className="nwl-launch nwl-launch-v2" onClick={()=>enter('horror')}><Icon name="play" size={16}/><span>進入世界</span><Icon name="arrow" size={15}/></button>
        </section>
-       <div className="nwl-bottom-note">SYSTEM OBSERVING · YOUR DECISIONS WILL BE REMEMBERED</div>
+       <div className="nwl-v2-bottom-help">UI PROTOTYPE <span>·</span> 點選「進入世界」可試文字情緒動畫</div>
      </div>:<div className="nwl-story-layout">
        <div className="nwl-worldbar"><button type="button" onClick={()=>setSection('nexus')} aria-label="返回主神空間 Dashboard"><Icon name="back" size={16}/></button><div><small>WORLD · {WORLDS.find(w=>w.genre===genre)?.sub}</small><strong>{WORLDS.find(w=>w.genre===genre)?.name}</strong></div><button type="button" onClick={()=>setDrawer('journal')} aria-label="故事紀錄"><Icon name="book" size={19}/></button></div>
        <div className="nwl-story-stats"><span><i className="nwl-stat-red"/> HP {hp}</span><span><i className="nwl-stat-blue"/> SP {sp}</span><span><Icon name="spark" size={12}/> {points} PT</span><span><Icon name="clock" size={12}/> {chapter.clock}</span></div>
-       <section className="nwl-story-window" key={genre+'-'+tone}>
+       <section className="nwl-story-window" key={genre+'-'+tone+'-'+page}>
+         <div className="nwl-reading-status"><span>劇情閱讀 · {page+1} / {segmentPages.length}</span><span>情緒演出：{toneLabels[tone]}</span></div>
          <div className="nwl-story-overline"><span className="nwl-divider-line"/> CHAPTER DEMO · 情緒演出</div>
          <div className="nwl-scene-location"><Icon name="globe" size={13}/>{chapter.place}</div>
          <div className="nwl-story-title"><span>◈</span><h1>{chapter.title}</h1></div>
          <div className={'nwl-narrative nwl-tone-'+tone+(animateText?' nwl-animate':'')}>
-           {chapter.segments.map((seg,i)=>seg.type==='impact'?
-             <div key={i} className="nwl-impact">{seg.text}</div>:
+           {visibleSegments.map((seg,i)=>seg.type==='impact'?
+             <div key={i} className="nwl-impact">{Array.from(seg.text).map((letter,k)=><span key={k} style={{animationDelay:(k*85)+'ms'}}>{letter}</span>)}</div>:
              seg.type==='alert'?<div key={i} className="nwl-alert"><Icon name="warning" size={16}/>{seg.text}</div>:
              seg.type==='aside'?<div key={i} className="nwl-aside">{seg.text}</div>:
              seg.type==='voice'?<div key={i} className="nwl-dialogue"><div><strong>{seg.name}</strong><small>{seg.mood}</small></div><p>{seg.text}</p></div>:
              <p key={i} className="nwl-prose">{seg.text}</p>)}
          </div>
-         {history.map((x,i)=><div key={i} className="nwl-player-log"><span>你的選擇</span>{x}</div>)}
+         <div className="nwl-page-controls"><button type="button" onClick={()=>setStoryPage(i=>Math.max(0,i-1))} disabled={page===0} aria-label="上一段劇情"><Icon name="back" size={14}/> 上一段</button><span>{page+1} / {segmentPages.length}</span><button type="button" onClick={()=>setStoryPage(i=>Math.min(segmentPages.length-1,i+1))} disabled={page>=segmentPages.length-1} aria-label="下一段劇情">下一段 <Icon name="arrow" size={14}/></button></div>
+         {history.length>0&&<div className="nwl-player-log"><span>上一個行動</span>{history[history.length-1]}</div>}
          {!!notice&&<div className="nwl-proto-note"><Icon name="info" size={13}/>{notice}</div>}
        </section>
        <section className="nwl-decision-area">
@@ -229,6 +230,5 @@ export default function UILabPage(){
      </div>
      <div className="nwl-drawer-footer"><span>◈ NIGHTWALKER / DESIGN PROTOTYPE</span><button type="button" onClick={()=>setDrawer(null)}>返回</button></div>
    </div></div>}
-   {section==='nexus'&&<div className="nwl-global-switch"><button type="button" onClick={()=>setSection('story')}><Icon name="play" size={13}/> 體驗文字冒險 Theme</button></div>}
  </main>
 }
