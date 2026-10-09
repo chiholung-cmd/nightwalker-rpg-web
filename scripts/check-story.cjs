@@ -30,7 +30,21 @@ for(const [id,scene] of Object.entries(SCENES)){
   }
 }
 assert.deepEqual(missing,[],'Dangling story links')
-assert(Object.keys(SCENES).length>=45,'Story should contain all four arcs')
+assert(Object.keys(SCENES).length>=70,'Expected branching across the main, classic, cinema, and novel worlds')
+for(const [label,start,world] of [
+  ['cinema','film_arrival','午夜放映廳'],
+  ['literary','novel_arrival','霧中第七章'],
+  ['classic gothic','gothic_start','德古拉'],
+  ['classic arctic','arctic_start','科學怪人']]){
+  assert(SCENES[start],label+' missing start scene')
+  assert(availableChoices(SCENES.hub_portals,INITIAL).some(c=>c.to===start),label+' should unlock at the hub')
+  const ending=Object.values(SCENES).some(s=>s.world===world&&s.choices.some(c=>c.effect?.clearWorld===world))
+  assert(ending,label+' missing an ending with a world clear')
+}
+assert(Object.values(SCENES).every(s=>s.choices.every(c=>c.action!=='battle')),'Story-first mode must have no combat-only branch')
+assert.deepEqual(SCENES.film_actress.moods,['sad','fear','resolve'])
+assert(SCENES.novel_heroine.choices.some(c=>c.effect?.flags?.includes('novel_heard_her')),'NPC agency route missing')
+
 assert(!availableChoices(SCENES.hub_portals,INITIAL).some(c=>c.to==='fourth_threshold'),'Fourth door opened too early')
 let s=INITIAL
 for(const name of ['失物管理處','血月公寓','鏡城病院'])s=applyEffect(s,{clearWorld:name,points:20})
