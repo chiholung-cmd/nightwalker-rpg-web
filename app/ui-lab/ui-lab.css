@@ -514,7 +514,7 @@
  .nwl-theme-tabs button,.nwl-tone-tabs button{padding:4px 0;font-size:9px}
 }
 @media(max-height:605px){
- .nwl-dashboard-v2{grid-template-rows:minmax(95px,1.3fr) minmax(59px,.62fr) 0 minmax(132px,1.36fr) minmax(50px,.57fr);gap:5px}
+ .nwl-dashboard-v2{grid-template-rows:minmax(95px,1.3fr) minmax(59px,.62fr) minmax(132px,1.36fr) minmax(50px,.57fr);gap:5px}
  .nwl-v2-functions-label,.nwl-v2-bottom-help{display:none}
  .nwl-feature-v2 .nwl-feature-icon{height:22px}
  .nwl-feature-v2 strong{font-size:9px}
