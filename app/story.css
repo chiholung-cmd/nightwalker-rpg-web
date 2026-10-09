@@ -248,3 +248,5 @@ button:disabled{opacity:.38;cursor:not-allowed}
 @media(max-width:355px){.reader-nav button{font-size:8px}.reader-nav button span{font-size:17px}.reader-mission-card{padding:10px}}
 
 .reader-combine{display:flex;gap:9px!important;border:0!important;padding:7px 0 0!important;justify-content:flex-start!important}.reader-combine button{border:1px solid #9f80b1;background:#41334f;color:#f6dcea;padding:8px 13px;border-radius:6px;font-size:11px}.reader-combine button:disabled{opacity:.34}
+
+.reader-ai-mode{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:6px 8px;border:1px solid #b49ac3;border-radius:7px;text-decoration:none;color:#f6e2ff;background:linear-gradient(125deg,#5b3d72,#30344f);font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 0 11px #bba0ce35}.reader-ai-mode:focus-visible{outline:2px solid #ead1fc}@media(max-width:355px){.reader-ai-mode{font-size:9px;padding:5px 6px}}
