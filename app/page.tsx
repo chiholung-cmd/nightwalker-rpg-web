@@ -1,442 +1,323 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import {
+  INITIAL, availableChoices, applyEffect, effectiveLines, sceneFor,
+  type Choice, type SaveState, type WorldTheme
+} from '../lib/infiniteStory'
+import './story.css'
 
-type Phase = 'fight' | 'enemy' | 'won' | 'shop' | 'finished' | 'lost'
-type Action = 'attack' | 'guard' | 'inspect' | 'seal' | 'mirror' | 'phone' | 'ticket'
-type Game = {
-  hp: number; sp: number; points: number; level: number; wave: number; turn: number
-  enemyHp: number; weak: boolean; marks: number; mirrorUsed: boolean
-  phoneUsed: boolean; ticketUsed: boolean; weapon: boolean; phase: Phase
-  message: string; speaker: string; berserk?: boolean
+const SAVE_KEY = 'nightwalker-multiverse-story-v1'
+type Overlay = 'bag' | 'journal' | 'shop' | 'menu' | 'map' | null
+type CombatKind = 'clerk' | 'echo'
+type Fight = {
+  enemy: CombatKind
+  hp: number
+  turn: number
+  weak: boolean
+  mirrorUsed: boolean
+  busy: boolean
+  message: string
+  animation: string
+  returnScene: string
 }
-const SAVE = 'nightwalker-infinite-combat-v1'
-const fresh = (): Game => ({
-  hp: 100, sp: 74, points: 105, level: 1, wave: 1, turn: 1, enemyHp: 100,
-  weak: false, marks: 0, mirrorUsed: false, phoneUsed: false, ticketUsed: false,
-  weapon: false, berserk: false, phase: 'fight', speaker: '主神系統',
-  message: '「所有冇名字嘅人，都係需要回收嘅失物。」失物管理員舉起巨剪。'
-})
-const limit = (n: number) => Math.max(0, Math.min(100, n))
-const enemyName = (g: Game) => g.wave === 1 ? '失物管理員' : '夜班裁定官'
-const enemyMax = (g: Game) => g.wave === 1 ? 100 : 145
-const intents = [
-  ['姓名核對', '剪刀突刺', '證物查驗', '影子回收'],
-  ['午夜鐘聲', '逆時針斬', '命運核對', '無光回響']
+const enemyName = (kind: CombatKind) => kind === 'clerk' ? '失物管理員' : '裂隙守門者'
+const maxEnemyHP = (kind: CombatKind) => kind === 'clerk' ? 95 : 135
+const clamp = (n: number, max = 100) => Math.max(0, Math.min(max, n))
+const miniStat = (value: number) => String(Math.round(value)).padStart(2, '0')
+
+function WorldBackdrop({ theme, battle, count }: { theme: WorldTheme; battle: boolean; count: number }) {
+  return (
+    <svg className="iw-world-svg" viewBox="0 0 390 450" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="iw-sky" x2="0" y2="1"><stop stopColor="#152343"/><stop offset="1" stopColor="#090e1d"/></linearGradient>
+        <linearGradient id="iw-gold" x2="0" y2="1"><stop stopColor="#e6d4a5"/><stop offset="1" stopColor="#6b526d"/></linearGradient>
+        <radialGradient id="iw-portal-light"><stop stopColor="#92d6ec" stopOpacity=".7"/><stop offset="1" stopColor="#344f91" stopOpacity="0"/></radialGradient>
+        <radialGradient id="iw-redlight"><stop stopColor="#fd5f86" stopOpacity=".62"/><stop offset="1" stopColor="#651d53" stopOpacity="0"/></radialGradient>
+      </defs>
+      <rect width="390" height="450" fill="url(#iw-sky)"/>
+      <g opacity=".25" stroke="#7787b4" strokeWidth="1"><path d="M0 80H390M0 160H390M0 240H390M0 320H390M30 0V450M150 0V450M260 0V450M360 0V450"/></g>
+      {theme==='nexus' && <>
+        <ellipse cx="194" cy="233" rx="188" ry="158" fill="url(#iw-portal-light)" opacity=".7"/>
+        <path d="M0 354L195 240L390 354V450H0Z" fill="#101c36" stroke="#687aa7" strokeWidth="2"/>
+        <path d="M15 365L195 271L372 365M67 398L195 322L318 398M120 430L195 385L269 430" stroke="#59729c" strokeWidth="1" opacity=".5" fill="none"/>
+        {[67,168,300].map((x,i)=><g key={i}>
+          <path d={'M'+(x-33)+' 210Q'+x+' 131 '+(x+33)+' 210V335H'+(x-33)+'Z'} fill={i===0?'#1c2a4b':i===1?'#242142':'#28253e'} stroke={i===0?'#8bcae3':i===1?'#d2a0b3':'#a5a9e4'} strokeWidth="3"/>
+          <path d={'M'+(x-23)+' 212Q'+x+' 161 '+(x+23)+' 212V324H'+(x-23)+'Z'} fill={i===0?'#457da4':i===1?'#933e68':'#6962a3'} opacity=".8"/>
+          <path d={'M'+(x-13)+' 215Q'+x+' 185 '+(x+13)+' 215V320H'+(x-13)+'Z'} fill="#c2d6ff" opacity=".17"/>
+        </g>)}
+        <path d="M190 61L209 30L220 56L249 68L220 76L207 102L192 76L166 68Z" fill="#e4d9ed" opacity=".8"/>
+        <circle cx="207" cy="67" r="54" fill="none" stroke="#b6b3e9" strokeWidth="1.5" strokeDasharray="3 8" opacity=".6"/>
+      </>}
+      {theme==='archive' && <>
+        <circle cx="275" cy="103" r="106" fill="url(#iw-portal-light)" opacity=".6"/>
+        {[0,1,2,3].map(i=><g key={i} transform={'translate('+(i*111-19)+' 80)'}>
+          <rect width="102" height="304" fill="#101827" stroke="#54637b" strokeWidth="4"/>
+          {[0,1,2,3].map(j=><g key={j}><path d={'M3 '+(64+j*59)+'H99'} stroke="#64728d" strokeWidth="3"/>
+            <rect x="10" y={10+j*59} width="24" height="45" fill="#3d475f"/>
+            <rect x="40" y={18+j*59} width="25" height="37" fill="#5f4d66"/>
+            <rect x="73" y={11+j*59} width="21" height="44" fill="#594858"/></g>)}
+        </g>)}
+        <path d="M0 388H390V450H0Z" fill="#111925"/>
+        <ellipse cx="196" cy="407" rx="150" ry="29" fill="#637a8b" opacity=".15"/>
+        <circle cx="194" cy="153" r="41" fill="#1c2239" stroke="#cfb79d" strokeWidth="6"/>
+        <path d="M194 122V153L220 163" stroke="#ffe2aa" strokeWidth="4" fill="none"/>
+        <text x="194" y="211" fill="#c2b2bd" fontSize="10" textAnchor="middle" letterSpacing="3">LOST &amp; FOUND</text>
+      </>}
+      {theme==='apartment' && <>
+        <circle cx="301" cy="107" r="86" fill="url(#iw-redlight)"/>
+        <circle cx="301" cy="107" r="51" fill="#f08b91" opacity=".55"/>
+        <path d="M0 365L0 55L114 55L114 365M133 365L133 5L267 5L267 365M288 365L288 81H390V365" fill="#0b1122" stroke="#67435f" strokeWidth="3"/>
+        {[30,80,165,215,313,360].map((x,i)=>[111,175,240,310].map((y,j)=><rect key={x+'-'+y} x={x} y={y} width="26" height="38" fill={(i+j)%3===0?'#b94d69':'#48344f'} opacity=".69" stroke="#b4778a" strokeWidth=".9"/>))}
+        <path d="M0 370L390 335V450H0Z" fill="#151325"/>
+        <path d="M10 372Q105 300 175 367T390 354" stroke="#bd4768" strokeWidth="4" fill="none"/>
+        <text x="192" y="47" fontSize="17" letterSpacing="8" fill="#e7aeb9">13 F</text>
+      </>}
+      {theme==='hospital' && <>
+        <path d="M65 30L195 148L325 30V395H65Z" fill="#18283b" stroke="#689da6" strokeWidth="2"/>
+        <path d="M195 148V395" stroke="#72b6bd" strokeWidth="3" opacity=".55"/>
+        <path d="M0 385L195 303L390 385V450H0Z" fill="#162f36"/>
+        {[35,75,115,155].map((v,i)=><path key={i} d={'M0 '+(380+i*18)+'L195 '+(307+i*36)+'L390 '+(380+i*18)} stroke="#569b9e" strokeWidth="1.3" opacity=".45" fill="none"/>)}
+        {[80,265].map(x=><g key={x}><rect x={x} y="178" width="45" height="130" fill="#0b1c2b" stroke="#71a9ac" strokeWidth="3"/><path d={'M'+(x+23)+' 179V309'} stroke="#5e9ea3" strokeWidth="1.5"/></g>)}
+        <rect x="155" y="152" width="80" height="27" fill="#acddd4" opacity=".63"/>
+        <path d="M190 158V172M183 165H197" stroke="#195d65" strokeWidth="4"/>
+        <circle cx="195" cy="132" r="69" fill="url(#iw-portal-light)" opacity=".8"/>
+      </>}
+      {theme==='rift' && <>
+        <ellipse cx="195" cy="182" rx="155" ry="175" fill="url(#iw-portal-light)"/>
+        {[0,1,2,3,4,5].map(i=><path key={i} d={'M'+(i*73-20)+' 450L'+(195+(i-3)*14)+' 80'} stroke="#8997cb" opacity=".5" strokeWidth="2"/> )}
+        <path d="M195 38L255 131L339 164L260 234L225 340L167 249L82 202L153 143Z" fill="#1c2247" stroke="#a9bdfa" strokeWidth="4"/>
+        <path d="M195 83L239 163L286 184L225 229L208 290L169 229L120 201L170 159Z" fill="#6478bb" opacity=".63"/>
+        <circle cx="195" cy="174" r="69" fill="none" stroke="#c0d4ff" strokeWidth="2" strokeDasharray="5 12"/>
+        <text x="195" y="408" fontSize="12" fill="#b4cbfc" textAnchor="middle">RIFT {String(count+1).padStart(3,'0')}</text>
+      </>}
+      {battle && <g><circle cx="286" cy="265" r="125" fill="url(#iw-redlight)" opacity=".7"/><path d="M269 331L254 255L270 204L301 205L329 252L325 335Z" fill="#171627" stroke="#bc668c" strokeWidth="3"/><circle cx="295" cy="207" r="37" fill="#392139" stroke="#dea1a3" strokeWidth="6"/><circle cx="295" cy="207" r="26" fill="#1d1b32" stroke="#bc728c" strokeWidth="3"/><path d="M295 181V208L309 222" stroke="#ffc6c0" strokeWidth="4" fill="none"/><path d="M254 265L216 284M328 265L362 277" stroke="#5d415f" strokeWidth="13" strokeLinecap="round"/><path d="M130 340L136 271L174 255L194 278L201 341Z" fill="#14243d" stroke="#7eb3d5" strokeWidth="2"/><circle cx="166" cy="239" r="29" fill="#c7d7e6"/><path d="M141 241L140 220L156 226L167 199L179 218L193 212L193 236" fill="#e2effa" stroke="#9fbde1" strokeWidth="2"/><path d="M197 280L262 218" stroke="#b5eeff" strokeWidth="6"/><path d="M205 282L265 226" stroke="#60beed" strokeWidth="2"/></g>}
+    </svg>
+  )
+}
+
+function Avatar({ face }: { face?: string }) {
+  const glyph = face === 'guide' ? '霧' : face === 'girl' ? '✿' : face === 'clerk' ? '✂' : face === 'nurse' ? '✚' : face === 'neighbor' ? '月' : '∞'
+  return <span className={'iw-avatar iw-avatar-'+(face||'system')} aria-hidden="true">{glyph}</span>
+}
+function Stat({ label, value, type }: { label:string; value:number; type:'hp'|'sp' }) {
+  return <div className="iw-stat"><div className="iw-stat-label"><span>{label}</span><strong>{miniStat(value)}</strong></div><div className="iw-stat-track"><i className={'iw-fill-'+type} style={{width:value+'%'}}/></div></div>
+}
+const shopItems = [
+  { key:'med', name:'急救針劑', icon:'✚', cost:30, note:'回復 35 HP' },
+  { key:'calm', name:'鎮魂藥劑', icon:'◇', cost:25, note:'回復 25 理智' },
+  { key:'mirror', name:'鏡界護符', icon:'✧', cost:50, note:'背包永久收藏，可作為世界線索' }
+]
+const battleMoves: {key:string;label:string;info:string;icon:string}[] = [
+  {key:'attack',label:'斬擊',info:'普通傷害',icon:'⚔'},
+  {key:'inspect',label:'偵查',info:'破防+傷害',icon:'◎'},
+  {key:'guard',label:'防禦',info:'減傷/回 SP',icon:'◇'},
+  {key:'seal',label:'遺忘印記',info:'消耗 18 SP',icon:'✧'},
+  {key:'mirror',label:'鏡像斬',info:'每場一次・打斷',icon:'✦'}
 ]
 
-
-function HudPortrait({ kind }: { kind: 'hero' | 'clerk' | 'clock' }) {
-  if (kind === 'clock') return (
-    <svg className="nw-portrait-svg" viewBox="0 0 64 64" aria-hidden="true">
-      <defs><linearGradient id="nw-small-clock" x2="1" y2="1"><stop stopColor="#dfd2b8"/><stop offset="1" stopColor="#6a4e68"/></linearGradient></defs>
-      <rect width="64" height="64" fill="#201527"/><path d="M4 62L12 47L18 38L31 49L46 38L58 62Z" fill="#34243a" stroke="#77546b" strokeWidth="2"/>
-      <path d="M23 16L16 5L31 14L47 5L41 18" fill="#b47b89" stroke="#e2afac" strokeWidth="1.5"/>
-      <circle cx="32" cy="30" r="25" fill="#1a1628" stroke="#c18d9c" strokeWidth="4"/>
-      <circle cx="32" cy="30" r="20" fill="url(#nw-small-clock)" stroke="#e5c6ae" strokeWidth="2"/>
-      <circle cx="32" cy="30" r="15" fill="#3c2b3e" stroke="#785366" strokeWidth="2"/>
-      {Array.from({length:12},(_,i)=><path key={i} d="M32 11V15" stroke="#f6d8c4" strokeWidth="1.5" transform={`rotate(${i*30} 32 30)`}/>)}
-      <path d="M32 30L39 18M32 30L20 34" stroke="#ff7aa6" strokeWidth="3" strokeLinecap="round"/><circle cx="32" cy="30" r="3" fill="#fff0ce"/>
-      <path d="M6 12L12 3M54 11L59 2" stroke="#ff4c7c" strokeWidth="2"/>
-    </svg>
-  )
-  if(kind === 'clerk') return (
-    <svg className="nw-portrait-svg" viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" fill="#211725"/>
-      <path d="M3 64L16 46L47 46L62 64Z" fill="#31202f" stroke="#8d586f" strokeWidth="2"/>
-      <path d="M16 24L20 10L45 9L51 27L44 45L24 45Z" fill="#cfbfc9" stroke="#8c6881" strokeWidth="2"/>
-      <path d="M13 24L18 6L26 13L35 4L43 11L50 9L54 30L44 24L24 25Z" fill="#24202e"/>
-      <path d="M20 27L30 28L27 32L21 32ZM37 28L46 27L44 32L37 32Z" fill="#a52b60"/>
-      <path d="M28 41L39 41" stroke="#78445e" strokeWidth="2"/>
-      <path d="M50 44L58 52" stroke="#d3b6c7" strokeWidth="3"/>
-      <path d="M10 53L3 60" stroke="#a46787" strokeWidth="2"/>
-    </svg>
-  )
-  return (
-    <svg className="nw-portrait-svg" viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" fill="#1a283c"/>
-      <path d="M1 64L14 46L24 40L34 48L45 40L64 64Z" fill="#18273b" stroke="#6289ad" strokeWidth="2"/>
-      <path d="M23 40V49L33 54L43 47V38" fill="#aebacc"/>
-      <path d="M17 22Q16 9 32 8Q51 9 49 27L44 43L29 49L20 40Z" fill="#d7dce6" stroke="#8398b4" strokeWidth="2"/>
-      <path d="M12 30L14 13L20 17L22 5L30 11L36 1L42 11L53 6L53 22L58 25L47 28L45 20L36 25L31 19L21 31Z" fill="#f1f6ff" stroke="#9cb7d2" strokeWidth="1.5"/>
-      <path d="M20 29L30 32L27 36L21 35ZM35 32L46 29L44 35L36 36Z" fill="#26374b"/>
-      <path d="M22 33L28 34M37 34L44 33" stroke="#6ce5fc" strokeWidth="2.5"/>
-      <path d="M31 43L38 42" stroke="#75839d" strokeWidth="1.6"/>
-      <path d="M14 52L32 63L48 51" stroke="#92dfff" strokeWidth="2" fill="none"/>
-    </svg>
-  )
-}
-
-function CharacterArt({ boss }: { boss: boolean }) {
-  return (
-    <svg className="nw-scene" viewBox="0 0 600 350" preserveAspectRatio="xMidYMid slice" role="img" aria-label="銀髮持劍者迎戰地鐵失物管理員">
-      <defs>
-        <linearGradient id="nw-wall" x2="1" y2="1"><stop stopColor="#25344a" /><stop offset="1" stopColor="#080d18" /></linearGradient>
-        <linearGradient id="nw-coat"><stop stopColor="#091324"/><stop offset=".55" stopColor="#344664"/><stop offset="1" stopColor="#13182c"/></linearGradient>
-        <linearGradient id="nw-blade"><stop stopColor="#fff"/><stop offset=".55" stopColor="#86e9ff"/><stop offset="1" stopColor="#289bff"/></linearGradient>
-        <radialGradient id="nw-aura"><stop stopColor="#c95596" stopOpacity=".55"/><stop offset="1" stopColor="#8143b6" stopOpacity="0"/></radialGradient>
-        <radialGradient id="nw-moon"><stop stopColor="#f0f5fd" stopOpacity=".7"/><stop offset="1" stopColor="#9eb2db" stopOpacity="0"/></radialGradient>
-        <linearGradient id="nw-clockmetal" x1="0" x2="1" y2="1"><stop stopColor="#e2cba4"/><stop offset=".44" stopColor="#6e5874"/><stop offset="1" stopColor="#241e39"/></linearGradient>
-        <linearGradient id="nw-clockrobe" x1="0" x2="1" y2="1"><stop stopColor="#38243b"/><stop offset=".55" stopColor="#121626"/><stop offset="1" stopColor="#402236"/></linearGradient>
-        <filter id="nw-rune-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <rect width="600" height="350" fill="url(#nw-wall)" />
-      <g stroke="#4f6581" strokeWidth="1" opacity=".28"><path d="M0 28H600M0 118H600M0 216H600M72 0V260M205 0V260M393 0V260M536 0V260" /></g>
-      <rect x="210" y="10" width="178" height="217" fill="#091324" stroke="#536784" strokeWidth="7"/>
-      <rect x="220" y="22" width="158" height="196" fill="#1e3048"/>
-      <circle cx="300" cy="102" r="56" fill="#dee0dc" opacity=".22" />
-      <path d="M220 202L256 141L278 167L313 102L349 176L378 132V218H220Z" fill="#0e1a2b"/>
-      <path d="M301 22V218M220 116H378" stroke="#52677e" strokeWidth="5"/>
-      <g fill="#0d1828" stroke="#3e5068" strokeWidth="4"><rect x="4" y="69" width="124" height="190"/><rect x="480" y="75" width="116" height="184"/></g>
-      <g fill="#58657e" opacity=".65"><rect x="15" y="81" width="28" height="40"/><rect x="50" y="89" width="42" height="32"/><rect x="16" y="144" width="48" height="40"/><rect x="73" y="148" width="43" height="36"/><rect x="491" y="88" width="38" height="42"/><rect x="539" y="90" width="44" height="40"/><rect x="491" y="154" width="88" height="48"/></g>
-      <path d="M0 271H600V350H0Z" fill="#121c30"/>
-      <path d="M0 278H600M0 316H600M113 271L36 350M497 271L564 350" stroke="#53617a" opacity=".55" />
-      <ellipse cx="170" cy="294" rx="64" ry="11" fill="#5ccff0" opacity=".2"/>
-      <ellipse cx="440" cy="294" rx="74" ry="13" fill="#d9487b" opacity=".22"/>
-      <circle className={boss ? 'nw-boss-aura active' : 'nw-boss-aura'} cx="441" cy="158" r="129" fill="url(#nw-aura)"/>
-      <g className="nw-dust" opacity=".75" fill="#b6b0e3">
-        {[[80,56],[144,74],[248,51],[355,92],[393,39],[540,58],[563,147],[277,207],[72,242],[511,253],[321,258],[212,112]].map(([x,y],i) =>
-          <circle key={i} cx={x} cy={y} r={i % 3 === 0 ? 1.9 : 1.2} style={{animationDelay: (i * .27) + 's'}}/>
-        )}
-      </g>
-      <g className="nw-hero-art">
-        <path d="M149 233L143 288H169L181 237M188 234L190 288H215L204 230" fill="#0a1829" stroke="#647c9a" strokeWidth="3"/>
-        <path d="M140 284H170V298H133ZM190 284H216L223 297H190Z" fill="#101929" stroke="#3d597d" strokeWidth="2"/>
-        <path d="M161 137L139 155L118 281L174 252L221 278L200 157L184 138Z" fill="url(#nw-coat)" stroke="#6583a6" strokeWidth="3"/>
-        <path d="M160 142L176 177L184 144L194 246L166 261L153 244Z" fill="#213049" stroke="#a5c3de" strokeWidth="2"/>
-        <path d="M141 162L119 204L143 218L166 174M198 162L235 193L221 213L190 180" fill="#1a2d49" stroke="#668ba9" strokeWidth="3"/>
-        <path d="M157 115V144L179 153L193 139L187 113Z" fill="#b9c8d9"/>
-        <path d="M148 99Q146 72 175 74Q200 75 200 101L185 130L159 130Z" fill="#c3cbd6" stroke="#798da4" strokeWidth="2"/>
-        <path d="M139 106L147 78L135 87L154 59L163 70L177 54L186 67L201 61L209 86L200 101L191 91L176 95L164 83Z" fill="#d6ebf8" stroke="#9bb4cf" strokeWidth="2"/>
-        <path d="M150 106L173 115L200 105L194 129L165 134L154 126Z" fill="#142338" stroke="#8fb0cc" strokeWidth="2"/>
-        <path d="M158 113L170 117M181 117L191 113" stroke="#6cf0ff" strokeWidth="3.5"/>
-        <path d="M142 161L163 169M175 193L195 195" stroke="#8ddff5" strokeWidth="3"/>
-        <path d="M224 200L265 131" stroke="#2a4057" strokeWidth="8" strokeLinecap="round"/>
-        <path d="M257 135L269 144" stroke="#d7ecf9" strokeWidth="5"/>
-        <path d="M261 133L339 28L326 58L253 138Z" fill="url(#nw-blade)" stroke="#def8ff" strokeWidth="2"/>
-        <path d="M264 132L334 33" stroke="#fff" strokeWidth="2.5"/>
-        <circle cx="226" cy="202" r="10" fill="#c1cedd"/>
-      </g>
-      {!boss && <g className="nw-enemy-art">
-        <path d="M423 236L409 289H434L447 243M457 234L462 289H486L474 230" fill="#1e1626" stroke="#824f6c" strokeWidth="3"/>
-        <path d="M418 147L393 169L370 283L429 267L483 292L493 189L462 149Z" fill="#1c1926" stroke="#80556e" strokeWidth="3"/>
-        <path d="M419 158L436 181L454 235L467 158M398 190L389 266M467 179L483 265" stroke="#a75f7e" strokeWidth="3" fill="none"/>
-        <path d="M422 130L419 155L462 158L457 132" fill="#bdaab6"/>
-        <path d="M408 104Q410 78 438 74Q469 77 473 112L462 141Q434 162 413 138Z" fill="#dacbd2" stroke="#6e5a6a" strokeWidth="2"/>
-        <path d="M406 111L411 91L407 79L425 62L440 76L462 68L477 99L473 114" fill="#292332" stroke="#915872" strokeWidth="2"/>
-        <path d="M419 119L432 117L432 129L417 130ZM445 118L465 119L461 131L445 129Z" fill="#4c1a35"/>
-        <path d="M420 124L431 121M447 123L459 123" stroke="#ff648c" strokeWidth="4"/>
-        <path d="M430 141L448 141" stroke="#8b4d67" strokeWidth="3"/>
-        <path d="M409 172L380 197L360 227M469 177L492 199L500 238" stroke="#342534" strokeWidth="17" strokeLinecap="round" fill="none"/>
-        <circle cx="360" cy="228" r="11" fill="#b5a7b2"/><circle cx="501" cy="238" r="11" fill="#b5a7b2"/>
-        <path d="M359 231L334 177L353 197L372 218L347 266L353 228L331 249Z" fill="#b5c0cc" stroke="#e9e2e7" strokeWidth="2"/>
-        <circle cx="361" cy="230" r="6" fill="#6a3f57"/>
-        <rect x="436" y="171" width="31" height="40" rx="3" fill="#c6b9c3" stroke="#7b6575" strokeWidth="2" transform="rotate(12 451 189)"/>
-        <text x="450" y="191" textAnchor="middle" fontSize="10" fill="#8b3758" transform="rotate(12 451 189)">NO.</text>
-      </g>}
-      {boss && <g className="nw-clockboss-art">
-        {/* Boss 2 is a completely different silhouette: a suspended clock-headed judge, not a recolour. */}
-        <g className="nw-time-rings" fill="none" stroke="#d0a3ab">
-          <circle cx="446" cy="137" r="91" opacity=".45" strokeWidth="1.7" strokeDasharray="6 13"/>
-          <circle cx="446" cy="137" r="106" opacity=".25" strokeWidth="1.8"/>
-          {Array.from({length:12},(_,i)=>(
-            <path key={i} d="M446 33V43" strokeWidth="3" transform={`rotate(${i*30} 446 137)`}/>
-          ))}
-        </g>
-        <path d="M441 46L427 10L446 31L467 10L453 48" fill="#8e6e83" stroke="#c6a5a6" strokeWidth="2"/>
-        <path d="M421 185L385 203L361 291L416 277L448 289L502 279L487 209L462 188Z" fill="url(#nw-clockrobe)" stroke="#a16c83" strokeWidth="3"/>
-        <path d="M402 203Q388 246 384 288M482 212Q495 248 497 280" stroke="#d29c83" strokeWidth="3" opacity=".6"/>
-        <path d="M420 190L444 215L463 189L459 261L444 282L432 260Z" fill="#30213b" stroke="#8b7897" strokeWidth="2.5"/>
-        <path d="M439 220V276" stroke="#dbbb89" strokeWidth="4"/>
-        <path d="M397 205L366 215L345 252M482 208L515 218L538 254" stroke="#3c283f" strokeWidth="18" fill="none" strokeLinecap="round"/>
-        <path d="M396 204L368 215L346 250M482 208L516 220L537 255" stroke="#a06c82" strokeWidth="2.5" fill="none"/>
-        <path d="M342 253L325 276L345 264L354 284L358 259" stroke="#c1a3a9" strokeWidth="7" strokeLinecap="round" fill="none"/>
-        <path d="M537 252L528 285L543 270L553 281L545 254" stroke="#c1a3a9" strokeWidth="7" strokeLinecap="round" fill="none"/>
-        <path d="M440 179V204L451 213L462 201L457 176" fill="#63536a" stroke="#bfa1ab" strokeWidth="2"/>
-        <path d="M400 82L410 58L439 49L474 61L490 92L483 158L462 183L423 181L398 156Z" fill="#261d35" stroke="#ca9d85" strokeWidth="5"/>
-        <circle cx="445" cy="118" r="65" fill="#221d31" stroke="#a4898c" strokeWidth="9"/>
-        <circle cx="445" cy="118" r="57" fill="url(#nw-clockmetal)" stroke="#ead3a9" strokeWidth="3"/>
-        <circle cx="445" cy="118" r="44" fill="#1e2135" stroke="#d7b895" strokeWidth="2"/>
-        <circle cx="445" cy="118" r="37" fill="#161625" stroke="#815a76" strokeWidth="1.5"/>
-        {Array.from({length:12},(_,i)=>(
-          <path key={i} d="M445 67V80" stroke={i%3===0?"#fae8c0":"#8b7080"} strokeWidth={i%3===0?3:2} transform={`rotate(${i*30} 445 118)`}/>
-        ))}
-        <path className="nw-clock-hand-fast" d="M445 118L481 91" stroke="#ff8aaf" strokeWidth="5" strokeLinecap="round" filter="url(#nw-rune-glow)"/>
-        <path className="nw-clock-hand-slow" d="M445 118L427 86" stroke="#ecdbc0" strokeWidth="6" strokeLinecap="round"/>
-        <circle cx="445" cy="118" r="8" fill="#f5d4be" stroke="#a55383" strokeWidth="3"/>
-        <path d="M407 188L384 162L379 181L363 163M478 187L500 159L507 178L520 162" stroke="#d6aa94" strokeWidth="4" fill="none"/>
-        <path d="M418 185L406 197L422 226L444 205L462 225L481 198L468 185" fill="none" stroke="#ceae89" strokeWidth="3"/>
-        <g className="nw-rune" stroke="#f9a3c4" strokeWidth="2" fill="none" filter="url(#nw-rune-glow)">
-          <path d="M343 88L354 70L364 89L354 108Z M534 93L546 72L557 92L546 111Z"/>
-          <circle cx="353" cy="89" r="5"/><circle cx="546" cy="92" r="5"/>
-        </g>
-      </g>}
-      <text x="300" y="14" fill="#9aa8ba" textAnchor="middle" letterSpacing="3" fontSize="10">LOST &amp; FOUND • 04:44</text>
-    </svg>
-  )
-}
-
 export default function HomePage() {
-  const [g, setG] = useState<Game>(fresh)
-  const [ready, setReady] = useState(false)
-  const [anim, setAnim] = useState('')
-  const [hit, setHit] = useState<{ id: number; amount: number; side: 'hero' | 'enemy'; label: string } | null>(null)
-  const hitCounter = useRef(0)
-  const [popup, setPopup] = useState<'bag' | 'info' | null>(null)
-  const [muted, setMuted] = useState(true)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const introTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const lock = useRef(false)
+  const [game,setGame] = useState<SaveState>(INITIAL)
+  const [hydrated,setHydrated] = useState(false)
+  const [mode,setMode] = useState<'story'|'battle'|'lost'>('story')
+  const [fight,setFight] = useState<Fight|null>(null)
+  const [overlay,setOverlay] = useState<Overlay>(null)
+  const [fx,setFx] = useState('')
+  const block = useRef(false)
+  const activeTimer=useRef<ReturnType<typeof setTimeout>|null>(null)
 
-  useEffect(() => {
+  useEffect(()=>{
     try {
-      const raw = localStorage.getItem(SAVE)
-      if (raw) {
-        const data = JSON.parse(raw) as Game
-        if ([1, 2].includes(data.wave) && typeof data.hp === 'number' && typeof data.phase === 'string') {
-          setG({ ...fresh(), ...data, phase: data.phase === 'enemy' ? 'fight' : data.phase })
+      const raw=localStorage.getItem(SAVE_KEY)
+      if(raw){
+        const parsed=JSON.parse(raw) as SaveState
+        if(parsed && typeof parsed.scene==='string' && Array.isArray(parsed.flags) && Array.isArray(parsed.items) && sceneFor(parsed.scene).id===parsed.scene){
+          setGame({...INITIAL,...parsed})
+          if(parsed.hp<=0 || parsed.sp<=0)setMode('lost')
         }
       }
-    } catch { /* corrupted local save: start fresh */ }
-    setReady(true)
-    return () => {
-      if (timer.current) clearTimeout(timer.current)
-      if (introTimer.current) clearTimeout(introTimer.current)
+    }catch{/* Invalid save starts from inherited zero-station state */}
+    setHydrated(true)
+    return ()=>{if(activeTimer.current)clearTimeout(activeTimer.current)}
+  },[])
+  useEffect(()=>{if(hydrated)localStorage.setItem(SAVE_KEY,JSON.stringify(game))},[game,hydrated])
+
+  const scene=sceneFor(game.scene)
+  const lines=effectiveLines(scene,game)
+  const currentLine=Math.min(game.line,lines.length-1)
+  const atChoices=currentLine===lines.length-1
+  const choices=availableChoices(scene,game)
+  const choose=(choice:Choice)=>{
+    if(block.current||mode!=='story')return
+    if(choice.action==='shop'){setOverlay('shop');return}
+    if(choice.action==='combat-practice'){window.location.href='/combat';return}
+    const next=applyEffect(game,choice.effect)
+    const node=choice.to||game.scene
+    const record=(scene.title+' → '+choice.label)
+    const updated:SaveState={...next,scene:node,line:0,path:[record,...next.path].slice(0,40)}
+    setGame(updated)
+    if(updated.hp===0||updated.sp===0){setMode('lost');return}
+    if(choice.action==='battle'){
+      setFight({enemy:choice.enemy||'clerk',hp:maxEnemyHP(choice.enemy||'clerk'),turn:1,weak:false,mirrorUsed:false,
+        busy:false,message:'前面嘅怪物擋住去路。你拔出鏡面碎片，決定正面迎戰。',animation:'',returnScene:choice.to||'lost_after_battle'})
+      setMode('battle')
     }
-  }, [])
-
-  useEffect(() => { if (ready) localStorage.setItem(SAVE, JSON.stringify(g)) }, [g, ready])
-
-  const audio = (pitch = 420) => {
-    if (muted || typeof window === 'undefined') return
-    try {
-      const Ctor = window.AudioContext
-      const ctx = new Ctor()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'triangle'
-      osc.frequency.setValueAtTime(pitch, ctx.currentTime)
-      osc.frequency.exponentialRampToValueAtTime(Math.max(50, pitch / 2), ctx.currentTime + .18)
-      gain.gain.setValueAtTime(.085, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .2)
-      osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + .21)
-      osc.onended = () => { void ctx.close() }
-    } catch { /* browser does not support audio */ }
   }
-  const showHit = (amount: number, side: 'hero' | 'enemy', label = '') => {
-    if (amount > 0) setHit({ id: ++hitCounter.current, amount, side, label })
+  const advance=()=>{
+    if(mode!=='story'||overlay)return
+    if(game.line<lines.length-1)setGame({...game,line:game.line+1})
   }
-  const fx = (name: string) => {
-    setAnim('')
-    requestAnimationFrame(() => setAnim(name))
-    timer.current = setTimeout(() => setAnim(''), name === 'intro' ? 1950 : 580)
+  const buy=(key:string)=>{
+    const item=shopItems.find(x=>x.key===key)
+    if(!item||game.points<item.cost)return
+    if(key==='med'&&game.hp===100||key==='calm'&&game.sp===100||key==='mirror'&&game.items.includes('鏡界護符'))return
+    setGame({...game,points:game.points-item.cost,
+      hp:key==='med'?clamp(game.hp+35):game.hp,
+      sp:key==='calm'?clamp(game.sp+25):game.sp,
+      items:key==='mirror'?[...game.items,'鏡界護符']:game.items,
+      journal:key==='mirror'?['購入鏡界護符，可感應其他世界的鏡面。',...game.journal]:game.journal})
   }
-  const reset = () => {
-    if (timer.current) clearTimeout(timer.current)
-    if (introTimer.current) clearTimeout(introTimer.current)
-    lock.current = false; setAnim(''); setHit(null); setPopup(null); setG(fresh())
+  const restart=()=>{
+    if(activeTimer.current)clearTimeout(activeTimer.current)
+    block.current=false;setGame(INITIAL);setFight(null);setMode('story');setOverlay(null);setFx('')
   }
-
-  const act = (type: Action) => {
-    if (lock.current || g.phase !== 'fight') return
-    if (type === 'mirror' && g.mirrorUsed || type === 'phone' && g.phoneUsed ||
-        type === 'ticket' && g.ticketUsed || type === 'seal' && g.sp < 18) return
-    lock.current = true
-    const s: Game = { ...g, phase: 'enemy', speaker: '無名生還者' }
-    let dmg = 0, skip = false, guard = false
-    const base = (s.weak ? 11 : 0) + (s.weapon ? 6 : 0)
-    if (type === 'attack') {
-      dmg = 17 + base; s.message = '你揮動蒼藍長劍，寒光劃破黑暗！'; fx('attack'); audio()
-    } else if (type === 'inspect') {
-      s.weak = true; s.message = '你睇穿敵人胸口嘅檔案鎖鏈！之後攻擊永久 +11。'; fx('inspect'); audio(520)
-    } else if (type === 'guard') {
-      guard = true; s.sp = limit(s.sp + 7); s.message = '你打開精神護盾。受到嘅傷害大幅減少，理智 +7。'; fx('guard'); audio(300)
-    } else if (type === 'seal') {
-      s.sp -= 18; s.marks = 0; dmg = 32 + base + (s.level - 1) * 7
-      s.message = '【遺忘者印記】紫色咒紋吞噬敵人，身上嘅身份印記被消除！'; fx('seal'); audio(720)
-    } else if (type === 'mirror') {
-      s.mirrorUsed = true; dmg = 28 + base; skip = true
-      s.message = '鏡面碎片召喚出另一個你，同時斬擊！敵人被短暫禁錮。'; fx('mirror'); audio(620)
-    } else if (type === 'phone') {
-      s.phoneUsed = true; dmg = 10 + (s.weak ? 6 : 0)
-      skip = [0, 2].includes((s.turn - 1) % 4)
-      s.message = '舊式手機閃過蒼白光芒。' + (skip ? '敵人嘅程序被打斷！' : '敵人勉強擋住閃光。')
-      fx('mirror'); audio(650)
-    } else {
-      s.ticketUsed = true; dmg = 13 + (s.weak ? 7 : 0)
-      skip = [0, 2].includes((s.turn - 1) % 4)
-      s.message = '半張染血車票燃燒起嚟。' + (skip ? '敵方身份核對失敗！' : '怪物被火焰灼傷。')
-      fx('seal'); audio(580)
+  const returnHub=()=>{
+    if(activeTimer.current)clearTimeout(activeTimer.current)
+    block.current=false;setGame(prev=>({...prev,scene:'hub_return',line:0}));setFight(null);setMode('story');setOverlay(null)
+  }
+  const actionBattle=(type:string)=>{
+    if(!fight||fight.busy||block.current||mode!=='battle')return
+    if(type==='seal'&&game.sp<18||type==='mirror'&&fight.mirrorUsed)return
+    block.current=true
+    const next:Fight={...fight,busy:true,animation:type}
+    let hp=game.hp,sp=game.sp,points=game.points,damage=0,stunned=false,defend=false
+    const bonus=fight.weak?9:0
+    if(type==='attack'){damage=19+bonus;next.message='劍光直擊敵人，造成 '+damage+' 傷害！'}
+    if(type==='inspect'){next.weak=true;next.message='你發現敵人心臟有一道裂縫！之後攻擊傷害提升。'}
+    if(type==='guard'){defend=true;sp=clamp(sp+7);next.message='你降低身體重心進入防禦姿態，理智回復 7。'}
+    if(type==='seal'){sp-=18;damage=35+bonus;next.message='【遺忘者印記】被刪除嘅名字化成紫光，造成 '+damage+' 傷害！'}
+    if(type==='mirror'){damage=29+bonus;next.mirrorUsed=true;stunned=true;next.message='你嘅鏡像同時出刀！敵人行動被打斷，傷害 '+damage+'。'}
+    next.hp=Math.max(0,next.hp-damage)
+    setFx(type)
+    if(next.hp<=0){
+      points+=fight.enemy==='clerk'?65:45
+      setGame({...game,points,sp,hp,flags:Array.from(new Set([...game.flags,'battle_'+fight.enemy+'_won']))})
+      setFight({...next,busy:false,message:'敵人終於倒下。你成功取得離開嘅機會。'})
+      setMode('story')
+      block.current=false
+      return
     }
-    s.enemyHp = Math.max(0, s.enemyHp - dmg)
-    showHit(dmg, 'enemy')
-    if (dmg) s.message += ' 造成 ' + dmg + ' 傷害。'
-    if (s.wave === 2 && s.enemyHp > 0 && s.enemyHp <= 72 && !s.berserk) {
-      s.berserk = true
-      s.message += ' ⚠ 第二形態：逆時狂暴覺醒！'
-    }
-    if (s.enemyHp === 0) {
-      s.phase = 'won'; s.points += s.wave === 1 ? 75 : 140; s.level++
-      s.message += ' 敵人倒下，戰鬥勝利！'; lock.current = false
-    } else if (skip) {
-      s.phase = 'fight'; s.turn++; lock.current = false
-    }
-    setG(s)
-    if (s.phase !== 'enemy') return
-
-    timer.current = setTimeout(() => {
-      const next: Game = { ...s, speaker: enemyName(s), phase: 'fight' }
-      const move = (s.turn - 1) % 4
-      let hp = 0, sp = 0
-      if (move === 0) {
-        hp = s.wave === 1 ? 0 : 7; sp = s.wave === 1 ? 9 : 17
-        next.message = '姓名核對！你嘅無名身份幫你抵擋部分精神侵蝕。'
-      } else if (move === 1) {
-        hp = s.wave === 1 ? 25 : 32; next.message = '敵人舉起巨刃猛烈突刺！'
-      } else if (move === 2) {
-        if (s.ticketUsed) { next.message = '染血車票嘅餘燼令身份檢查失效！' }
-        else { hp = s.wave === 1 ? 11 : 17; sp = 10; next.marks++; next.message = '身份核對失敗！你被蓋上「待回收」標記。' }
-      } else {
-        hp = s.wave === 1 ? 18 : 25; sp = s.wave === 1 ? 10 : 14
-        next.message = '黑暗影子包圍你，奪走生命同理智！'
-      }
-      if (hp) hp += next.marks * 3
-      if (s.berserk) {
-        hp += hp > 0 ? 6 : 0
-        sp += sp > 0 ? 4 : 0
-        next.message = '【第二形態】' + next.message
-      }
-      if (guard) { hp = Math.ceil(hp / 4); sp = Math.ceil(sp / 4); next.message = '防禦成功！' + next.message }
-      next.hp = limit(next.hp - hp); next.sp = limit(next.sp - sp)
-      showHit(hp || sp, 'hero', hp ? 'HP' : 'SP')
-      next.message += ' HP −' + hp + '，SP −' + sp
-      if (next.hp <= 0 || next.sp <= 0) { next.phase = 'lost'; next.message += ' 你失去意識。' }
-      next.turn++
-      if (hp || sp) fx('hurt')
-      setG(next)
-      lock.current = false
-    }, 680)
+    setGame(prev=>({...prev,hp,sp}))
+    setFight(next)
+    activeTimer.current=setTimeout(()=>{
+      let enemyHP=0,enemySP=0
+      const intent=(fight.turn-1)%3
+      if(intent===0){enemySP=fight.enemy==='clerk'?10:14}
+      if(intent===1){enemyHP=fight.enemy==='clerk'?24:29}
+      if(intent===2){enemyHP=fight.enemy==='clerk'?12:16;enemySP=7}
+      if(defend){enemyHP=Math.ceil(enemyHP*.25);enemySP=Math.ceil(enemySP*.25)}
+      const afterHP=clamp(hp-enemyHP),afterSP=clamp(sp-enemySP)
+      setGame(prev=>({...prev,hp:afterHP,sp:afterSP}))
+      setFight(prev=>prev?{...prev,turn:prev.turn+1,busy:false,animation:stunned?'mirror':'hurt',
+        message:stunned?'敵人被鏡面困住，冇辦法反擊。':enemyName(fight.enemy)+'發動'+['身份核對','猛烈突刺','影子回收'][intent]+'！生命 −'+enemyHP+'，理智 −'+enemySP}:prev)
+      if(afterHP===0||afterSP===0)setMode('lost')
+      setFx(stunned?'mirror':'hurt')
+      block.current=false
+    },580)
   }
-
-  const shop = (item: 'heal' | 'calm' | 'weapon') => {
-    if (g.phase !== 'shop') return
-    const price = item === 'weapon' ? 45 : 25
-    if (g.points < price || item === 'weapon' && g.weapon) return
-    if (item === 'heal' && g.hp >= 100 || item === 'calm' && g.sp >= 100) return
-    setG({ ...g, points: g.points - price, hp: item === 'heal' ? limit(g.hp + 30) : g.hp,
-      sp: item === 'calm' ? limit(g.sp + 25) : g.sp, weapon: item === 'weapon' ? true : g.weapon,
-      message: item === 'heal' ? '已回復生命 +30。' : item === 'calm' ? '已回復理智 +25。' : '劍刃獲得永久強化，攻擊 +6。', speaker: '神秘商人' })
+  const battleWinReturn=()=>{
+    if(!fight||fight.hp>0)return
+    setGame(prev=>({...prev,scene:fight.returnScene,line:0}))
+    setFight(null);setFx('');setMode('story')
   }
-  const nextWave = () => {
-    if (g.phase !== 'shop' || lock.current) return
-    lock.current = true
-    setHit(null)
-    fx('intro')
-    setG({ ...g, phase: 'enemy', wave: 2, turn: 1, enemyHp: 145, weak: false,
-      marks: 0, berserk: false, mirrorUsed: false, phoneUsed: false, speaker: '夜班裁定官',
-      message: '「你根本唔應該通過第一關。」時鐘嘅指針開始倒轉。' })
-    introTimer.current = setTimeout(() => {
-      lock.current = false
-      setG(prev => prev.wave === 2 && prev.phase === 'enemy' ? { ...prev, phase: 'fight' } : prev)
-    }, 1900)
+  const revive=()=>{
+    if(!fight){setGame(prev=>({...prev,hp:60,sp:50,points:Math.max(0,prev.points-25),scene:'hub_return',line:0}));setMode('story');return}
+    block.current=false
+    setGame(prev=>({...prev,hp:70,sp:50,points:Math.max(0,prev.points-25),journal:['死而復活令你失去 25 積分。',...prev.journal]}))
+    setFight({...fight,hp:maxEnemyHP(fight.enemy),turn:1,weak:false,mirrorUsed:false,busy:false,animation:'',message:'【復活協議】你回到戰鬥開始時。'})
+    setMode('battle')
   }
-  const full = () => {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {})
-    else document.exitFullscreen?.().catch(() => {})
-  }
-  const actionDisabled = (type: Action) => !ready || lock.current || g.phase !== 'fight' ||
-    type === 'seal' && g.sp < 18 || type === 'mirror' && g.mirrorUsed ||
-    type === 'phone' && g.phoneUsed || type === 'ticket' && g.ticketUsed
+  const isBattle=mode==='battle'||mode==='lost'&&Boolean(fight)
+  const theme:isStoryTheme = isBattle ? 'archive':scene.theme
+  type isStoryTheme = WorldTheme
 
-  return (
-    <main className="nw-game">
-      <header className="nw-top">
-        <div className="nw-brand"><b>∞</b> NIGHTWALKER <small>/ 無限流</small></div>
-        <div className="nw-head-actions">
-          <span>回合 {String(g.turn).padStart(2, '0')}</span>
-          <button onClick={() => setMuted(!muted)} aria-label="音效開關">{muted ? '♪ OFF' : '♪ ON'}</button>
-          <button onClick={full} aria-label="全螢幕">⛶</button>
-        </div>
-      </header>
-      <section className={'nw-arena nw-' + anim + (g.wave === 2 ? ' nw-boss-stage' : '') + (g.berserk ? ' nw-enraged' : '') + (g.phase === 'won' ? ' nw-victorious' : '')}>
-        <CharacterArt boss={g.wave === 2} />
-        <div className="nw-hud nw-left">
-          <span className="nw-hud-avatar nw-hud-avatar-hero"><HudPortrait kind="hero"/></span>
-          <div className="nw-hudname"><b>無名生還者</b><small>Lv.{g.level}</small></div>
-          <div className="nw-hudrow"><span>HP</span><span>{g.hp}/100</span></div>
-          <div className="nw-meter"><i className="nw-life" style={{ width: g.hp + '%' }} /></div>
-          <div className="nw-hudrow"><span>理智 SP</span><span>{g.sp}/100</span></div>
-          <div className="nw-meter"><i className="nw-sp" style={{ width: g.sp + '%' }} /></div>
-        </div>
-        <div className="nw-hud nw-right">
-          <span className="nw-hud-avatar nw-hud-avatar-enemy"><HudPortrait kind={g.wave === 1 ? 'clerk' : 'clock'}/></span>
-          <div className="nw-hudname"><b>{enemyName(g)}</b><small>{g.berserk ? 'RAGE' : g.wave === 2 ? 'BOSS' : 'ELITE'}</small></div>
-          <div className="nw-hudrow"><span>HP</span><span>{g.enemyHp}/{enemyMax(g)}</span></div>
-          <div className="nw-meter"><i className="nw-enemyhp" style={{ width: 100 * g.enemyHp / enemyMax(g) + '%' }} /></div>
-          <div className="nw-hudrow"><span>{g.berserk ? '狂暴第二形態' : g.weak ? '弱點暴露' : '弱點未知'}</span><span>印記 {g.marks}</span></div>
-        </div>
-        <div className="nw-vfx"><i className="nw-slash"/><i className="nw-sigil">✧</i><i className="nw-shield"/><i className="nw-beam"/><i className="nw-hit"/>
-          <i className="nw-spark nw-spark-one"/><i className="nw-spark nw-spark-two"/><i className="nw-spark nw-spark-three"/>
-          <div className="nw-ultimate-title">遺忘者印記 <span>FORGOTTEN SEAL</span></div>
-          <div className="nw-boss-intro"><span>WARNING · CLASS D ANOMALY</span><strong>夜班裁定官</strong><small>THE MIDNIGHT ARBITER</small></div>
-          {hit && <div key={hit.id} className={'nw-damage nw-damage-' + hit.side} aria-hidden="true"><small>{hit.label}</small>−{hit.amount}</div>}
-        </div>
-        <div className="nw-arena-bottom">
-          <span>{g.wave === 1 ? 'STAGE 02 · LOST & FOUND' : 'BOSS · THE ARBITER'}</span><span className="nw-intent">⚠ {g.berserk ? '狂暴 · ' : ''}{intents[g.wave - 1][(g.turn - 1) % 4]}</span>
-        </div>
-      </section>
-      <div className="nw-credits"><strong>✦ {g.points} 積分</strong><span>遺忘者印記 Lv.{g.level}</span></div>
-      <section className="nw-dialogue">
-        <div className="nw-speaker-icon">◇</div><div className="nw-dialogue-content"><b>{g.speaker}</b><p>{g.message}</p></div>
-      </section>
-      <section className="nw-controls">
-        <div className="nw-control-head"><span>▣ COMBAT COMMAND</span><span>{g.weak ? '◉ 弱點已識破 +11' : '◎ 敵方弱點：未知'}</span></div>
-        <div className="nw-action-grid">
-          <button className="nw-command nw-command-attack" disabled={actionDisabled('attack')} onClick={() => act('attack')}><span className="nw-command-icon">⚔</span><b>斬擊</b><small>{17 + (g.weak ? 11 : 0) + (g.weapon ? 6 : 0)} 傷害</small></button>
-          <button className="nw-command nw-command-guard" disabled={actionDisabled('guard')} onClick={() => act('guard')}><span className="nw-command-icon">◇</span><b>防禦</b><small>減傷 75%</small></button>
-          <button className="nw-command nw-command-inspect" disabled={actionDisabled('inspect')} onClick={() => act('inspect')}><span className="nw-command-icon">◎</span><b>偵查</b><small>{g.weak ? '弱點已識破' : '識破弱點'}</small></button>
-          <button className="nw-command nw-ultimate" disabled={actionDisabled('seal')} onClick={() => act('seal')}><span className="nw-command-icon nw-command-sigil">✧</span><b>遺忘印記</b><small>SP −18</small></button>
-          <button className="nw-command nw-command-mirror" disabled={actionDisabled('mirror')} onClick={() => act('mirror')}><span className="nw-command-icon">✦</span><b>鏡像斬</b><small>{g.mirrorUsed ? '本場已用' : '打斷攻擊'}</small></button>
-          <button className="nw-command nw-command-bag" onClick={() => setPopup('bag')} disabled={g.phase === 'enemy'}><span className="nw-command-icon">▣</span><b>背包</b><small>特殊道具</small></button>
-        </div>
-      </section>
-      <footer className="nw-footer"><span>ONE SCREEN · AUTO SAVE</span><button onClick={() => setPopup('info')}>☰ 遊戲資料</button></footer>
+  return <main className="iw-app">
+    <header className="iw-top">
+      <div className="iw-mark" aria-label="Nightwalker">◈</div>
+      <div className="iw-brand"><strong>NIGHTWALKER <em>∞</em></strong><small>無限流・多重世界</small></div>
+      <div className="iw-world-id"><span>WORLD {String(game.cleared.length+game.riftCount).padStart(2,'0')}</span><small>{isBattle?'戰鬥遭遇':scene.world}</small></div>
+      <button className="iw-top-button" aria-label="選單" onClick={()=>setOverlay('menu')}>☷</button>
+    </header>
 
-      {(popup || ['won', 'shop', 'finished', 'lost'].includes(g.phase)) && <div className="nw-overlay">
-        <div className="nw-modal">
-          {popup === 'info' ? <>
-            <h2>角色及系統</h2><p>永久身份：無名生還者。零號月台路線：車票 → 鏡面 → 放棄名字。</p>
-            <p>生命 {g.hp}/100 · 理智 {g.sp}/100 · 積分 {g.points} · 等級 {g.level}</p>
-            <p>自動存檔儲存在本機瀏覽器，清除網站資料會失去進度。</p>
-            <button className="nw-secondary" onClick={reset}>重頭挑戰</button>
-            <button className="nw-primary" onClick={() => setPopup(null)}>繼續遊戲</button>
-          </> : popup === 'bag' ? <>
-            <h2>▣ 特殊道具</h2><p>你繼承咗零號月台嘅異常物品。特殊物品有使用限制。</p>
-            <div className="nw-item"><div><b>◇ 舊式手機</b><small>閃光攻擊，有機會打斷敵人</small></div><button disabled={actionDisabled('phone')} onClick={() => {setPopup(null); act('phone')}}>{g.phoneUsed ? '已用' : '使用'}</button></div>
-            <div className="nw-item"><div><b>▤ 染血車票</b><small>一次性道具；反制身份核對</small></div><button disabled={actionDisabled('ticket')} onClick={() => {setPopup(null); act('ticket')}}>{g.ticketUsed ? '已用' : '使用'}</button></div>
-            <div className="nw-item"><div><b>✧ 遺忘者印記</b><small>永久被動身份 · 裝備中</small></div><button disabled>已裝備</button></div>
-            <button className="nw-primary" onClick={() => setPopup(null)}>返回戰鬥</button>
-          </> : g.phase === 'won' ? <>
-            <h2>✦ 戰鬥勝利</h2>
-            <p>{g.wave === 1 ? '失物管理員崩裂成灰燼，你獲得「鏽蝕檔案鑰匙」。' : '夜班裁定官嘅時鐘停咗。你終於成功逃離收容所。'}</p>
-            <p>獲得 {g.wave === 1 ? 75 : 140} 積分，永久技能已升級至 Lv.{g.level}！</p>
-            <button className="nw-primary" onClick={() => {if (g.wave === 1) setG({ ...g, phase: 'shop' }); else setG({ ...g, phase: 'finished' })}}>{g.wave === 1 ? '開啟主神積分商店 →' : '查看副本結算 →'}</button>
-          </> : g.phase === 'shop' ? <>
-            <h2>⚒ 主神商店</h2><p>可用積分：{g.points}。第二場 Boss 前最後一次補給機會。</p>
-            <div className="nw-item"><div><b>✚ 急救針劑</b><small>HP +30</small></div><button disabled={g.points < 25 || g.hp === 100} onClick={() => shop('heal')}>25 ✦</button></div>
-            <div className="nw-item"><div><b>✧ 鎮魂藥劑</b><small>理智 +25</small></div><button disabled={g.points < 25 || g.sp === 100} onClick={() => shop('calm')}>25 ✦</button></div>
-            <div className="nw-item"><div><b>⚔ 劍刃銘刻</b><small>攻擊永久 +6</small></div><button disabled={g.points < 45 || g.weapon} onClick={() => shop('weapon')}>{g.weapon ? '已購買' : '45 ✦'}</button></div>
-            <button className="nw-primary" onClick={nextWave}>進入夜班裁定官 Boss 戰 →</button>
-          </> : g.phase === 'lost' ? <>
-            <h2>☠ 挑戰失敗</h2><p>{g.hp === 0 ? '生命值歸零，你成為下一份失物紀錄。' : '理智被吞噬，你再分唔清自己同倒影。'}</p>
-            <button className="nw-primary" onClick={reset}>重新挑戰</button>
-          </> : <>
-            <h2>✦ 副本通關</h2><p>兩場戰鬥已完成。等級 {g.level}，HP {g.hp}，理智 {g.sp}，剩餘積分 {g.points}。</p>
-            <p>下一個隨機副本會延續「無名生還者」嘅身份與裝備。</p>
-            <button className="nw-primary" onClick={reset}>再次挑戰</button>
-          </>}
-        </div>
-      </div>}
-    </main>
-  )
+    <section className={'iw-stage iw-theme-'+theme+(isBattle?' iw-battle-active iw-fx-'+fx:'')}>
+      <WorldBackdrop theme={theme} battle={isBattle} count={game.riftCount}/>
+      <div className="iw-vignette"/>
+      <div className="iw-stage-head">
+        <div><span className="iw-stage-tag">{isBattle?'⚔ COMBAT': 'STORY MODE'}</span><strong>{isBattle?'規則異常・交戰中':scene.title}</strong></div>
+        {isBattle?<span className="iw-scene-counter">回合 {fight?.turn||1}</span>:<span className="iw-scene-counter">{game.cleared.length} 個世界通關</span>}
+      </div>
+      <div className="iw-stage-bottom">
+        {isBattle?<div className="iw-foe"><small>ANOMALY ENCOUNTER</small><strong>{fight?enemyName(fight.enemy):'未知'}</strong><div className="iw-foe-bar"><i style={{width:((fight?.hp||0)/maxEnemyHP(fight?.enemy||'clerk')*100)+'%'}}/></div></div>:
+          <div className="iw-scene-quote"><span>✧</span> 你的選擇，將會留低痕跡。</div>}
+      </div>
+      {isBattle&&<div className="iw-battle-fx"><i/><b>✦</b></div>}
+    </section>
+
+    <section className="iw-status" aria-label="角色狀態">
+      <div className="iw-player-identity"><span className="iw-player-avatar">✧</span><div><strong>無名生還者</strong><small>身份：遺忘者</small></div></div>
+      <Stat label="HP" value={game.hp} type="hp"/>
+      <Stat label="SP" value={game.sp} type="sp"/>
+      <div className="iw-points"><strong>✦ {game.points}</strong><small>積分</small></div>
+    </section>
+
+    <section className="iw-dialogue">
+      <div className="iw-dialogue-head"><Avatar face={isBattle?'clerk':scene.face}/><div><strong>{isBattle?(fight?enemyName(fight.enemy):'戰鬥') : scene.speaker}</strong><small>{isBattle?'戰鬥情報・敵方攻擊可預判':scene.world+' ・ '+(currentLine+1)+'/'+lines.length}</small></div><span className="iw-type-indicator">{isBattle?'⚔':'●'}</span></div>
+      <p>{isBattle ? (fight?.message||'') : lines[currentLine]}</p>
+    </section>
+
+    {mode==='story'?<section className="iw-actions" aria-label="故事選擇">
+      {!atChoices?<button className="iw-next" onClick={advance}><span>繼續閱讀故事</span><strong>下一句 →</strong></button>:
+        <div className="iw-choices">{choices.map((choice,i)=><button className="iw-choice" key={i} onClick={()=>choose(choice)}><span className="iw-choice-count">{String(i+1).padStart(2,'0')}</span><span className="iw-choice-text"><strong>{choice.label}</strong>{choice.hint&&<small>{choice.hint}</small>}</span><span className="iw-choice-arrow">›</span></button>)}
+          {choices.length===0&&<button className="iw-choice" onClick={returnHub}>返回主神空間 →</button>}
+        </div>}
+    </section>:
+    mode==='battle'?<section className="iw-actions iw-combat-panel" aria-label="戰鬥指令">
+      {fight?.hp===0?<button className="iw-next" onClick={battleWinReturn}><span>勝利・戰利品已記錄</span><strong>繼續劇情 →</strong></button>:
+        <div className="iw-battle-grid">{battleMoves.map(m=><button key={m.key} className={'iw-battle-command iw-skill-'+m.key} disabled={fight?.busy||m.key==='mirror'&&fight?.mirrorUsed||m.key==='seal'&&game.sp<18} onClick={()=>actionBattle(m.key)}><span>{m.icon}</span><strong>{m.label}</strong><small>{m.info}</small></button>)}</div>}
+    </section>:<section className="iw-actions"><div className="iw-death"><strong>◈ 意識中斷</strong><p>你的生命或理智已耗盡。主神准許你支付 25 積分，重置今次危機。</p><button onClick={revive}>支付積分・重返輪迴</button></div></section>}
+
+    <nav className="iw-bottom-nav" aria-label="遊戲功能">
+      <button onClick={()=>setOverlay('map')}><span>◇</span><small>世界</small></button>
+      <button onClick={()=>setOverlay('journal')}><span>▤</span><small>劇情</small></button>
+      <button onClick={()=>setOverlay('bag')}><span>▣</span><small>背包</small></button>
+      <button onClick={()=>setOverlay('shop')}><span>✦</span><small>商店</small></button>
+      <button onClick={()=>setOverlay('menu')}><span>☰</span><small>選單</small></button>
+    </nav>
+
+    {overlay&&<div className="iw-overlay" onClick={()=>setOverlay(null)}>
+      <div className="iw-sheet" onClick={e=>e.stopPropagation()}>
+        <div className="iw-sheet-handle"/>
+        <div className="iw-sheet-header"><strong>{overlay==='bag'?'背包與裝備':overlay==='journal'?'因果與劇情紀錄':overlay==='shop'?'主神商店':overlay==='map'?'多重世界地圖':'遊戲設定'}</strong><button onClick={()=>setOverlay(null)}>✕</button></div>
+        {overlay==='bag'&&<div className="iw-sheet-scroll"><p className="iw-note">物品會跨世界保留；有啲線索喺其他世界會解鎖特別選項。</p>
+          {game.items.map((item,i)=><div className="iw-sheet-line" key={i}><span>◇</span><strong>{item}</strong><small>已持有</small></div>)}
+          <div className="iw-bond">阿霧信任：{game.bond>=2?'盟友':game.bond>=1?'熟識':'陌生'}（{game.bond}）</div>
+        </div>}
+        {overlay==='journal'&&<div className="iw-sheet-scroll"><p className="iw-note">你做過嘅重要決定會永久記錄。故事不是每次都能重來。</p>
+          <h3>重大發現</h3>{game.journal.map((item,i)=><div className="iw-journal-line" key={i}>{item}</div>)}
+          <h3>最近選擇</h3>{game.path.slice(0,15).map((item,i)=><div className="iw-path-line" key={i}>{item}</div>)}
+        </div>}
+        {overlay==='map'&&<div className="iw-sheet-scroll"><p className="iw-note">完成世界：{game.cleared.length} ・ 裂隙輪迴：{game.riftCount}</p>
+          {['零號月台','失物管理處','血月公寓','鏡城病院','未知裂隙'].map(world=><div className="iw-map-line" key={world}><span>✧</span><strong>{world}</strong><small>{game.cleared.includes(world)?'✓ 已完成':world==='未知裂隙'?'每次重新組合':'未通關'}</small></div>)}
+          <button className="iw-modal-action" onClick={()=>{setOverlay(null);if(mode==='story'){setGame(prev=>({...prev,scene:'hub_portals',line:0}))}}} disabled={mode!=='story'}>返回世界傳送門</button>
+        </div>}
+        {overlay==='shop'&&<div className="iw-sheet-scroll"><p className="iw-note">可用積分：{game.points}。購買後會即時更新，跨世界保留。</p>{shopItems.map(item=><div className="iw-shop-row" key={item.key}><span>{item.icon}</span><div><strong>{item.name}</strong><small>{item.note}</small></div><button onClick={()=>buy(item.key)} disabled={game.points<item.cost||item.key==='med'&&game.hp===100||item.key==='calm'&&game.sp===100||item.key==='mirror'&&game.items.includes('鏡界護符')}>{item.cost} ✦</button></div>)}</div>}
+        {overlay==='menu'&&<div className="iw-sheet-scroll"><p className="iw-note">手機直向優先 ・ 自動儲存於目前瀏覽器</p>
+          <div className="iw-menu-card"><strong>多世界存檔</strong><small>生命 {game.hp}/100 ・ 理智 {game.sp}/100 ・ 已通關 {game.cleared.length} 世界</small></div>
+          <a className="iw-modal-action" href="/combat">⚔ 開啟經典戰鬥訓練場</a>
+          <button className="iw-modal-action" onClick={()=>setOverlay(null)}>返回故事</button>
+          <button className="iw-danger-action" onClick={()=>{if(window.confirm('確定刪除本機故事進度，由零號月台結算後重新開始？'))restart()}}>刪除存檔並重新開始</button>
+        </div>}
+      </div>
+    </div>}
+  </main>
 }
