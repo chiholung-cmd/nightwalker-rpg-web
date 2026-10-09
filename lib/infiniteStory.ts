@@ -32,6 +32,7 @@ export type Choice = {
   requiresItem?: string
   bondAtLeast?: number
   requiresTalent?: 'insight' | 'mirror'
+  requiresMastery?: {key:'tech'|'occult'|'martial';rank:number}
   notCleared?: string
   needsCleared?: string
   action?: 'shop' | 'battle' | 'combat-practice'
@@ -508,6 +509,7 @@ export function availableChoices(scene: Scene, state: SaveState): Choice[] {
     if(c.requiresItem && !state.items.includes(c.requiresItem)) return false
     if(c.bondAtLeast !== undefined && state.bond < c.bondAtLeast) return false
     if(c.requiresTalent && talentRank(state,c.requiresTalent)<1)return false
+    if(c.requiresMastery && (state.mastery?.[c.requiresMastery.key]||0)<c.requiresMastery.rank)return false
     if(c.notCleared && state.cleared.includes(c.notCleared)) return false
     if(c.needsCleared && !c.needsCleared.split('|').every(w=>state.cleared.includes(w))) return false
     return true
