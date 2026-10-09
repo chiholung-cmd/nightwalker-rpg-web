@@ -41,6 +41,7 @@ export const STORM_WORLD: Record<string, Scene> = {
     choices:[
       {label:'記低預言，秘密通知聶風同步驚雲',hint:'聯手主線',to:'fy_wind',effect:{flags:['fy_shared_prophecy'],items:['半張命數圖'],sp:-6,journal:'泥菩薩預言令雄霸決意挑撥風雲。'}},
       {label:'先將預言交畀秦霜查核',hint:'需秦霜信任',to:'fy_wind',requires:'fy_qinshuang_ally',effect:{flags:['fy_qin_knows_prophecy'],xp:25}},
+      {label:'用獵魔封印經驗識破命數盒上嘅防護機關',hint:'跨世界秘術傳承 Lv.1',to:'fy_wind',requiresMastery:{key:'occult',rank:1},effect:{flags:['fy_qin_knows_prophecy'],items:['泥菩薩機關圖'],sp:-6,xp:30}},
       {label:'隱藏後半段預言，避免提早觸怒雄霸',hint:'延後危機、失去情報優勢',to:'fy_kongchi',effect:{flags:['fy_hide_prophecy'],sp:-4}}
     ]
   },
