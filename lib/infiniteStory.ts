@@ -27,6 +27,7 @@ export type Choice = {
   to?: string
   effect?: Effect
   requires?: string
+  requiresAll?: string[]
   without?: string
   requiresItem?: string
   bondAtLeast?: number
@@ -502,6 +503,7 @@ export const SCENES: Record<string, Scene> = {
 export function availableChoices(scene: Scene, state: SaveState): Choice[] {
   return scene.choices.filter(c => {
     if(c.requires && !state.flags.includes(c.requires)) return false
+    if(c.requiresAll && !c.requiresAll.every(flag=>state.flags.includes(flag)))return false
     if(c.without && state.flags.includes(c.without)) return false
     if(c.requiresItem && !state.items.includes(c.requiresItem)) return false
     if(c.bondAtLeast !== undefined && state.bond < c.bondAtLeast) return false
