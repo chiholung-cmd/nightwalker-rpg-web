@@ -5,10 +5,12 @@ import {
   INITIAL, availableChoices, applyEffect, effectiveLines, sceneFor,
   type Choice, type SaveState, type WorldTheme
 } from '../lib/infiniteStory'
+import { TALENTS, awardXp, combatDamage, maxHp, maxSp, spendTalent, talentRank, withProgress, xpToNext, type TalentId } from '../lib/progression'
 import './story.css'
 
 const SAVE_KEY = 'nightwalker-multiverse-story-v1'
-type Overlay = 'bag' | 'journal' | 'shop' | 'menu' | 'map' | null
+const SESSION_KEY = 'nightwalker-multiverse-session-v2'
+type Overlay = 'bag' | 'journal' | 'shop' | 'menu' | 'map' | 'character' | null
 type CombatKind = 'clerk' | 'echo'
 type Fight = {
   enemy: CombatKind
@@ -100,8 +102,8 @@ function Avatar({ face }: { face?: string }) {
   const glyph = face === 'guide' ? '霧' : face === 'girl' ? '✿' : face === 'clerk' ? '✂' : face === 'nurse' ? '✚' : face === 'neighbor' ? '月' : '∞'
   return <span className={'iw-avatar iw-avatar-'+(face||'system')} aria-hidden="true">{glyph}</span>
 }
-function Stat({ label, value, type }: { label:string; value:number; type:'hp'|'sp' }) {
-  return <div className="iw-stat"><div className="iw-stat-label"><span>{label}</span><strong>{miniStat(value)}</strong></div><div className="iw-stat-track"><i className={'iw-fill-'+type} style={{width:value+'%'}}/></div></div>
+function Stat({ label, value, max, type }: { label:string; value:number; max:number; type:'hp'|'sp' }) {
+  return <div className="iw-stat"><div className="iw-stat-label"><span>{label}</span><strong>{miniStat(value)}<i>/{max}</i></strong></div><div className="iw-stat-track"><i className={'iw-fill-'+type} style={{width:100*value/max+'%'}}/></div></div>
 }
 const shopItems = [
   { key:'med', name:'急救針劑', icon:'✚', cost:30, note:'回復 35 HP' },
@@ -123,28 +125,50 @@ export default function HomePage() {
   const [fight,setFight] = useState<Fight|null>(null)
   const [overlay,setOverlay] = useState<Overlay>(null)
   const [fx,setFx] = useState('')
+  const [visibleChars,setVisibleChars]=useState(0)
+  const [textInstant,setTextInstant]=useState(false)
   const block = useRef(false)
   const activeTimer=useRef<ReturnType<typeof setTimeout>|null>(null)
 
   useEffect(()=>{
     try {
-      const raw=localStorage.getItem(SAVE_KEY)
+      const sessionRaw=localStorage.getItem(SESSION_KEY)
+      const raw=sessionRaw||localStorage.getItem(SAVE_KEY)
       if(raw){
-        const parsed=JSON.parse(raw) as SaveState
+        const session=sessionRaw?JSON.parse(sessionRaw):null
+        const parsed=(session?.game||JSON.parse(raw)) as SaveState
         if(parsed && typeof parsed.scene==='string' && Array.isArray(parsed.flags) && Array.isArray(parsed.items) && sceneFor(parsed.scene).id===parsed.scene){
-          setGame({...INITIAL,...parsed})
-          if(parsed.hp<=0 || parsed.sp<=0)setMode('lost')
+          setGame(withProgress({...INITIAL,...parsed}))
+          if(session && session.fight && (session.mode==='battle'||session.mode==='lost')){
+            const safeFight=session.fight as Fight
+            const enemy=safeFight.enemy==='echo'?'echo':'clerk'
+            setFight({...safeFight,enemy,busy:false,animation:'',hp:Math.min(maxEnemyHP(enemy),Math.max(0,safeFight.hp))})
+            setMode(session.mode)
+          }else if(parsed.hp<=0 || parsed.sp<=0)setMode('lost')
         }
       }
     }catch{/* Invalid save starts from inherited zero-station state */}
     setHydrated(true)
     return ()=>{if(activeTimer.current)clearTimeout(activeTimer.current)}
   },[])
-  useEffect(()=>{if(hydrated)localStorage.setItem(SAVE_KEY,JSON.stringify(game))},[game,hydrated])
+  useEffect(()=>{
+    if(!hydrated)return
+    localStorage.setItem(SAVE_KEY,JSON.stringify(game))
+    localStorage.setItem(SESSION_KEY,JSON.stringify({game,mode,fight:fight?{...fight,busy:false,animation:''}:null}))
+  },[game,mode,fight,hydrated])
 
   const scene=sceneFor(game.scene)
   const lines=effectiveLines(scene,game)
   const currentLine=Math.min(game.line,lines.length-1)
+  const fullText=lines[currentLine]||''
+  useEffect(()=>{
+    setTextInstant(false);setVisibleChars(0)
+  },[game.scene,game.line])
+  useEffect(()=>{
+    if(mode!=='story'||textInstant||visibleChars>=fullText.length)return
+    const t=setTimeout(()=>setVisibleChars(n=>Math.min(n+2,fullText.length)),14)
+    return ()=>clearTimeout(t)
+  },[mode,game.scene,game.line,fullText,visibleChars,textInstant])
   const atChoices=currentLine===lines.length-1
   const choices=availableChoices(scene,game)
   const choose=(choice:Choice)=>{
@@ -166,21 +190,23 @@ export default function HomePage() {
   }
   const advance=()=>{
     if(mode!=='story'||overlay)return
+    if(visibleChars<fullText.length){setTextInstant(true);setVisibleChars(fullText.length);return}
     if(game.line<lines.length-1)setGame({...game,line:game.line+1})
   }
   const buy=(key:string)=>{
     const item=shopItems.find(x=>x.key===key)
     if(!item||game.points<item.cost)return
-    if(key==='med'&&game.hp===100||key==='calm'&&game.sp===100||key==='mirror'&&game.items.includes('鏡界護符'))return
+    if(key==='med'&&game.hp===maxHp(game)||key==='calm'&&game.sp===maxSp(game)||key==='mirror'&&game.items.includes('鏡界護符'))return
     setGame({...game,points:game.points-item.cost,
-      hp:key==='med'?clamp(game.hp+35):game.hp,
-      sp:key==='calm'?clamp(game.sp+25):game.sp,
+      hp:key==='med'?clamp(game.hp+35,maxHp(game)):game.hp,
+      sp:key==='calm'?clamp(game.sp+25,maxSp(game)):game.sp,
       items:key==='mirror'?[...game.items,'鏡界護符']:game.items,
       journal:key==='mirror'?['購入鏡界護符，可感應其他世界的鏡面。',...game.journal]:game.journal})
   }
   const restart=()=>{
     if(activeTimer.current)clearTimeout(activeTimer.current)
     block.current=false;setGame(INITIAL);setFight(null);setMode('story');setOverlay(null);setFx('')
+    localStorage.removeItem(SESSION_KEY)
   }
   const returnHub=()=>{
     if(activeTimer.current)clearTimeout(activeTimer.current)
@@ -192,17 +218,16 @@ export default function HomePage() {
     block.current=true
     const next:Fight={...fight,busy:true,animation:type}
     let hp=game.hp,sp=game.sp,points=game.points,damage=0,stunned=false,defend=false
-    const bonus=fight.weak?9:0
-    if(type==='attack'){damage=19+bonus;next.message='劍光直擊敵人，造成 '+damage+' 傷害！'}
+    if(type==='attack'){damage=combatDamage(game,'attack',fight.weak);next.message='劍光直擊敵人，造成 '+damage+' 傷害！'}
     if(type==='inspect'){next.weak=true;next.message='你發現敵人心臟有一道裂縫！之後攻擊傷害提升。'}
-    if(type==='guard'){defend=true;sp=clamp(sp+7);next.message='你降低身體重心進入防禦姿態，理智回復 7。'}
-    if(type==='seal'){sp-=18;damage=35+bonus;next.message='【遺忘者印記】被刪除嘅名字化成紫光，造成 '+damage+' 傷害！'}
-    if(type==='mirror'){damage=29+bonus;next.mirrorUsed=true;stunned=true;next.message='你嘅鏡像同時出刀！敵人行動被打斷，傷害 '+damage+'。'}
+    if(type==='guard'){defend=true;sp=clamp(sp+7,maxSp(game));next.message='你降低身體重心進入防禦姿態，理智回復 7。'}
+    if(type==='seal'){sp-=18;damage=combatDamage(game,'seal',fight.weak);next.message='【遺忘者印記】被刪除嘅名字化成紫光，造成 '+damage+' 傷害！'}
+    if(type==='mirror'){damage=combatDamage(game,'mirror',fight.weak);next.mirrorUsed=true;stunned=true;next.message='你嘅鏡像同時出刀！敵人行動被打斷，傷害 '+damage+'。'}
     next.hp=Math.max(0,next.hp-damage)
     setFx(type)
     if(next.hp<=0){
       points+=fight.enemy==='clerk'?65:45
-      setGame({...game,points,sp,hp,flags:Array.from(new Set([...game.flags,'battle_'+fight.enemy+'_won'])),journal:['成功擊敗 '+enemyName(fight.enemy)+'，獲得 '+(fight.enemy==='clerk'?65:45)+' 積分。',...game.journal]})
+      setGame(awardXp({...game,points,sp,hp,flags:Array.from(new Set([...game.flags,'battle_'+fight.enemy+'_won'])),journal:['成功擊敗 '+enemyName(fight.enemy)+'，獲得 '+(fight.enemy==='clerk'?65:45)+' 積分。',...game.journal]},fight.enemy==='clerk'?45:65))
       setFight({...next,busy:false,message:'敵人終於倒下。你成功取得離開嘅機會。'})
       block.current=false
       return
@@ -217,7 +242,7 @@ export default function HomePage() {
       if(intent===2){enemyHP=fight.enemy==='clerk'?12:16;enemySP=7}
       if(stunned){enemyHP=0;enemySP=0}
       else if(defend){enemyHP=Math.ceil(enemyHP*.25);enemySP=Math.ceil(enemySP*.25)}
-      const afterHP=clamp(hp-enemyHP),afterSP=clamp(sp-enemySP)
+      const afterHP=clamp(hp-enemyHP,maxHp(game)),afterSP=clamp(sp-enemySP,maxSp(game))
       setGame(prev=>({...prev,hp:afterHP,sp:afterSP}))
       setFight(prev=>prev?{...prev,turn:prev.turn+1,busy:false,animation:stunned?'mirror':'hurt',
         message:stunned?'敵人被鏡面困住，冇辦法反擊。':enemyName(fight.enemy)+'發動'+['身份核對','猛烈突刺','影子回收'][intent]+'！生命 −'+enemyHP+'，理智 −'+enemySP}:prev)
@@ -238,6 +263,10 @@ export default function HomePage() {
     setGame(prev=>({...prev,hp:70,sp:50,points:Math.max(0,prev.points-25),journal:['死而復活令你失去 25 積分。',...prev.journal]}))
     setFight({...fight,hp:maxEnemyHP(fight.enemy),turn:1,weak:false,mirrorUsed:false,busy:false,animation:'',message:'【復活協議】你回到戰鬥開始時。'})
     setMode('battle')
+  }
+  const addTalent=(id:TalentId)=>{
+    if(mode==='lost')return
+    setGame(prev=>spendTalent(prev,id))
   }
   const isBattle=mode==='battle'||mode==='lost'&&Boolean(fight)
   const theme: WorldTheme = isBattle ? (fight?.enemy==='echo'?'rift':'archive') : scene.theme
@@ -266,14 +295,14 @@ export default function HomePage() {
 
     <section className="iw-status" aria-label="角色狀態">
       <div className="iw-player-identity"><span className="iw-player-avatar">✧</span><div><strong>無名生還者</strong><small>身份：遺忘者</small></div></div>
-      <Stat label="HP" value={game.hp} type="hp"/>
-      <Stat label="SP" value={game.sp} type="sp"/>
+      <Stat label="HP" value={game.hp} max={maxHp(game)} type="hp"/>
+      <Stat label="SP" value={game.sp} max={maxSp(game)} type="sp"/>
       <div className="iw-points"><strong>✦ {game.points}</strong><small>積分</small></div>
     </section>
 
     <section className="iw-dialogue">
       <div className="iw-dialogue-head"><Avatar face={isBattle?'clerk':scene.face}/><div><strong>{isBattle?(fight?enemyName(fight.enemy):'戰鬥') : scene.speaker}</strong><small>{isBattle?'戰鬥情報・敵方攻擊可預判':scene.world+' ・ '+(currentLine+1)+'/'+lines.length}</small></div><span className="iw-type-indicator">{isBattle?'⚔':'●'}</span></div>
-      <p>{isBattle ? (fight?.message||'') : lines[currentLine]}</p>
+      <p className="iw-talking" onClick={()=>{if(mode==='story'){setTextInstant(true);setVisibleChars(fullText.length)}}}>{isBattle ? (fight?.message||'') : fullText.slice(0,visibleChars)}{mode==='story'&&visibleChars<fullText.length&&<span className="iw-cursor">▍</span>}</p>
     </section>
 
     {mode==='story'?<section className="iw-actions" aria-label="故事選擇">
@@ -290,6 +319,7 @@ export default function HomePage() {
     <nav className="iw-bottom-nav" aria-label="遊戲功能">
       <button onClick={()=>setOverlay('map')}><span>◇</span><small>世界</small></button>
       <button onClick={()=>setOverlay('journal')}><span>▤</span><small>劇情</small></button>
+      <button onClick={()=>setOverlay('character')}><span>✧</span><small>角色</small>{game.talentPoints>0&&<i className="iw-nav-dot"/>}</button>
       <button onClick={()=>setOverlay('bag')}><span>▣</span><small>背包</small></button>
       <button onClick={()=>setOverlay('shop')}><span>✦</span><small>商店</small></button>
       <button onClick={()=>setOverlay('menu')}><span>☰</span><small>選單</small></button>
@@ -298,7 +328,15 @@ export default function HomePage() {
     {overlay&&<div className="iw-overlay" onClick={()=>setOverlay(null)}>
       <div className="iw-sheet" onClick={e=>e.stopPropagation()}>
         <div className="iw-sheet-handle"/>
-        <div className="iw-sheet-header"><strong>{overlay==='bag'?'背包與裝備':overlay==='journal'?'因果與劇情紀錄':overlay==='shop'?'主神商店':overlay==='map'?'多重世界地圖':'遊戲設定'}</strong><button onClick={()=>setOverlay(null)}>✕</button></div>
+        <div className="iw-sheet-header"><strong>{overlay==='bag'?'背包與裝備':overlay==='journal'?'因果與劇情紀錄':overlay==='shop'?'主神商店':overlay==='map'?'多重世界地圖':overlay==='character'?'玩家・天賦與成長':'遊戲設定'}</strong><button onClick={()=>setOverlay(null)}>✕</button></div>
+        {overlay==='character'&&<div className="iw-sheet-scroll">
+          <div className="iw-character-info"><span>✧</span><div><strong>無名生還者 · Lv.{game.level}</strong><small>主神試煉者・永久身份</small><div className="iw-exp-track"><i style={{width:100*game.xp/xpToNext(game.level)+'%'}}/></div><small>EXP {game.xp} / {xpToNext(game.level)} · 可分配天賦點 {game.talentPoints}</small></div></div>
+          <p className="iw-note">通關、完成特殊選擇及擊敗敵人可以獲得經驗；升級會獲得 1 點天賦，天賦可改變其他世界嘅對話同戰鬥。</p>
+          {TALENTS.map(t=>{const rank=talentRank(game,t.id);return <div className="iw-talent-row" key={t.id}>
+            <span className="iw-talent-icon">{t.icon}</span><div><strong>{t.title} <small>Lv.{rank}/{t.max}</small></strong><p>{t.description}</p></div>
+            <button disabled={rank>=t.max||game.talentPoints<1||mode==='lost'} onClick={()=>addTalent(t.id)}>{rank>=t.max?'MAX':'+ 升級'}</button>
+          </div>})}
+        </div>}
         {overlay==='bag'&&<div className="iw-sheet-scroll"><p className="iw-note">物品會跨世界保留；有啲線索喺其他世界會解鎖特別選項。</p>
           {game.items.map((item,i)=><div className="iw-sheet-line" key={i}><span>◇</span><strong>{item}</strong><small>已持有</small></div>)}
           <div className="iw-bond">阿霧信任：{game.bond>=2?'盟友':game.bond>=1?'熟識':'陌生'}（{game.bond}）</div>
@@ -311,9 +349,9 @@ export default function HomePage() {
           {['零號月台','失物管理處','血月公寓','鏡城病院','未知裂隙'].map(world=><div className="iw-map-line" key={world}><span>✧</span><strong>{world}</strong><small>{game.cleared.includes(world)?'✓ 已完成':world==='未知裂隙'?'每次重新組合':'未通關'}</small></div>)}
           <button className="iw-modal-action" onClick={()=>{setOverlay(null);if(mode==='story' && scene.world==='主神中轉站'){setGame(prev=>({...prev,scene:'hub_portals',line:0}))}}} disabled={mode!=='story'||scene.world!=='主神中轉站'}>返回世界傳送門</button>
         </div>}
-        {overlay==='shop'&&<div className="iw-sheet-scroll"><p className="iw-note">可用積分：{game.points}。購買後會即時更新，跨世界保留。</p>{shopItems.map(item=><div className="iw-shop-row" key={item.key}><span>{item.icon}</span><div><strong>{item.name}</strong><small>{item.note}</small></div><button onClick={()=>buy(item.key)} disabled={game.points<item.cost||item.key==='med'&&game.hp===100||item.key==='calm'&&game.sp===100||item.key==='mirror'&&game.items.includes('鏡界護符')}>{item.cost} ✦</button></div>)}</div>}
+        {overlay==='shop'&&<div className="iw-sheet-scroll"><p className="iw-note">可用積分：{game.points}。購買後會即時更新，跨世界保留。</p>{shopItems.map(item=><div className="iw-shop-row" key={item.key}><span>{item.icon}</span><div><strong>{item.name}</strong><small>{item.note}</small></div><button onClick={()=>buy(item.key)} disabled={game.points<item.cost||item.key==='med'&&game.hp===maxHp(game)||item.key==='calm'&&game.sp===maxSp(game)||item.key==='mirror'&&game.items.includes('鏡界護符')}>{item.cost} ✦</button></div>)}</div>}
         {overlay==='menu'&&<div className="iw-sheet-scroll"><p className="iw-note">手機直向優先 ・ 自動儲存於目前瀏覽器</p>
-          <div className="iw-menu-card"><strong>多世界存檔</strong><small>生命 {game.hp}/100 ・ 理智 {game.sp}/100 ・ 已通關 {game.cleared.length} 世界</small></div>
+          <div className="iw-menu-card"><strong>多世界存檔</strong><small>生命 {game.hp}/{maxHp(game)} ・ 理智 {game.sp}/{maxSp(game)} ・ Lv.{game.level} ・ 已通關 {game.cleared.length} 世界</small></div>
           <a className="iw-modal-action" href="/combat">⚔ 開啟經典戰鬥訓練場</a>
           <button className="iw-modal-action" onClick={()=>setOverlay(null)}>返回故事</button>
           <button className="iw-danger-action" onClick={()=>{if(window.confirm('確定刪除本機故事進度，由零號月台結算後重新開始？'))restart()}}>刪除存檔並重新開始</button>
