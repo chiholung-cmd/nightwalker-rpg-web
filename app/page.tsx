@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { INITIAL, SCENES, applyEffect, availableChoices, effectiveLines, sceneFor, type Choice, type SaveState, type WorldTheme } from '../lib/infiniteStory'
-import { maxHp, maxSp, TALENTS, spendTalent, talentRank, withProgress, xpToNext, type TalentId } from '../lib/progression'
+import { maxHp, maxSp, TALENTS, spendTalent, combineBranch, talentRank, withProgress, xpToNext, type TalentId } from '../lib/progression'
 import { nightwalkerAtlas } from '../lib/characterPortraitAtlas'
 import { nightwalkerCast } from '../lib/characterCast'
 import { FILM_MISSIONS,currentFilmMission,unlockedFilm,completedFilm,completedOptional,trainingSummary } from '../lib/movieMissions'
@@ -167,7 +167,8 @@ export default function HomePage(){
     if(e?.points)changes.push('積分 '+(e.points>0?'+':'')+e.points)
     if(e?.items?.length)changes.push('道具：'+e.items.join('、'))
     if(e?.clearWorld)changes.push('世界通關：'+e.clearWorld)
-    if(e?.bond)changes.push('角色關係 '+(e.bond>0?'+':'')+e.bond)
+    if(e?.bond)changes.push('阿霧關係 '+(e.bond>0?'+':'')+e.bond)
+    if(e?.relation)changes.push(e.relation.id+' 信任 '+(e.relation.delta>0?'+':'')+e.relation.delta)
     if(e?.branch)changes.push(e.branch+' 級支線憑證 +1')
     if(e?.mastery)changes.push(({tech:'科技',occult:'秘術',martial:'武學'} as const)[e.mastery]+'熟練度 +1')
     setFeedback(changes.slice(0,2).join(' · '))
@@ -279,7 +280,7 @@ export default function HomePage(){
         </>}
         {sheet==='character'&&<>
           <div className="reader-char-card"><span>✧</span><div><strong>無名生還者 · Lv.{g.level}</strong><small>阿霧信任 {g.bond} · 天賦點 {g.talentPoints}</small><div className="reader-xp"><i style={{width:(100*g.xp/xpToNext(g.level))+'%'}}/></div><small>EXP {g.xp}/{xpToNext(g.level)}</small></div></div>
-          <div className="reader-growth"><strong>跨世界傳承</strong>{trainingSummary(g).map(a=><div key={a.key}><span>{a.name} · Lv.{a.rank}</span><small>{a.description}</small></div>)}<p>D 級支線：{g.branches?.D||0}　C 級支線：{g.branches?.C||0}　B 級支線：{g.branches?.B||0}</p></div>
+          <div className="reader-growth"><strong>跨世界傳承</strong>{trainingSummary(g).map(a=><div key={a.key}><span>{a.name} · Lv.{a.rank}</span><small>{a.description}</small></div>)}<p>D 級支線：{g.branches?.D||0}　C 級支線：{g.branches?.C||0}　B 級支線：{g.branches?.B||0}</p><div className="reader-combine"><button disabled={(g.branches?.D||0)<3} onClick={()=>setG(s=>combineBranch(s,'D'))}>3D → 1C</button><button disabled={(g.branches?.C||0)<3} onClick={()=>setG(s=>combineBranch(s,'C'))}>3C → 1B</button></div></div><div className="reader-growth"><strong>電影人物關係</strong>{Object.entries(g.relationships||{}).length?Object.entries(g.relationships||{}).map(([name,value])=><div key={name}><span>{name}</span><small>{value>0?'信任 +'+value:value<0?'戒心 '+value:'中立'}</small></div>):<p>電影角色尚未認識你。每個 NPC 嘅關係會各自記錄。</p>}</div>
           {TALENTS.map(t=><div className="reader-talent" key={t.id}><span>{t.icon}</span><div><strong>{t.title}　Lv.{talentRank(g,t.id)}/{t.max}</strong><small>{t.description}</small></div><button disabled={g.talentPoints<1||talentRank(g,t.id)>=t.max} onClick={()=>setG(s=>spendTalent(s,t.id))}>升級</button></div>)}
         </>}
         {sheet==='bag'&&<><p className="reader-note">線索同道具可以跨世界保留，部分會解鎖特定角色嘅對話選項。</p>{g.items.map((item,i)=><div className="reader-item" key={i}><span>▣</span><strong>{item}</strong></div>)}</>}
