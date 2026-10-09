@@ -113,12 +113,12 @@ export default function UILabPage(){
  const [compactReading,setCompactReading]=useState(false)
  const panelRef=useRef<HTMLDivElement>(null)
  const chapter=STORIES[genre][tone]
- const pageSize=compactReading?2:3
+ const pageSize=compactReading?1:2
  const segmentPages=Array.from({length:Math.ceil(chapter.segments.length/pageSize)},(_,i)=>chapter.segments.slice(i*pageSize,(i+1)*pageSize))
  const page=Math.min(storyPage,Math.max(0,segmentPages.length-1))
  const visibleSegments=segmentPages[page]||[]
  useEffect(()=>{setChoiceIndex(null);setHistory([]);setTyped('');setStoryPage(0)},[genre,tone])
- useEffect(()=>{const check=()=>setCompactReading(window.innerHeight<760);check();window.addEventListener('resize',check);return()=>window.removeEventListener('resize',check)},[])
+ useEffect(()=>{const check=()=>setCompactReading(window.innerHeight<690);check();window.addEventListener('resize',check);return()=>window.removeEventListener('resize',check)},[])
  useEffect(()=>{if(drawer){panelRef.current?.focus()}},[drawer])
  const action=(text:string,idx?:number)=>{
    if(!text.trim())return
