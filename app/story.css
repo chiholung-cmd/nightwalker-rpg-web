@@ -246,3 +246,5 @@ button:disabled{opacity:.38;cursor:not-allowed}
 .reader-world-item small{line-height:1.5}
 .reader-world-symbol{background-size:cover;background-position:center}
 @media(max-width:355px){.reader-nav button{font-size:8px}.reader-nav button span{font-size:17px}.reader-mission-card{padding:10px}}
+
+.reader-combine{display:flex;gap:9px!important;border:0!important;padding:7px 0 0!important;justify-content:flex-start!important}.reader-combine button{border:1px solid #9f80b1;background:#41334f;color:#f6dcea;padding:8px 13px;border-radius:6px;font-size:11px}.reader-combine button:disabled{opacity:.34}
