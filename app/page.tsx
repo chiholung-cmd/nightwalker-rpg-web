@@ -5,12 +5,13 @@ import { INITIAL, SCENES, applyEffect, availableChoices, effectiveLines, sceneFo
 import { maxHp, maxSp, TALENTS, spendTalent, talentRank, withProgress, xpToNext, type TalentId } from '../lib/progression'
 import { nightwalkerAtlas } from '../lib/characterPortraitAtlas'
 import { nightwalkerCast } from '../lib/characterCast'
+import { FILM_MISSIONS,currentFilmMission,unlockedFilm,completedFilm,completedOptional,trainingSummary } from '../lib/movieMissions'
 import './story.css'
 
 const SAVE_KEY = 'nightwalker-multiverse-story-v1'
 const SESSION_KEY = 'nightwalker-multiverse-session-v2'
 const SETTINGS_KEY = 'nightwalker-reader-settings'
-type Sheet = 'worlds'|'journal'|'character'|'bag'|'shop'|'settings'|null
+type Sheet = 'worlds'|'missions'|'journal'|'character'|'bag'|'shop'|'settings'|null
 type ReaderSettings = { images:boolean; largeText:boolean; typing:boolean }
 const DEFAULT_SETTINGS: ReaderSettings = {images:true,largeText:false,typing:true}
 const clamp = (v:number,max:number) => Math.max(0,Math.min(max,v))
@@ -30,7 +31,10 @@ const SPECIAL_ART:Record<string,string> = {
   '深海零號艙':'https://images.unsplash.com/photo-1760170437237-a3654545ab4c?auto=format&fit=crop&w=1800&q=83',
   '倒數七日':'https://images.unsplash.com/photo-1649316956806-0f91196bf29c?auto=format&fit=crop&w=1800&q=83',
   '逆時學園':'https://images.unsplash.com/photo-1617721930761-42fe8e5efad0?auto=format&fit=crop&w=1800&q=83',
-  '霧中第七章':'https://images.unsplash.com/photo-1508107536691-b1449928187d?auto=format&fit=crop&w=1800&q=83'
+  '霧中第七章':'https://images.unsplash.com/photo-1508107536691-b1449928187d?auto=format&fit=crop&w=1800&q=83',
+  '生化危機（2002）':'https://images.unsplash.com/photo-1617721930761-42fe8e5efad0?auto=format&fit=crop&w=1800&q=83',
+  'Van Helsing（2004）':'https://images.unsplash.com/photo-1767779670933-9df4ea401954?auto=format&fit=crop&w=1800&q=83',
+  '風雲雄霸天下（1998）':'https://images.unsplash.com/photo-1649316956806-0f91196bf29c?auto=format&fit=crop&w=1800&q=83'
 }
 const WORLD_LABEL:Record<WorldTheme,string> = {
   nexus:'主神空間', archive:'規則怪談', apartment:'劇集・懸疑',hospital:'動漫・超自然',
@@ -40,19 +44,11 @@ const WORLD_GLYPH:Record<WorldTheme,string> = {
   nexus:'∞',archive:'▤',apartment:'▥',hospital:'✚',rift:'✧',gothic:'♜',arctic:'❄',cinema:'▣'
 }
 const WORLD_LIST=[
-  {name:'深海零號艙',category:'電影・科幻災難',start:'film_sub_arrival',clear:'深海零號艙',theme:'cinema' as WorldTheme},
-  {name:'倒數七日',category:'劇集・懸疑推理',start:'tv_week_arrival',clear:'倒數七日',theme:'apartment' as WorldTheme},
-  {name:'逆時學園',category:'動漫・超自然',start:'anime_school_arrival',clear:'逆時學園',theme:'hospital' as WorldTheme},
-  {name:'第十三號放映室',category:'原創・電影',start:'cinema_start',clear:'第十三號放映室',theme:'cinema' as WorldTheme},
-  {name:'沒有片尾的電影',category:'原創・電影懸疑',start:'film_arrival',clear:'午夜放映廳',theme:'cinema' as WorldTheme},
-  {name:'失物管理處',category:'舊副本・規則怪談',start:'lost_arrival',clear:'失物管理處',theme:'archive' as WorldTheme},
-  {name:'血月公寓',category:'舊副本・驚悚',start:'blood_arrival',clear:'血月公寓',theme:'apartment' as WorldTheme},
-  {name:'鏡城病院',category:'舊副本・懸疑',start:'hospital_arrival',clear:'鏡城病院',theme:'hospital' as WorldTheme},
-  {name:'德古拉',category:'封存・小說',start:'gothic_start',clear:'德古拉',theme:'gothic' as WorldTheme},
-  {name:'科學怪人',category:'封存・小說',start:'arctic_start',clear:'科學怪人',theme:'arctic' as WorldTheme},
-  {name:'霧中第七章',category:'封存・小說',start:'novel_arrival',clear:'霧中第七章',theme:'gothic' as WorldTheme}
+  {name:'生化危機 (2002)',category:'電影 01 · 現代科幻恐怖',start:'re_arrival',clear:'生化危機2002',theme:'archive' as WorldTheme},
+  {name:'Van Helsing (2004)',category:'電影 02 · 哥德奇幻',start:'vh_arrival',clear:'VanHelsing2004',theme:'gothic' as WorldTheme},
+  {name:'風雲雄霸天下 (1998)',category:'電影 03 · 香港武俠',start:'fy_arrival',clear:'風雲1998',theme:'rift' as WorldTheme}
 ]
-const ENTER_SCENES = new Set(['hub_arrival','hub_portals','lost_arrival','blood_arrival','hospital_arrival','gothic_start','arctic_start','cinema_start','fourth_threshold','rift_arrival','film_arrival','film_final_frame','novel_arrival','novel_rewrite'])
+const ENTER_SCENES = new Set(['hub_arrival','hub_portals','lost_arrival','blood_arrival','hospital_arrival','gothic_start','arctic_start','cinema_start','fourth_threshold','rift_arrival','film_arrival','film_final_frame','novel_arrival','novel_rewrite','re_arrival','vh_arrival','fy_arrival','movie_brief','movie_trilogy_epilogue'])
 const EMOTIONS:Record<string,string>={calm:'平靜',worried:'憂慮',afraid:'驚恐',angry:'憤怒',sad:'悲傷',hopeful:'期待',mysterious:'難以捉摸'}
 const LINE_MOODS:Record<string,string>={neutral:'平靜',fear:'驚恐',sad:'悲傷',joy:'欣喜',anger:'憤怒',mystery:'疑惑',resolve:'堅定'}
 const expressionFor=(face:string|undefined,world:string,sceneId:string,bond:number)=>{
@@ -127,6 +123,7 @@ export default function HomePage(){
   },[g,ready])
   useEffect(()=>{if(ready)localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))},[settings,ready])
   const scene=sceneFor(g.scene)
+  const activeMission=currentFilmMission(scene.world)
   const lines=effectiveLines(scene,g)
   const idx=Math.max(0,Math.min(lines.length-1,g.line))
   const line=lines[idx]||''
@@ -170,7 +167,9 @@ export default function HomePage(){
     if(e?.points)changes.push('積分 '+(e.points>0?'+':'')+e.points)
     if(e?.items?.length)changes.push('道具：'+e.items.join('、'))
     if(e?.clearWorld)changes.push('世界通關：'+e.clearWorld)
-    if(e?.bond)changes.push('阿霧關係 '+(e.bond>0?'+':'')+e.bond)
+    if(e?.bond)changes.push('角色關係 '+(e.bond>0?'+':'')+e.bond)
+    if(e?.branch)changes.push(e.branch+' 級支線憑證 +1')
+    if(e?.mastery)changes.push(({tech:'科技',occult:'秘術',martial:'武學'} as const)[e.mastery]+'熟練度 +1')
     setFeedback(changes.slice(0,2).join(' · '))
     setG(after)
     if(after.hp<=0||after.sp<=0)setBlocked(true)
@@ -200,7 +199,7 @@ export default function HomePage(){
       <button className="reader-menu" aria-label="選單" onClick={()=>setSheet('settings')}>☰</button>
     </header>
 
-    <div className="reader-meta"><span className="reader-world-kind">{WORLD_GLYPH[worldKey]} {WORLD_LABEL[worldKey]}</span><span className="reader-scene-num">劇情片段 {String(sceneNumber).padStart(2,'0')}</span></div>
+    <div className="reader-meta"><span className="reader-world-kind">{WORLD_GLYPH[worldKey]} {activeMission ? '電影 '+(FILM_MISSIONS.indexOf(activeMission)+1)+' / 3 · '+activeMission.category : WORLD_LABEL[worldKey]}</span><span className="reader-scene-num">劇情片段 {String(sceneNumber).padStart(2,'0')}</span></div>
 
     <div className={'reader-atmosphere'+(showWorldImage?' reader-illustrated':'')}>
       {showWorldImage?<img src={image} alt={scene.world+'場景背景'} onError={()=>setImageFailed(true)}/>:<div className="reader-symbol">{WORLD_GLYPH[worldKey]}</div>}
@@ -241,6 +240,7 @@ export default function HomePage(){
 
     <nav className="reader-nav">
       <button onClick={()=>setSheet('worlds')}><span>◇</span>世界</button>
+      <button onClick={()=>setSheet('missions')}><span>◈</span>任務</button>
       <button onClick={()=>setSheet('journal')}><span>▤</span>因果</button>
       <button onClick={()=>setSheet('character')}><span>✧</span>角色{g.talentPoints>0&&<i className="reader-dot"/>}</button>
       <button onClick={()=>setSheet('bag')}><span>▣</span>物品</button>
@@ -248,12 +248,29 @@ export default function HomePage(){
     </nav>
 
     {sheet&&<div className="reader-overlay" onClick={()=>setSheet(null)}><section className="reader-sheet" onClick={e=>e.stopPropagation()}>
-      <header className="reader-sheet-head"><h2>{sheet==='worlds'?'世界書架':sheet==='journal'?'因果紀錄':sheet==='character'?'無名生還者':sheet==='bag'?'隨身物品':sheet==='shop'?'積分商店':'遊戲設定'}</h2><button onClick={()=>setSheet(null)}>✕</button></header>
+      <header className="reader-sheet-head"><h2>{sheet==='worlds'?'電影輪迴序列':sheet==='missions'?'主神任務':sheet==='journal'?'因果紀錄':sheet==='character'?'無名生還者':sheet==='bag'?'隨身物品':sheet==='shop'?'積分商店':'遊戲設定'}</h2><button onClick={()=>setSheet(null)}>✕</button></header>
       <div className="reader-sheet-content">
         {sheet==='worlds'&&<>
-          <p className="reader-note">電影、劇集、動漫係主要冒險類型；早期小說同怪談仍然保留於舊檔案。所有選擇同物品會跨世界延續。</p>
-          {WORLD_LIST.map(w=><div className="reader-world-item" key={w.name}><div className={'reader-world-symbol theme-'+w.theme} style={{backgroundImage:`linear-gradient(90deg,#070d19aa,#18233f69),url(${SPECIAL_ART[w.name]||WORLD_ART[w.theme]||''})`}}><span>{WORLD_GLYPH[w.theme]}</span></div><div><strong>{w.name}</strong><small>{w.category} · {g.cleared.includes(w.clear)?'已通關':'待探索'}</small></div></div>)}
-          <button className="reader-action" onClick={goToHub} disabled={!isHub(scene.world)}>前往世界傳送門</button>
+          <p className="reader-note">正式主線依次穿越三套真實電影。完成上一世界後先開放下一關；舊世界劇情只保留存檔，不會阻住新主線。</p>
+          {FILM_MISSIONS.map((m,i)=><div className="reader-world-item" key={m.id}>
+            <div className="reader-world-symbol" style={{backgroundImage:`linear-gradient(90deg,#070d19aa,#18233f69),url(${SPECIAL_ART[i===0?'生化危機（2002）':i===1?'Van Helsing（2004）':'風雲雄霸天下（1998）']})`}}><span>{i+1}</span></div>
+            <div><strong>{String(i+1).padStart(2,'0')} · {m.title}（{m.year}）</strong><small>{completedFilm(m,g)?'✓ 通關完成':unlockedFilm(m,g)?'解鎖 · 可以進入':'🔒 上一部電影尚未完成'} · {m.category}</small></div>
+          </div>)}
+          <button className="reader-action" onClick={goToHub} disabled={!isHub(scene.world)}>進入主神傳送門</button>
+          <p className="reader-note">提示：已經通關嘅世界不會再獲得首次通關獎勵。你可以喺因果紀錄查看所有選擇。</p>
+        </>}
+        {sheet==='missions'&&<>
+          <p className="reader-note">任務係玩家喺電影世界需要完成嘅主要目標。隱藏支線獎勵需要達成特定條件，完成後會保存成永久因果。</p>
+          {(activeMission?[activeMission]:FILM_MISSIONS).map(m=><div key={m.id} className="reader-mission-card">
+            <div className="reader-mission-title"><strong>{m.title}（{m.year}）</strong><span>{completedFilm(m,g)?'已通關':unlockedFilm(m,g)?'任務可用':'尚未解鎖'}</span></div>
+            <p>【主線】{m.main}</p><small>{m.description}</small>
+            <div className="reader-reward">✦ 基礎 {m.basePoints} 積分 · {m.baseXp} XP · 通關後永久保留成長</div>
+            <h3>電影 NPC</h3><p>{m.npcs.join('、')}</p>
+            <h3>隱藏支線（{completedOptional(m,g)}/{m.side.length}）</h3>
+            {m.side.map(t=><div className="reader-mission-side" key={t.flag}>
+              <span>{g.flags.includes(t.flag)?'✓':'◇'}</span><div><strong>{t.label}</strong><small>{t.reward}</small></div>
+            </div>)}
+          </div>)}
         </>}
         {sheet==='journal'&&<>
           <p className="reader-note">你做過嘅抉擇會寫入因果紀錄。有啲選項即使當下無後果，都可能喺幾個世界之後改變故事。</p>
@@ -262,6 +279,7 @@ export default function HomePage(){
         </>}
         {sheet==='character'&&<>
           <div className="reader-char-card"><span>✧</span><div><strong>無名生還者 · Lv.{g.level}</strong><small>阿霧信任 {g.bond} · 天賦點 {g.talentPoints}</small><div className="reader-xp"><i style={{width:(100*g.xp/xpToNext(g.level))+'%'}}/></div><small>EXP {g.xp}/{xpToNext(g.level)}</small></div></div>
+          <div className="reader-growth"><strong>跨世界傳承</strong>{trainingSummary(g).map(a=><div key={a.key}><span>{a.name} · Lv.{a.rank}</span><small>{a.description}</small></div>)}<p>D 級支線：{g.branches?.D||0}　C 級支線：{g.branches?.C||0}　B 級支線：{g.branches?.B||0}</p></div>
           {TALENTS.map(t=><div className="reader-talent" key={t.id}><span>{t.icon}</span><div><strong>{t.title}　Lv.{talentRank(g,t.id)}/{t.max}</strong><small>{t.description}</small></div><button disabled={g.talentPoints<1||talentRank(g,t.id)>=t.max} onClick={()=>setG(s=>spendTalent(s,t.id))}>升級</button></div>)}
         </>}
         {sheet==='bag'&&<><p className="reader-note">線索同道具可以跨世界保留，部分會解鎖特定角色嘅對話選項。</p>{g.items.map((item,i)=><div className="reader-item" key={i}><span>▣</span><strong>{item}</strong></div>)}</>}
