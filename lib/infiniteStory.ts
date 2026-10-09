@@ -1,3 +1,4 @@
+import { awardXp, maxHp, maxSp, talentRank } from './progression'
 export type WorldTheme = 'nexus' | 'archive' | 'apartment' | 'hospital' | 'rift'
 export type Effect = {
   hp?: number
@@ -10,6 +11,7 @@ export type Effect = {
   clearWorld?: string
   journal?: string
   riftAdvance?: boolean
+  xp?: number
 }
 export type Choice = {
   label: string
@@ -20,6 +22,7 @@ export type Choice = {
   without?: string
   requiresItem?: string
   bondAtLeast?: number
+  requiresTalent?: 'insight' | 'mirror'
   notCleared?: string
   needsCleared?: string
   action?: 'shop' | 'battle' | 'combat-practice'
@@ -49,6 +52,10 @@ export type SaveState = {
   path: string[]
   riftCount: number
   chapter: number
+  level: number
+  xp: number
+  talentPoints: number
+  talents: { vitality:number; composure:number; insight:number; mirror:number }
 }
 export const INITIAL: SaveState = {
   scene: 'hub_arrival', line: 0,
@@ -58,7 +65,8 @@ export const INITIAL: SaveState = {
   cleared: ['零號月台'],
   journal: ['你喺零號月台放棄名字，獲得「無名生還者」身份。'],
   path: ['零號月台：車票 → 鏡面 → 放棄名字'],
-  riftCount: 0, chapter: 1
+  riftCount: 0, chapter: 1, level:1, xp:0, talentPoints:0,
+  talents:{vitality:0,composure:0,insight:0,mirror:0}
 }
 const HUB = '主神中轉站'
 export const SCENES: Record<string, Scene> = {
@@ -134,6 +142,7 @@ export const SCENES: Record<string, Scene> = {
       {label:'副本 003：血月公寓',hint:'住戶規則・救人定逃生',to:'blood_arrival',notCleared:'血月公寓'},
       {label:'副本 004：鏡城病院',hint:'身份交換・記憶與真相',to:'hospital_arrival',notCleared:'鏡城病院'},
       {label:'前往不穩定裂隙',hint:'完成三個世界後解鎖・可重複探索',to:'rift_arrival',needsCleared:'失物管理處|血月公寓|鏡城病院'},
+      {label:'開啟被主神封鎖嘅第四道門',hint:'第二章・跨世界因果・完成三個副本後解鎖',to:'fourth_threshold',needsCleared:'失物管理處|血月公寓|鏡城病院',notCleared:'第四道門'},
       {label:'返回候車廳，同阿霧傾偈',to:'hub_return'}
     ]
   },
@@ -146,6 +155,7 @@ export const SCENES: Record<string, Scene> = {
     choices:[
       {label:'詢問關於自己名字嘅線索',to:'hub_memory',requires:'archive_truth'},
       {label:'同阿霧分享目前經歷',to:'hub_bond',effect:{bond:1},without:'bond_reward_claimed'},
+      {label:'用「真相視界」觀察阿霧隱藏嘅記憶',hint:'真相視界天賦專屬',to:'guide_inner',requiresTalent:'insight'},
       {label:'查看世界地圖',to:'hub_portals'},
       {label:'進入積分商店',action:'shop'}
     ]
@@ -419,6 +429,7 @@ export const SCENES: Record<string, Scene> = {
     ],
     choices:[
       {label:'答應帶鏡中人離開',hint:'真相路線・理智 -15',to:'hospital_ending',effect:{sp:-15,flags:['hospital_freed_echo'],items:['鏡中人的記憶'],journal:'你保留鏡中人的記憶，決定與主神系統對抗。'}},
+      {label:'用鏡域共鳴喚醒被抹除的原始檔案',hint:'鏡域天賦專屬・額外真相',to:'hospital_ending',requiresTalent:'mirror',effect:{sp:-9,xp:50,flags:['hospital_original_self','hospital_freed_echo'],items:['初始輪迴殘片'],journal:'你用鏡域天賦取得輪迴第一次發生時的原始記憶。'}},
       {label:'用鏡面碎片打碎醫院鏡子',hint:'安全逃生・犧牲真相',to:'hospital_ending',effect:{flags:['hospital_destroyed_mirror'],sp:8}},
       {label:'同鏡中人討價還價，要求先還部分記憶',hint:'需要阿霧信任',to:'hospital_ending',bondAtLeast:2,effect:{flags:['hospital_partial_memory'],sp:-5,items:['失去的第七段記憶'],journal:'第七段記憶顯示主神中轉站有一位玩家正在假扮引路人。'}},
       {label:'用血月公寓的紅線封住鏡面裂口',hint:'跨世界道具・穩住鏡中人',to:'hospital_ending',requiresItem:'紅線斷片',effect:{flags:['hospital_freed_echo','hospital_redline'],sp:5,items:['鏡中人的記憶'],journal:'你用另一個世界嘅紅線保護鏡中人離開病院。'}}
@@ -483,6 +494,7 @@ export function availableChoices(scene: Scene, state: SaveState): Choice[] {
     if(c.without && state.flags.includes(c.without)) return false
     if(c.requiresItem && !state.items.includes(c.requiresItem)) return false
     if(c.bondAtLeast !== undefined && state.bond < c.bondAtLeast) return false
+    if(c.requiresTalent && talentRank(state,c.requiresTalent)<1)return false
     if(c.notCleared && state.cleared.includes(c.notCleared)) return false
     if(c.needsCleared && !c.needsCleared.split('|').every(w=>state.cleared.includes(w))) return false
     return true
@@ -495,17 +507,18 @@ export function applyEffect(state: SaveState, effect?: Effect): SaveState {
   const flags = Array.from(new Set([...state.flags, ...(effect.flags||[])]))
   const cleared = effect.clearWorld && !state.cleared.includes(effect.clearWorld)
     ? [...state.cleared, effect.clearWorld] : state.cleared
-  return {
+  const firstClear=!!effect.clearWorld&&!state.cleared.includes(effect.clearWorld)
+  return awardXp({
     ...state,
-    hp: Math.max(0,Math.min(100,state.hp+(effect.hp||0))),
-    sp: Math.max(0,Math.min(100,state.sp+(effect.sp||0))),
+    hp: Math.max(0,Math.min(maxHp(state),state.hp+(effect.hp||0))),
+    sp: Math.max(0,Math.min(maxSp(state),state.sp+(effect.sp||0))),
     points: Math.max(0,state.points+(effect.points||0)),
     bond: Math.max(-5,Math.min(10,state.bond+(effect.bond||0))),
     items, flags, cleared,
     riftCount: state.riftCount+(effect.riftAdvance?1:0),
     chapter: Math.max(state.chapter,cleared.length),
     journal: effect.journal ? [effect.journal,...state.journal].slice(0,30):state.journal
-  }
+  },(effect.xp||0)+(firstClear?80:0))
 }
 export function sceneFor(id:string):Scene {
   return SCENES[id] || SCENES.hub_arrival
