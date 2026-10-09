@@ -1,0 +1,20 @@
+{
+  "name": "Nightwalker ∞ 無限流 RPG",
+  "short_name": "Nightwalker",
+  "description": "以選擇改寫命運，穿越無限怪談世界的手機 RPG。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a111e",
+  "theme_color": "#12182a",
+  "lang": "zh-HK",
+  "icons": [
+    {
+      "src": "/nightwalker-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
