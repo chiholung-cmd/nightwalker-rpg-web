@@ -8,13 +8,13 @@ type Game = {
   hp: number; sp: number; points: number; level: number; wave: number; turn: number
   enemyHp: number; weak: boolean; marks: number; mirrorUsed: boolean
   phoneUsed: boolean; ticketUsed: boolean; weapon: boolean; phase: Phase
-  message: string; speaker: string
+  message: string; speaker: string; berserk?: boolean
 }
 const SAVE = 'nightwalker-infinite-combat-v1'
 const fresh = (): Game => ({
   hp: 100, sp: 74, points: 105, level: 1, wave: 1, turn: 1, enemyHp: 100,
   weak: false, marks: 0, mirrorUsed: false, phoneUsed: false, ticketUsed: false,
-  weapon: false, phase: 'fight', speaker: '主神系統',
+  weapon: false, berserk: false, phase: 'fight', speaker: '主神系統',
   message: '「所有冇名字嘅人，都係需要回收嘅失物。」失物管理員舉起巨剪。'
 })
 const limit = (n: number) => Math.max(0, Math.min(100, n))
@@ -24,6 +24,48 @@ const intents = [
   ['姓名核對', '剪刀突刺', '證物查驗', '影子回收'],
   ['午夜鐘聲', '逆時針斬', '命運核對', '無光回響']
 ]
+
+
+function HudPortrait({ kind }: { kind: 'hero' | 'clerk' | 'clock' }) {
+  if (kind === 'clock') return (
+    <svg className="nw-portrait-svg" viewBox="0 0 64 64" aria-hidden="true">
+      <defs><linearGradient id="nw-small-clock" x2="1" y2="1"><stop stopColor="#dfd2b8"/><stop offset="1" stopColor="#6a4e68"/></linearGradient></defs>
+      <rect width="64" height="64" fill="#201527"/><path d="M4 62L12 47L18 38L31 49L46 38L58 62Z" fill="#34243a" stroke="#77546b" strokeWidth="2"/>
+      <path d="M23 16L16 5L31 14L47 5L41 18" fill="#b47b89" stroke="#e2afac" strokeWidth="1.5"/>
+      <circle cx="32" cy="30" r="25" fill="#1a1628" stroke="#c18d9c" strokeWidth="4"/>
+      <circle cx="32" cy="30" r="20" fill="url(#nw-small-clock)" stroke="#e5c6ae" strokeWidth="2"/>
+      <circle cx="32" cy="30" r="15" fill="#3c2b3e" stroke="#785366" strokeWidth="2"/>
+      {Array.from({length:12},(_,i)=><path key={i} d="M32 11V15" stroke="#f6d8c4" strokeWidth="1.5" transform={\`rotate(\${i*30} 32 30)\`}/>)}
+      <path d="M32 30L39 18M32 30L20 34" stroke="#ff7aa6" strokeWidth="3" strokeLinecap="round"/><circle cx="32" cy="30" r="3" fill="#fff0ce"/>
+      <path d="M6 12L12 3M54 11L59 2" stroke="#ff4c7c" strokeWidth="2"/>
+    </svg>
+  )
+  if(kind === 'clerk') return (
+    <svg className="nw-portrait-svg" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" fill="#211725"/>
+      <path d="M3 64L16 46L47 46L62 64Z" fill="#31202f" stroke="#8d586f" strokeWidth="2"/>
+      <path d="M16 24L20 10L45 9L51 27L44 45L24 45Z" fill="#cfbfc9" stroke="#8c6881" strokeWidth="2"/>
+      <path d="M13 24L18 6L26 13L35 4L43 11L50 9L54 30L44 24L24 25Z" fill="#24202e"/>
+      <path d="M20 27L30 28L27 32L21 32ZM37 28L46 27L44 32L37 32Z" fill="#a52b60"/>
+      <path d="M28 41L39 41" stroke="#78445e" strokeWidth="2"/>
+      <path d="M50 44L58 52" stroke="#d3b6c7" strokeWidth="3"/>
+      <path d="M10 53L3 60" stroke="#a46787" strokeWidth="2"/>
+    </svg>
+  )
+  return (
+    <svg className="nw-portrait-svg" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" fill="#1a283c"/>
+      <path d="M1 64L14 46L24 40L34 48L45 40L64 64Z" fill="#18273b" stroke="#6289ad" strokeWidth="2"/>
+      <path d="M23 40V49L33 54L43 47V38" fill="#aebacc"/>
+      <path d="M17 22Q16 9 32 8Q51 9 49 27L44 43L29 49L20 40Z" fill="#d7dce6" stroke="#8398b4" strokeWidth="2"/>
+      <path d="M12 30L14 13L20 17L22 5L30 11L36 1L42 11L53 6L53 22L58 25L47 28L45 20L36 25L31 19L21 31Z" fill="#f1f6ff" stroke="#9cb7d2" strokeWidth="1.5"/>
+      <path d="M20 29L30 32L27 36L21 35ZM35 32L46 29L44 35L36 36Z" fill="#26374b"/>
+      <path d="M22 33L28 34M37 34L44 33" stroke="#6ce5fc" strokeWidth="2.5"/>
+      <path d="M31 43L38 42" stroke="#75839d" strokeWidth="1.6"/>
+      <path d="M14 52L32 63L48 51" stroke="#92dfff" strokeWidth="2" fill="none"/>
+    </svg>
+  )
+}
 
 function CharacterArt({ boss }: { boss: boolean }) {
   return (
@@ -229,6 +271,10 @@ export default function HomePage() {
     s.enemyHp = Math.max(0, s.enemyHp - dmg)
     showHit(dmg, 'enemy')
     if (dmg) s.message += ' 造成 ' + dmg + ' 傷害。'
+    if (s.wave === 2 && s.enemyHp > 0 && s.enemyHp <= 72 && !s.berserk) {
+      s.berserk = true
+      s.message += ' ⚠ 第二形態：逆時狂暴覺醒！'
+    }
     if (s.enemyHp === 0) {
       s.phase = 'won'; s.points += s.wave === 1 ? 75 : 140; s.level++
       s.message += ' 敵人倒下，戰鬥勝利！'; lock.current = false
@@ -255,6 +301,11 @@ export default function HomePage() {
         next.message = '黑暗影子包圍你，奪走生命同理智！'
       }
       if (hp) hp += next.marks * 3
+      if (s.berserk) {
+        hp += hp > 0 ? 6 : 0
+        sp += sp > 0 ? 4 : 0
+        next.message = '【第二形態】' + next.message
+      }
       if (guard) { hp = Math.ceil(hp / 4); sp = Math.ceil(sp / 4); next.message = '防禦成功！' + next.message }
       next.hp = limit(next.hp - hp); next.sp = limit(next.sp - sp)
       showHit(hp || sp, 'hero', hp ? 'HP' : 'SP')
@@ -282,7 +333,7 @@ export default function HomePage() {
     setHit(null)
     fx('intro')
     setG({ ...g, phase: 'enemy', wave: 2, turn: 1, enemyHp: 145, weak: false,
-      marks: 0, mirrorUsed: false, phoneUsed: false, speaker: '夜班裁定官',
+      marks: 0, berserk: false, mirrorUsed: false, phoneUsed: false, speaker: '夜班裁定官',
       message: '「你根本唔應該通過第一關。」時鐘嘅指針開始倒轉。' })
     introTimer.current = setTimeout(() => {
       lock.current = false
@@ -307,9 +358,10 @@ export default function HomePage() {
           <button onClick={full} aria-label="全螢幕">⛶</button>
         </div>
       </header>
-      <section className={'nw-arena nw-' + anim + (g.wave === 2 ? ' nw-boss-stage' : '') + (g.phase === 'won' ? ' nw-victorious' : '')}>
+      <section className={'nw-arena nw-' + anim + (g.wave === 2 ? ' nw-boss-stage' : '') + (g.berserk ? ' nw-enraged' : '') + (g.phase === 'won' ? ' nw-victorious' : '')}>
         <CharacterArt boss={g.wave === 2} />
         <div className="nw-hud nw-left">
+          <span className="nw-hud-avatar nw-hud-avatar-hero"><HudPortrait kind="hero"/></span>
           <div className="nw-hudname"><b>無名生還者</b><small>Lv.{g.level}</small></div>
           <div className="nw-hudrow"><span>HP</span><span>{g.hp}/100</span></div>
           <div className="nw-meter"><i className="nw-life" style={{ width: g.hp + '%' }} /></div>
@@ -317,10 +369,11 @@ export default function HomePage() {
           <div className="nw-meter"><i className="nw-sp" style={{ width: g.sp + '%' }} /></div>
         </div>
         <div className="nw-hud nw-right">
-          <div className="nw-hudname"><b>{enemyName(g)}</b><small>ELITE</small></div>
+          <span className="nw-hud-avatar nw-hud-avatar-enemy"><HudPortrait kind={g.wave === 1 ? 'clerk' : 'clock'}/></span>
+          <div className="nw-hudname"><b>{enemyName(g)}</b><small>{g.berserk ? 'RAGE' : g.wave === 2 ? 'BOSS' : 'ELITE'}</small></div>
           <div className="nw-hudrow"><span>HP</span><span>{g.enemyHp}/{enemyMax(g)}</span></div>
           <div className="nw-meter"><i className="nw-enemyhp" style={{ width: 100 * g.enemyHp / enemyMax(g) + '%' }} /></div>
-          <div className="nw-hudrow"><span>{g.weak ? '弱點暴露' : '弱點未知'}</span><span>印記 {g.marks}</span></div>
+          <div className="nw-hudrow"><span>{g.berserk ? '狂暴第二形態' : g.weak ? '弱點暴露' : '弱點未知'}</span><span>印記 {g.marks}</span></div>
         </div>
         <div className="nw-vfx"><i className="nw-slash"/><i className="nw-sigil">✧</i><i className="nw-shield"/><i className="nw-beam"/><i className="nw-hit"/>
           <i className="nw-spark nw-spark-one"/><i className="nw-spark nw-spark-two"/><i className="nw-spark nw-spark-three"/>
@@ -329,7 +382,7 @@ export default function HomePage() {
           {hit && <div key={hit.id} className={'nw-damage nw-damage-' + hit.side} aria-hidden="true"><small>{hit.label}</small>−{hit.amount}</div>}
         </div>
         <div className="nw-arena-bottom">
-          <span>{g.wave === 1 ? 'STAGE 02 · LOST & FOUND' : 'BOSS · THE ARBITER'}</span><span className="nw-intent">⚠ {intents[g.wave - 1][(g.turn - 1) % 4]}</span>
+          <span>{g.wave === 1 ? 'STAGE 02 · LOST & FOUND' : 'BOSS · THE ARBITER'}</span><span className="nw-intent">⚠ {g.berserk ? '狂暴 · ' : ''}{intents[g.wave - 1][(g.turn - 1) % 4]}</span>
         </div>
       </section>
       <div className="nw-credits"><strong>✦ {g.points} 積分</strong><span>遺忘者印記 Lv.{g.level}</span></div>
