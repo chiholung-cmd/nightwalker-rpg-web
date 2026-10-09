@@ -21,7 +21,7 @@ export const MOVIE_TRILOGY: Record<string, Scene> = {
   },
   movie_guide:{
     id:'movie_guide',title:'介入劇情嘅代價',world:'主神中轉站',theme:'nexus',speaker:'阿霧',face:'guide',
-    moods:['mystery','worried','resolve'],
+    moods:['mystery','fear','resolve'],
     lines:[
       '阿霧打開你手上嘅舊式手機，入面顯示一條從未出現過嘅訊息：「任何人都可以改變劇本，前提係佢願意承擔世界線變動嘅後果。」',
       '「記得電影點演，唔代表你識得信任邊個。你越早揭露秘密，對方未必越信你；主神又未必會畀你好好等到安全結局。」',
@@ -60,7 +60,7 @@ export const MOVIE_TRILOGY: Record<string, Scene> = {
   },
   re_alice:{
     id:'re_alice',title:'Alice 的疑心',world:'生化危機（2002）',theme:'archive',speaker:'Alice',face:'girl',
-    moods:['mystery','worried','resolve'],
+    moods:['mystery','fear','resolve'],
     lines:[
       'Alice 望住你手上嘅舊電話：「如果你真係知下面有咩，點解你冇阻止呢班人落去？」你知道佢失憶，但佢未必肯相信陌生人嘅預知。',
       'Rain 企喺門邊聽你哋講嘢。佢唔耐煩咁提醒：入口列車已經啟動，一旦大門封死，外面唔會有人返嚟接你。',
@@ -88,7 +88,7 @@ export const MOVIE_TRILOGY: Record<string, Scene> = {
   },
   re_terminal:{
     id:'re_terminal',title:'紅后的門：鐳射走廊',world:'生化危機（2002）',theme:'archive',speaker:'Kaplan',face:'neighbor',
-    moods:['worried','fear','resolve'],
+    moods:['fear','fear','resolve'],
     lines:[
       'Kaplan 拆開控制面板，入面顯示一道會啟動雷射嘅保安走廊。James Shade 準備帶隊進入 Red Queen 機房。',
       '你記得原有電影入面，呢段路會奪走多名隊員性命；但突然阻止長官，亦可能令小隊失去唯一關閉 AI 嘅機會。',
@@ -187,7 +187,7 @@ export const MOVIE_TRILOGY: Record<string, Scene> = {
   },
   movie_after_first:{
     id:'movie_after_first',title:'主神空間：科技不能解決所有詛咒',world:'主神中轉站',theme:'nexus',speaker:'阿霧',face:'guide',
-    moods:['joy','worried','resolve'],
+    moods:['joy','fear','resolve'],
     lines:[
       '阿霧仔細看住你帶出蜂巢嘅資料：「你已經唔只係一個知道電影劇情嘅觀眾。你喺嗰個世界留下咗紀錄。」',
       '佢將一張新任務卡交到你手：「第二套電影入面，你要面對嘅唔係病毒，而係狼人同吸血鬼。照原電影行落去，Anna 會死。」',
