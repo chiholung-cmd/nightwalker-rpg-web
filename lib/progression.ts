@@ -46,3 +46,13 @@ export function combatDamage(state:SaveState,move:'attack'|'seal'|'mirror',weak:
     (move==='mirror'?talentRank(state,'mirror')*8:0) +
     (state.items.includes('時裂長刃')?6:0)
 }
+
+/** Manual 3:1 side-story voucher synthesis, inspired by infinite-loop shop progression. */
+export function combineBranch<T extends SaveState>(state:T,from:'D'|'C'):T{
+  const current={D:state.branches?.D||0,C:state.branches?.C||0,B:state.branches?.B||0}
+  if(current[from]<3)return state
+  current[from]-=3
+  current[from==='D'?'C':'B']+=1
+  return {...state,branches:current,
+    journal:['主神已將三個'+from+'級支線憑證合成一個'+(from==='D'?'C':'B')+'級憑證。',...state.journal].slice(0,30)} as T
+}
