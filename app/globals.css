@@ -116,3 +116,29 @@
   .nw-clockboss-art,.nw-clock-hand-fast,.nw-clock-hand-slow,.nw-time-rings,.nw-rune,.nw-dust circle,.nw-boss-aura.active{animation:none!important}
   .nw-damage,.nw-arena.nw-intro .nw-boss-intro{animation-duration:.15s!important}
 }
+
+/* v0.3: compact character portrait HUD and a readable, dangerous second boss phase */
+.nw-hud{min-height:83px;padding-top:5px}
+.nw-hud-avatar{position:absolute;top:5px;left:7px;width:32px;height:32px;overflow:hidden;display:block;border-radius:6px;border:1px solid #84bdd5;box-shadow:0 0 9px #55bffa38;background:#132237}
+.nw-hud-avatar-enemy{border-color:#d07796;box-shadow:0 0 11px #fa67974b;background:#251528}
+.nw-portrait-svg{display:block;width:100%;height:100%}
+.nw-hudname{margin-left:38px;height:34px;align-items:flex-start;padding-top:2px;flex-direction:column;gap:1px}
+.nw-hudname b{font-size:clamp(9px,2.8vw,11px);line-height:1.1}
+.nw-hudname small{font-size:8px;color:#bfcbe1;line-height:1}
+.nw-hudrow{margin:4px 0 3px}
+.nw-hud-avatar-hero{background:#25364d}
+.nw-enraged{background:radial-gradient(ellipse at 67% 39%,#573249 0%,#2d253a 44%,#0b111d 86%)}
+.nw-enraged .nw-right{border-color:#fa658a;box-shadow:0 0 22px #e0478266,inset 0 1px #ffabc666}
+.nw-enraged .nw-enemyhp{background:linear-gradient(90deg,#c62e62,#ffab6a);box-shadow:0 0 11px #ff5c89}
+.nw-enraged .nw-clockboss-art{animation:nw-enraged-boss .95s ease-in-out infinite alternate}
+.nw-enraged .nw-time-rings{animation-duration:4s;stroke:#ff779e}
+.nw-enraged .nw-clock-hand-fast{animation-duration:1.8s}
+.nw-enraged .nw-intent{animation:nw-intent-pulse 1.3s ease-in-out infinite}
+.nw-enraged .nw-rune{animation-duration:.5s}
+.nw-enraged .nw-boss-aura{opacity:.85;filter:brightness(1.3)}
+.nw-enraged .nw-damage-enemy{color:#fff5a9;text-shadow:0 0 22px #ff5899}
+@keyframes nw-enraged-boss{0%{transform:translateY(-7px) scale(1);filter:none}100%{transform:translateY(2px) scale(1.02);filter:drop-shadow(0 0 18px #ff407d88)}}
+@keyframes nw-intent-pulse{50%{border-color:#ff9aa9;box-shadow:0 0 22px #ff719d88}}
+@media(max-width:350px){.nw-hud-avatar{width:28px;height:28px}.nw-hudname{margin-left:34px}.nw-hud{padding-inline:6px}}
+@media(max-height:580px){.nw-hud{min-height:73px}.nw-hudname{height:27px}.nw-hud-avatar{width:26px;height:26px}.nw-hudname{margin-left:31px}.nw-hudrow{margin:3px 0 2px}}
+@media(prefers-reduced-motion:reduce){.nw-enraged .nw-clockboss-art,.nw-enraged .nw-intent{animation:none}}
