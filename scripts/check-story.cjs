@@ -1,79 +1,73 @@
-/* Automated sanity checks for the branching story graph and permanent progression. */
-const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
-const ts = require('typescript')
-const cache = new Map()
-function loadTypeScript(filename) {
-  const p = path.resolve(filename)
+/* Nightwalker trilogy: story links, gating, rewards, progression and playthrough regression. */
+const assert=require('node:assert/strict')
+const fs=require('node:fs')
+const path=require('node:path')
+const ts=require('typescript')
+const cache=new Map()
+function load(file){
+  const p=path.resolve(file)
   if(cache.has(p))return cache.get(p).exports
-  const module = {exports:{}}
+  const module={exports:{}}
   cache.set(p,module)
-  const raw=fs.readFileSync(p,'utf8')
-  const output=ts.transpileModule(raw,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText
-  const localRequire=(specifier)=>{
-    if(specifier.startsWith('.'))return loadTypeScript(path.resolve(path.dirname(p),specifier)+'.ts')
-    return require(specifier)
-  }
-  new Function('require','module','exports',output)(localRequire,module,module.exports)
+  const code=ts.transpileModule(fs.readFileSync(p,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText
+  new Function('require','module','exports',code)(spec=>spec.startsWith('.')?load(path.resolve(path.dirname(p),spec)+'.ts'):require(spec),module,module.exports)
   return module.exports
 }
-const {SCENES,INITIAL,availableChoices,applyEffect}=loadTypeScript('lib/infiniteStory.ts')
-const {spendTalent,talentRank,maxHp,awardXp}=loadTypeScript('lib/progression.ts')
-let choices=0,missing=[]
-for(const [id,scene] of Object.entries(SCENES)){
-  assert.equal(id,scene.id,'Scene ID mismatch: '+id)
-  assert(scene.lines.length>0,'Missing dialogue at '+id)
-  for(const choice of scene.choices){
+const {SCENES,INITIAL,availableChoices,applyEffect}=load('lib/infiniteStory.ts')
+const {spendTalent,talentRank,maxHp,awardXp}=load('lib/progression.ts')
+const {FILM_MISSIONS,unlockedFilm}=load('lib/movieMissions.ts')
+let choices=0
+const moods=new Set(['neutral','fear','sad','joy','anger','mystery','resolve'])
+for(const [key,s] of Object.entries(SCENES)){
+  assert.equal(key,s.id,'Scene ID mismatch: '+key)
+  assert(s.lines.length>0,'Empty scene: '+key)
+  for(const m of s.moods||[])assert(moods.has(m),'Unknown mood '+m+' at '+key)
+  for(const choice of s.choices){
     choices++
-    if(choice.to&&!SCENES[choice.to])missing.push(id+' => '+choice.to)
+    if(choice.to)assert(SCENES[choice.to],'Broken choice link: '+key+' to '+choice.to)
   }
 }
-assert.deepEqual(missing,[],'Dangling story links')
-assert(Object.keys(SCENES).length>=80,'Expected film, TV, anime and archived worlds')
-for(const [world,route] of [['德古拉','gothic_start'],['科學怪人','arctic_start'],['第十三號放映室','cinema_start']]) {
-  assert(availableChoices(SCENES.screen_literature,INITIAL).some(c=>c.to===route),'Missing portal: '+world)
-  assert(!availableChoices(SCENES.screen_literature,applyEffect(INITIAL,{clearWorld:world})).some(c=>c.to===route),'Cleared world should not reward repeated visits: '+world)
+assert(Object.keys(SCENES).length>100,'Main and archived worlds must remain available')
+assert.deepEqual(FILM_MISSIONS.map(m=>m.clear),['生化危機2002','VanHelsing2004','風雲1998'])
+assert(availableChoices(SCENES.movie_portals,INITIAL).some(c=>c.to==='re_arrival'))
+assert(!availableChoices(SCENES.movie_portals,INITIAL).some(c=>c.to==='vh_arrival'||c.to==='fy_arrival'))
+assert(!Object.values(SCENES).some(s=>s.choices.some(c=>c.action==='battle')),'Narrative should not require combat screen')
+const take=(state,where,to)=>{
+  const list=availableChoices(SCENES[where],state)
+  const c=list.find(x=>x.to===to)
+  assert(c,'No reachable choice: '+where+' -> '+to+' under saved flags')
+  const updated=applyEffect(state,c.effect)
+  assert(updated.hp>0&&updated.sp>0,'Main path must be survivable '+where)
+  return updated
 }
-assert(!Object.values(SCENES).flatMap(x=>x.choices).some(c=>c.action==='battle'),'Story scenes still trigger the on-hold combat system')
-assert(availableChoices(SCENES.gothic_castle,INITIAL).some(c=>c.to==='gothic_tower'),'Castle must be escapable without prerequisite items')
-assert(availableChoices(SCENES.cinema_set,{...INITIAL,items:[...INITIAL.items,'改寫場景剪刀']}).some(c=>c.requiresItem==='改寫場景剪刀'),'Cinema film editing path not available')
-
-assert(Object.keys(SCENES).length>=80,'Expected branching film, television and anime worlds')
-for(const [label,start,world] of [
-  ['cinema','film_arrival','午夜放映廳'],
-  ['literary','novel_arrival','霧中第七章'],
-  ['classic gothic','gothic_start','德古拉'],
-  ['classic arctic','arctic_start','科學怪人'],
-  ['film','film_sub_arrival','深海零號艙'],
-  ['series','tv_week_arrival','倒數七日'],
-  ['anime','anime_school_arrival','逆時學園']]){
-  assert(SCENES[start],label+' missing start scene')
-  assert(availableChoices(SCENES[['film_arrival','cinema_start'].includes(start)?'screen_cinema_archives':['film_sub_arrival','tv_week_arrival','anime_school_arrival'].includes(start)?'screen_hub':'screen_literature'],INITIAL).some(c=>c.to===start),label+' should unlock at the hub')
-  const ending=Object.values(SCENES).some(s=>s.world===world&&s.choices.some(c=>c.effect?.clearWorld===world))
-  assert(ending,label+' missing an ending with a world clear')
-}
-assert(Object.values(SCENES).every(s=>s.choices.every(c=>c.action!=='battle')),'Story-first mode must have no combat-only branch')
-assert.deepEqual(SCENES.film_actress.moods,['sad','fear','resolve'])
-assert(SCENES.novel_heroine.choices.some(c=>c.effect?.flags?.includes('novel_heard_her')),'NPC agency route missing')
-
-assert(availableChoices(SCENES.hub_portals,INITIAL).some(c=>c.to==='screen_hub'),'Main screen worlds entry missing')
-assert(availableChoices(SCENES.screen_hub,INITIAL).some(c=>c.to==='anime_school_arrival'),'Anime route missing')
-assert(!availableChoices(SCENES.hub_portals,INITIAL).some(c=>c.to==='fourth_threshold'),'Fourth door opened too early')
 let s=INITIAL
-for(const name of ['失物管理處','血月公寓','鏡城病院'])s=applyEffect(s,{clearWorld:name,points:20})
-assert(s.level>1&&s.talentPoints>0,'No talent XP on world clears')
-assert(availableChoices(SCENES.hub_portals,s).some(c=>c.to==='fourth_threshold'),'Fourth door not unlocked after three clears')
-const before=s.talentPoints
-s=spendTalent(s,'insight')
-assert.equal(talentRank(s,'insight'),1,'Talent did not unlock')
-assert.equal(s.talentPoints,before-1,'Talent point did not consume')
-assert(availableChoices(SCENES.guide_first,s).length>=3)
-const health=spendTalent(s,'vitality')
-assert(maxHp(health)>=maxHp(s),'HP talent did not work')
-const xp=awardXp(INITIAL,75)
-assert.equal(xp.level,2)
-const full=applyEffect(s,{clearWorld:'第四道門'})
-assert(full.cleared.includes('第四道門'))
-assert(!availableChoices(SCENES.hub_portals,full).some(c=>c.to==='fourth_threshold'),'Cleared fourth door should close')
-console.log('PASS: '+Object.keys(SCENES).length+' scenes, '+choices+' choices; graph, world gates, leveling, talent spending, end states')
+const bio=['re_arrival','re_terminal','re_queen','re_infected','re_lab','re_train','re_ending','re_clear','movie_after_first']
+for(let i=0;i<bio.length-1;i++)s=take(s,bio[i],bio[i+1])
+assert(s.cleared.includes('生化危機2002'))
+assert(unlockedFilm(FILM_MISSIONS[1],s),'Second world should unlock after first')
+assert.equal(s.mastery.tech,1)
+const vh=['movie_after_first','vh_arrival','vh_helsing','vh_village','vh_velkan','vh_frankenstein','vh_ball','vh_crypt','vh_last_choice','vh_ending','vh_clear','movie_after_second']
+for(let i=0;i<vh.length-1;i++)s=take(s,vh[i],vh[i+1])
+assert(s.cleared.includes('VanHelsing2004'))
+assert(s.mastery.occult===1)
+assert(unlockedFilm(FILM_MISSIONS[2],s),'Storm Riders must unlock')
+const fy=['movie_after_second','fy_arrival','fy_prophecy','fy_kongchi','fy_cloud','fy_wedding','fy_after_wedding','fy_final_preparation','fy_climax','fy_ending','fy_clear','movie_trilogy_epilogue']
+for(let i=0;i<fy.length-1;i++)s=take(s,fy[i],fy[i+1])
+assert(s.cleared.includes('風雲1998'))
+assert(s.mastery.martial===1)
+assert(availableChoices(SCENES.movie_portals,s).some(c=>c.to==='movie_trilogy_epilogue'))
+assert(!availableChoices(SCENES.movie_portals,s).some(c=>c.to==='re_arrival'||c.to==='vh_arrival'||c.to==='fy_arrival'))
+const r1=applyEffect(INITIAL,{branch:'D',points:40,mastery:'tech'})
+assert.equal(r1.branches.D,1)
+assert.equal(r1.mastery.tech,1)
+assert(availableChoices(SCENES.vh_carl,r1).some(c=>c.requiresMastery?.key==='tech'),'Technology must have a second-world narrative use')
+assert(availableChoices(SCENES.fy_prophecy,applyEffect(r1,{mastery:'occult'})).some(c=>c.requiresMastery?.key==='occult'),'Occult mastery must have a third-world narrative use')
+const kong=availableChoices(SCENES.fy_ending,{...INITIAL,flags:[...INITIAL.flags,'fy_kongchi_saved']})
+assert(!kong.some(c=>c.effect?.branch==='C'),'C-rank ending cannot unlock on rescue alone')
+assert(availableChoices(SCENES.fy_ending,{...INITIAL,flags:[...INITIAL.flags,'fy_kongchi_saved','fy_joint_victory']}).some(c=>c.effect?.branch==='C'))
+let talent=awardXp(INITIAL,75)
+assert.equal(talent.level,2)
+const spent=spendTalent(talent,'vitality')
+assert.equal(talentRank(spent,'vitality'),1)
+assert(maxHp(spent)>maxHp(talent))
+console.log('PASS '+Object.keys(SCENES).length+' scenes; '+choices+' choices; 3 film playthroughs; gating, branching, mastery, reward safety and talents')
