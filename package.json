@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run test:story && next build",
+    "build": "npm run test:story && npm run test:ai && next build",
     "start": "next start",
     "lint": "next lint",
-    "test:story": "node scripts/check-story.cjs"
+    "test:story": "node scripts/check-story.cjs",
+    "test:ai": "node scripts/check-ai.cjs"
   },
   "dependencies": {
     "@types/node": "^20.11.30",
