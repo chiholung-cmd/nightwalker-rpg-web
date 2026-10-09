@@ -45,3 +45,74 @@
 @media(max-width:370px){.nw-brand{font-size:11px}.nw-brand small{font-size:9px}.nw-action-grid{gap:4px}.nw-action-grid button b{font-size:11px}.nw-action-grid button small{font-size:8px}.nw-hud{padding:6px}}
 @media(max-height:620px){.nw-top{height:37px;flex-basis:37px}.nw-dialogue{height:50px;flex-basis:50px;padding:5px 8px}.nw-controls{padding:5px 7px}.nw-action-grid button{min-height:40px}.nw-credits{height:25px;flex-basis:25px}.nw-footer{height:20px;flex-basis:20px}}
 @media(prefers-reduced-motion:reduce){.nw-hero-art,.nw-enemy-art,.nw-boss-aura.active{animation:none}}
+
+
+/* v0.2 · Original clockwork boss / cinematic feedback / compact mobile polish */
+.nw-game{background:linear-gradient(180deg,#0b1527,#080d19);box-shadow:0 0 0 1px #131d35,0 0 45px #040a17}
+.nw-top{background:linear-gradient(100deg,#101c30,#11182a 65%,#17192c);box-shadow:0 3px 16px #05091790;position:relative;z-index:2}
+.nw-brand{letter-spacing:.65px;text-shadow:0 0 18px #62dfff4a}
+.nw-head-actions button{transition:background .2s,border-color .2s}
+.nw-head-actions button:active{background:#305070;border-color:#78d4e9}
+.nw-arena{background:radial-gradient(ellipse at 63% 34%,#393251 0%,#1a263b 39%,#090f1c 83%)}
+.nw-arena::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(0deg,transparent 0px,transparent 3px,#d8ecff 4px,transparent 5px);opacity:.024;mix-blend-mode:screen}
+.nw-arena::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center,transparent 31%,#05091199 100%)}
+.nw-scene{filter:drop-shadow(0 7px 17px #0005)}
+.nw-clockboss-art{animation:nw-clock-float 3.2s ease-in-out infinite;transform-box:view-box;transform-origin:445px 278px}
+.nw-time-rings{transform-box:view-box;transform-origin:446px 137px;animation:nw-wheel-spin 30s linear infinite}
+.nw-clock-hand-fast,.nw-clock-hand-slow{transform-box:view-box;transform-origin:445px 118px}
+.nw-clock-hand-fast{animation:nw-hand-spin 7s steps(24,end) infinite}
+.nw-clock-hand-slow{animation:nw-hand-spin 20s linear infinite reverse}
+.nw-rune{animation:nw-rune-breathe 1.8s ease-in-out infinite}
+.nw-dust circle{animation:nw-dust 2.6s ease-in-out infinite alternate}
+.nw-boss-stage .nw-scene{filter:drop-shadow(0 0 14px #a54c7a33)}
+.nw-boss-stage .nw-arena-bottom .nw-intent{border-color:#c77595;box-shadow:0 0 16px #bf4b785e}
+.nw-hud{z-index:2;background:linear-gradient(120deg,#101d31ef,#1a2942da);box-shadow:0 6px 22px #0008,inset 0 1px #a7d7ff17}
+.nw-right{background:linear-gradient(120deg,#2a1b31ed,#211727db);box-shadow:0 6px 20px #0008,inset 0 1px #f1a3ba29}
+.nw-hudname{letter-spacing:.15px}.nw-right .nw-hudname b{color:#ffc5d0}
+.nw-meter{height:6px;border:1px solid #53607939}
+.nw-arena-bottom{z-index:2}
+.nw-vfx{z-index:3}
+.nw-damage{position:absolute;z-index:6;top:33%;font-size:clamp(22px,7vw,39px);font-weight:1000;font-style:italic;letter-spacing:-1.5px;filter:drop-shadow(0 3px 2px #160e14);text-shadow:0 0 11px #e7a878,0 2px 1px #331422;color:#ffe2a8;pointer-events:none;animation:nw-damage-float .88s cubic-bezier(.15,.7,.2,1) both}
+.nw-damage small{font-size:11px;letter-spacing:2px;display:block;text-shadow:none;color:#e4fdff}
+.nw-damage-enemy{left:68%}.nw-damage-hero{left:21%;color:#ff8fae;text-shadow:0 0 15px #ef4662,0 2px 1px #331422}
+.nw-ultimate-title{position:absolute;top:11%;left:5%;right:5%;display:flex;flex-direction:column;text-align:center;font-weight:1000;font-size:clamp(20px,7.5vw,38px);font-style:italic;letter-spacing:5px;color:#f7dcff;text-shadow:0 0 12px #d36cff,0 0 45px #8b35cf;opacity:0}
+.nw-ultimate-title span{font-size:10px;letter-spacing:5px;font-style:normal;color:#e7a8ff;margin-top:7px}
+.nw-boss-intro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(110deg,#2e0822ed,#1c1420e6,#381b35ed);opacity:0;letter-spacing:3px;color:#ffd0d8;transform:translateY(-100%);border-top:2px solid #c54b80;border-bottom:2px solid #c54b80}
+.nw-boss-intro span{font-size:11px;color:#fc8395;letter-spacing:3px}
+.nw-boss-intro strong{font-size:clamp(22px,7vw,42px);margin:10px 0;color:#ffe3e2;text-shadow:0 0 28px #fd6397}
+.nw-boss-intro small{font-size:10px;color:#d5b6ce}
+.nw-arena.nw-intro .nw-boss-intro{animation:nw-boss-reveal 1.9s ease-in-out forwards}
+.nw-arena.nw-seal .nw-ultimate-title{animation:nw-skill-title .7s ease-in-out forwards}
+.nw-arena.nw-seal .nw-spark,.nw-arena.nw-mirror .nw-spark,.nw-arena.nw-attack .nw-spark{animation:nw-spark-fly .5s ease-out both}
+.nw-spark{height:4px;width:30px;border-radius:10px;background:#ecfaff;box-shadow:0 0 12px 5px #8cecff;transform:rotate(-32deg)}
+.nw-spark-one{left:66%;top:45%}.nw-spark-two{left:75%;top:54%;animation-delay:.08s!important}.nw-spark-three{left:60%;top:64%;animation-delay:.13s!important}
+.nw-arena.nw-victorious .nw-enemy-art,.nw-arena.nw-victorious .nw-clockboss-art{filter:grayscale(.65) brightness(.55);opacity:.6;transition:opacity .5s,filter .5s}
+.nw-credits{background:linear-gradient(90deg,#142b3b,#201c32);border-top-color:#45647c}
+.nw-credits strong{font-size:12px;text-shadow:0 0 12px #f6b75f45}
+.nw-dialogue{background:linear-gradient(100deg,#111e30,#182139);box-shadow:inset 0 1px 1px #91bad81e}
+.nw-speaker-icon{box-shadow:inset 0 0 12px #74d9f922}
+.nw-controls{background:linear-gradient(145deg,#1a2d48,#131e33 50%,#121a30);box-shadow:inset 0 2px 15px #243856}
+.nw-action-grid button{position:relative;overflow:hidden;background:linear-gradient(135deg,#304664 0%,#1a2b47 68%);border-color:#537192;box-shadow:inset 0 1px #b4d4ef17,0 2px 3px #0005;transition:transform .15s,border-color .2s,box-shadow .2s}
+.nw-action-grid button:active:not(:disabled){border-color:#8ceafb;box-shadow:inset 0 0 16px #67d9ff29,0 0 10px #67d9ff38}
+.nw-action-grid button::before{content:"";position:absolute;inset:-60%;transform:translateX(-140%) rotate(25deg);background:linear-gradient(90deg,transparent,#f5fbff22,transparent);pointer-events:none}
+.nw-action-grid button:active:not(:disabled)::before{animation:nw-button-shine .34s ease}
+.nw-action-grid button.nw-ultimate{background:linear-gradient(135deg,#633a83,#39254e,#232b4f);border-color:#a374d0;box-shadow:inset 0 0 16px #ae71dc2a,0 0 12px #7d46ad2e}
+.nw-action-grid button.nw-ultimate b{text-shadow:0 0 12px #e9b4ff8c}
+.nw-overlay{z-index:10}
+.nw-modal{border-color:#866ba1;box-shadow:0 15px 75px #000b,inset 0 1px #c8b9f92e}
+.nw-item{transition:border-color .2s}.nw-item:hover{border-color:#7593b5}
+@keyframes nw-clock-float{0%,100%{transform:translateY(-5px)}50%{transform:translateY(4px)}}
+@keyframes nw-wheel-spin{to{transform:rotate(360deg)}}
+@keyframes nw-hand-spin{to{transform:rotate(360deg)}}
+@keyframes nw-rune-breathe{50%{opacity:.25;filter:brightness(2)}}
+@keyframes nw-dust{0%{opacity:.2;transform:translateY(4px)}100%{opacity:1;transform:translateY(-8px)}}
+@keyframes nw-damage-float{0%{opacity:0;transform:translateY(16px) scale(.6) skew(-12deg)}22%{opacity:1;transform:translateY(-9px) scale(1.3) skew(-12deg)}75%{opacity:1}100%{opacity:0;transform:translateY(-67px) scale(1) skew(-12deg)}}
+@keyframes nw-skill-title{0%,100%{opacity:0;transform:scale(1.5)}25%,75%{opacity:1;transform:scale(1)}}
+@keyframes nw-boss-reveal{0%{opacity:0;transform:translateY(-100%)}15%{opacity:1;transform:translateY(0)}75%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(100%)}}
+@keyframes nw-spark-fly{0%{opacity:0;transform:translate(-18px,18px) rotate(-32deg) scale(.2)}35%{opacity:1;transform:translate(0,0) rotate(-32deg) scale(1.25)}100%{opacity:0;transform:translate(42px,-26px) rotate(-32deg) scale(.4)}}
+@keyframes nw-button-shine{to{transform:translateX(140%) rotate(25deg)}}
+@media(max-height:620px){.nw-ultimate-title span{margin-top:1px}.nw-top{padding-top:2px;padding-bottom:2px}.nw-dialogue-content p{font-size:10px}}
+@media(prefers-reduced-motion:reduce){
+  .nw-clockboss-art,.nw-clock-hand-fast,.nw-clock-hand-slow,.nw-time-rings,.nw-rune,.nw-dust circle,.nw-boss-aura.active{animation:none!important}
+  .nw-damage,.nw-arena.nw-intro .nw-boss-intro{animation-duration:.15s!important}
+}
