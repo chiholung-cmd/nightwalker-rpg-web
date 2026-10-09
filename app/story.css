@@ -179,3 +179,42 @@ button:disabled{opacity:.38;cursor:not-allowed}
   .reader-choice{gap:6px}
 }
 @media(prefers-reduced-motion:reduce){.reader-atmosphere img,.reader-caret{animation:none}}
+
+
+/* v0.8 — cinematic visual novel: real raster character art + expressive portraits */
+.reader-atmosphere{isolation:isolate;flex-shrink:0;box-shadow:inset 0 -2px #b09cbd35}
+.reader-atmosphere img{position:absolute;inset:0}
+.reader-actor{position:absolute;z-index:2;right:0;bottom:-3px;width:min(46%,186px);height:91%;border:0;overflow:hidden;pointer-events:none;transform-origin:center bottom;animation:reader-character-appear .34s ease both}
+.reader-actor-paint{position:absolute;inset:0;background-repeat:no-repeat;image-rendering:auto;
+  filter:drop-shadow(-5px 4px 12px #05041266);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 12%,#000 86%,transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0%,#000 12%,#000 86%,transparent 100%)}
+.reader-actor.actor-male{width:min(37%,150px);height:77%;right:1%;bottom:0}
+.reader-actor.actor-hero{right:-1%;height:94%;width:min(45%,182px)}
+.reader-actor.actor-fear .reader-actor-paint{filter:saturate(.87) contrast(1.07)}
+.reader-actor.actor-angry .reader-actor-paint{filter:contrast(1.18) saturate(1.12)}
+.reader-actor.actor-sad .reader-actor-paint{filter:saturate(.69) brightness(.89)}
+.reader-actor.actor-happy .reader-actor-paint{filter:saturate(1.2) brightness(1.06)}
+.reader-atmosphere-shade{z-index:1;background:linear-gradient(90deg,#080b16ef 0%,#0a0c1bab 40%,transparent 76%),linear-gradient(0deg,#070a12e0,transparent 66%)}
+.reader-atmosphere-inner{z-index:3;right:35%;left:16px}
+.reader-atmosphere h1{max-width:100%;font-size:clamp(16px,4.4vw,25px);line-height:1.38}
+.reader-illustration-mark{display:none}
+.reader-speaking{justify-content:initial;gap:9px;min-height:43px;padding-bottom:8px}
+.reader-speaking-avatar{height:39px;width:39px;flex:0 0 39px;border:1px solid #7b687f;background-color:#181a2c;background-repeat:no-repeat;background-size:500% 100%;border-radius:7px;box-shadow:0 0 11px #9c71933d}
+.reader-speaker-name{min-width:0;flex:1;gap:7px}
+.reader-speaker-name>span{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reader-speaker-name em{white-space:nowrap}
+.reader-progression{flex:0 0 auto}
+.reader-world-item{min-height:77px;gap:12px;background:linear-gradient(105deg,#23263a,#1a1d30);border-color:#62516a;padding:6px}
+.reader-world-symbol{height:66px;width:108px;flex:0 0 108px;background-size:cover;background-position:center;border:1px solid #66566d;box-shadow:inset 0 0 18px #08070dcc;border-radius:5px;display:flex;align-items:flex-end;justify-content:flex-start;padding:6px}
+.reader-world-symbol span{font-size:20px;color:#eed7c4;text-shadow:0 2px 5px #000c}
+.reader-world-item strong{font-size:13px;color:#f4e7de}
+.reader-world-item small{font-size:10px;line-height:1.4}
+.reader-choice{box-shadow:inset 0 1px #ded3ec10,0 1px 6px #02030a88}
+.reader-choice-index{min-width:21px}
+.reader-story{background:linear-gradient(180deg,#1c1c2c,#111625 80%,#151322);border-top:1px solid #786585}
+.reader-body{color:#f1e9ec}
+@keyframes reader-character-appear{from{opacity:0;transform:translateX(18px) scale(.95)}to{opacity:1;transform:translateX(0) scale(1)}}
+@media(max-width:365px){.reader-atmosphere-inner{right:35%;left:11px}.reader-actor{width:46%}.reader-world-symbol{width:90px;flex-basis:90px}.reader-speaking-avatar{height:33px;width:33px;flex-basis:33px}.reader-speaker-name{gap:3px}.reader-speaker-name>span{font-size:12px}}
+@media(max-height:715px){.reader-speaking-avatar{height:32px;width:32px;flex-basis:32px}.reader-speaking{min-height:34px;padding-bottom:5px}.reader-actor{height:94%}.reader-body{padding-top:6px}}
+@media(prefers-reduced-motion:reduce){.reader-actor{animation:none}}
