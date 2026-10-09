@@ -102,6 +102,49 @@ function Avatar({ face }: { face?: string }) {
   const glyph = face === 'guide' ? '霧' : face === 'girl' ? '✿' : face === 'clerk' ? '✂' : face === 'nurse' ? '✚' : face === 'neighbor' ? '月' : '∞'
   return <span className={'iw-avatar iw-avatar-'+(face||'system')} aria-hidden="true">{glyph}</span>
 }
+
+function CharacterPortrait({face,theme}:{face?:string;theme:WorldTheme}){
+  if(!face||face==='system')return <div className="iw-char-rune" aria-hidden="true"><span>✧</span><i/><b>∞</b></div>
+  const guide=face==='guide',girl=face==='girl',nurse=face==='nurse',clerk=face==='clerk',neighbor=face==='neighbor'
+  const hair=guide?'#9290b1':girl?'#4b384d':nurse?'#1a283c':clerk?'#343042':'#343047'
+  const accent=guide?'#aa9ced':girl?'#eccd7e':nurse?'#8ad6dd':clerk?'#9e627b':'#ec8096'
+  const cloth=guide?'#4a425e':girl?'#b48e36':nurse?'#e0eaf1':clerk?'#252235':'#79364e'
+  const eyes=guide?'#f3c68f':girl?'#b4ddfb':nurse?'#86dbe4':clerk?'#d8799e':'#edb4b5'
+  return <svg className={'iw-figure iw-figure-'+face} viewBox="0 0 200 280" aria-hidden="true">
+    <defs>
+      <linearGradient id="iw-cloak" x1="0" x2="1" y1="0" y2="1"><stop stopColor={accent}/><stop offset=".5" stopColor={cloth}/><stop offset="1" stopColor="#0b1424"/></linearGradient>
+      <linearGradient id="iw-skin" x1="0" x2="1" y1="0" y2="1"><stop stopColor="#f8e6e3"/><stop offset="1" stopColor="#a69dae"/></linearGradient>
+      <radialGradient id="iw-character-aura"><stop stopColor={accent} stopOpacity=".42"/><stop offset="1" stopColor={accent} stopOpacity="0"/></radialGradient>
+      <filter id="iw-portrait-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <ellipse cx="101" cy="168" rx="101" ry="120" fill="url(#iw-character-aura)"/>
+    <path d="M12 282Q17 205 47 180L79 167L122 167L162 184Q188 219 199 282Z" fill="url(#iw-cloak)" stroke={accent} strokeWidth="2.5"/>
+    {guide&&<path d="M42 183Q12 91 57 47L100 20L145 41Q177 85 161 186L133 164L143 85L66 79L72 165Z" fill="#38334f" stroke="#8b79b4" strokeWidth="4"/>}
+    <path d="M83 152L77 181L100 198L126 181L118 153Z" fill="url(#iw-skin)" stroke="#a4a3b8" strokeWidth="1.5"/>
+    <path d="M50 103Q50 31 101 27Q151 29 151 108L142 164L117 192L84 190L59 168Z" fill={hair} stroke="#716f93" strokeWidth="2.7"/>
+    <path d="M65 90Q69 69 96 68Q132 63 137 93L135 143Q123 164 102 177Q79 172 67 148Z" fill="url(#iw-skin)" stroke="#b2a5b3" strokeWidth="1.8"/>
+    <path d="M63 95Q59 35 101 31Q144 37 150 83L136 93L129 72L99 84L83 61L67 106Z" fill={hair} stroke="#938bab" strokeWidth="3"/>
+    {guide&&<path d="M43 96Q45 39 100 18Q166 49 167 102L143 72L100 42L62 84Z" fill="#514867" stroke="#b3a1e8" strokeWidth="3"/>}
+    {girl&&<path d="M40 110Q46 41 98 38Q148 39 157 111L139 93L122 56L81 68L60 108Z" fill="#d4a648" stroke="#eedb8f" strokeWidth="4"/>}
+    {nurse&&<path d="M69 47L101 35L139 48L138 63L63 63Z" fill="#e0f4f3" stroke="#7ec1cb" strokeWidth="2"/>}
+    {clerk&&<path d="M63 57L99 32L144 60L132 75L101 67L76 83Z" fill="#252334" stroke="#b07995" strokeWidth="2"/>}
+    {neighbor&&<path d="M55 98Q50 37 102 31Q160 37 153 110L133 80L110 60L70 93Z" fill="#32253c" stroke="#c15d80" strokeWidth="2"/>}
+    <path d="M71 116Q83 110 95 117M109 117Q123 111 135 114" stroke={hair} strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+    <path d="M76 123Q84 128 93 123M112 123Q122 127 132 122" stroke="#382f46" strokeWidth="2" fill="none"/>
+    <circle className="iw-eye" cx="86" cy="123" r="3.9" fill={eyes}/><circle className="iw-eye" cx="122" cy="123" r="3.9" fill={eyes}/>
+    <path d="M99 126L96 144L104 145" stroke="#b58898" strokeWidth="1.5" fill="none"/>
+    <path d={girl||guide?"M94 153Q101 157 110 151":"M93 153Q103 152 113 151"} stroke="#a97589" strokeWidth="1.8" fill="none"/>
+    <path d="M75 181L99 201L125 180L156 206L177 280H25L51 208Z" fill={cloth} stroke={accent} strokeWidth="3"/>
+    {nurse?<path d="M80 185L101 204L120 185L112 281H87Z" fill="#f7f7f1" stroke="#95c8c9" strokeWidth="2"/>:<path d="M78 183L102 219L125 182L116 280H89Z" fill="#1b2639" stroke={accent} strokeWidth="2"/>}
+    <path d="M45 212L72 233M151 215L127 231" stroke={accent} strokeWidth="2.5" opacity=".7"/>
+    {girl&&<path d="M60 209L143 209" stroke="#eedb91" strokeWidth="4" opacity=".65"/>}
+    {clerk&&<path d="M99 200L99 280" stroke="#e0c0ca" strokeWidth="4" opacity=".65"/>}
+    <path d="M48 265Q106 251 153 269" stroke={accent} strokeWidth="1.5" opacity=".48" fill="none"/>
+    <circle cx="154" cy="107" r="2" fill="#fff" opacity=".72"/>
+    <path d="M36 126L20 115M166 128L179 114" stroke={accent} strokeWidth="2" opacity=".5"/>
+  </svg>
+}
+
 function Stat({ label, value, max, type }: { label:string; value:number; max:number; type:'hp'|'sp' }) {
   return <div className="iw-stat"><div className="iw-stat-label"><span>{label}</span><strong>{miniStat(value)}<i>/{max}</i></strong></div><div className="iw-stat-track"><i className={'iw-fill-'+type} style={{width:100*value/max+'%'}}/></div></div>
 }
@@ -280,7 +323,8 @@ export default function HomePage() {
     </header>
 
     <section className={'iw-stage iw-theme-'+theme+(isBattle?' iw-battle-active iw-fx-'+fx:'')}>
-      <WorldBackdrop theme={theme} battle={isBattle} count={game.riftCount}/>
+      <WorldBackdrop key={isBattle?'encounter-'+(fight?.enemy||'clerk'):scene.id} theme={theme} battle={isBattle} count={game.riftCount}/>
+      {!isBattle && <CharacterPortrait key={scene.id+'-'+(scene.face||'system')} face={scene.face} theme={theme}/>}
       <div className="iw-vignette"/>
       <div className="iw-stage-head">
         <div><span className="iw-stage-tag">{isBattle?'⚔ COMBAT': 'STORY MODE'}</span><strong>{isBattle?'規則異常・交戰中':scene.title}</strong></div>
@@ -306,7 +350,7 @@ export default function HomePage() {
     </section>
 
     {mode==='story'?<section className="iw-actions" aria-label="故事選擇">
-      {!atChoices?<button className="iw-next" onClick={advance}><span>繼續閱讀故事</span><strong>下一句 →</strong></button>:
+      {!atChoices||visibleChars<fullText.length?<button className="iw-next" onClick={advance}><span>{visibleChars<fullText.length?'點擊顯示完整對話':'繼續閱讀故事'}</span><strong>{visibleChars<fullText.length?'顯示全文':'下一句 →'}</strong></button>:
         <div className="iw-choices">{choices.map((choice,i)=><button className="iw-choice" key={i} onClick={()=>choose(choice)}><span className="iw-choice-count">{String(i+1).padStart(2,'0')}</span><span className="iw-choice-text"><strong>{choice.label}</strong>{choice.hint&&<small>{choice.hint}</small>}</span><span className="iw-choice-arrow">›</span></button>)}
           {choices.length===0&&<button className="iw-choice" onClick={returnHub}>返回主神空間 →</button>}
         </div>}
