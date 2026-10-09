@@ -67,7 +67,7 @@ export const MOVIE_TRILOGY: Record<string, Scene> = {
       'Alice 問你最後一次：「我應唔應該信你？」'
     ],
     choices:[
-      {label:'告訴佢先保住同伴，暫時唔講背叛者',hint:'Alice 信任',to:'re_terminal',effect:{flags:['re_alice_ally'],bond:1,journal:'你與 Alice 約定以救人及離開蜂巢為優先。'}},
+      {label:'告訴佢先保住同伴，暫時唔講背叛者',hint:'Alice 信任',to:'re_terminal',effect:{flags:['re_alice_ally'],relation:{id:'Alice',delta:1},journal:'你與 Alice 約定以救人及離開蜂巢為優先。'}},
       {label:'立即指控 Spence 偷走病毒',hint:'風險：未有證據',to:'re_spence',effect:{flags:['re_accused_early'],sp:-8}},
       {label:'承認自己只係估計，先去求證',hint:'誠實調查',to:'re_terminal',effect:{flags:['re_honest']}}
     ]
@@ -82,7 +82,7 @@ export const MOVIE_TRILOGY: Record<string, Scene> = {
     ],
     choices:[
       {label:'暗中記錄 Spence 交代前後矛盾嘅說話',hint:'取得揭穿背叛者嘅情報',to:'re_terminal',effect:{flags:['re_spence_evidence'],items:['Spence 行動記錄'],sp:-3,journal:'Spence 對病毒與列車位置的認知並不符合失憶說法。'}},
-      {label:'同 Matt 合作尋找 Lisa 留低嘅檔案',hint:'解鎖 Umbrella 罪證',to:'re_terminal',effect:{flags:['re_matt_ally'],bond:1}},
+      {label:'同 Matt 合作尋找 Lisa 留低嘅檔案',hint:'解鎖 Umbrella 罪證',to:'re_terminal',effect:{flags:['re_matt_ally'],relation:{id:'Matt Addison',delta:1}}},
       {label:'表面相信 Spence，逼佢帶路',hint:'較快，但存在背叛風險',to:'re_terminal',effect:{flags:['re_spence_lead'],hp:-5}}
     ]
   },
