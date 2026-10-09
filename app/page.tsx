@@ -152,9 +152,10 @@ export default function HomePage() {
     if(choice.action==='shop'){setOverlay('shop');return}
     if(choice.action==='combat-practice'){window.location.href='/combat';return}
     const next=applyEffect(game,choice.effect)
-    const node=choice.to||game.scene
+    const enteringBattle=choice.action==='battle'
+    const node=enteringBattle?game.scene:(choice.to||game.scene)
     const record=(scene.title+' → '+choice.label)
-    const updated:SaveState={...next,scene:node,line:0,path:[record,...next.path].slice(0,40)}
+    const updated:SaveState={...next,scene:node,line:enteringBattle?game.line:0,path:[record,...next.path].slice(0,40)}
     setGame(updated)
     if(updated.hp===0||updated.sp===0){setMode('lost');return}
     if(choice.action==='battle'){
@@ -201,9 +202,8 @@ export default function HomePage() {
     setFx(type)
     if(next.hp<=0){
       points+=fight.enemy==='clerk'?65:45
-      setGame({...game,points,sp,hp,flags:Array.from(new Set([...game.flags,'battle_'+fight.enemy+'_won']))})
+      setGame({...game,points,sp,hp,flags:Array.from(new Set([...game.flags,'battle_'+fight.enemy+'_won'])),journal:['成功擊敗 '+enemyName(fight.enemy)+'，獲得 '+(fight.enemy==='clerk'?65:45)+' 積分。',...game.journal]})
       setFight({...next,busy:false,message:'敵人終於倒下。你成功取得離開嘅機會。'})
-      setMode('story')
       block.current=false
       return
     }
@@ -215,7 +215,8 @@ export default function HomePage() {
       if(intent===0){enemySP=fight.enemy==='clerk'?10:14}
       if(intent===1){enemyHP=fight.enemy==='clerk'?24:29}
       if(intent===2){enemyHP=fight.enemy==='clerk'?12:16;enemySP=7}
-      if(defend){enemyHP=Math.ceil(enemyHP*.25);enemySP=Math.ceil(enemySP*.25)}
+      if(stunned){enemyHP=0;enemySP=0}
+      else if(defend){enemyHP=Math.ceil(enemyHP*.25);enemySP=Math.ceil(enemySP*.25)}
       const afterHP=clamp(hp-enemyHP),afterSP=clamp(sp-enemySP)
       setGame(prev=>({...prev,hp:afterHP,sp:afterSP}))
       setFight(prev=>prev?{...prev,turn:prev.turn+1,busy:false,animation:stunned?'mirror':'hurt',
@@ -228,6 +229,7 @@ export default function HomePage() {
   const battleWinReturn=()=>{
     if(!fight||fight.hp>0)return
     setGame(prev=>({...prev,scene:fight.returnScene,line:0}))
+    block.current=false
     setFight(null);setFx('');setMode('story')
   }
   const revive=()=>{
@@ -238,8 +240,7 @@ export default function HomePage() {
     setMode('battle')
   }
   const isBattle=mode==='battle'||mode==='lost'&&Boolean(fight)
-  const theme:isStoryTheme = isBattle ? 'archive':scene.theme
-  type isStoryTheme = WorldTheme
+  const theme: WorldTheme = isBattle ? (fight?.enemy==='echo'?'rift':'archive') : scene.theme
 
   return <main className="iw-app">
     <header className="iw-top">
@@ -308,7 +309,7 @@ export default function HomePage() {
         </div>}
         {overlay==='map'&&<div className="iw-sheet-scroll"><p className="iw-note">完成世界：{game.cleared.length} ・ 裂隙輪迴：{game.riftCount}</p>
           {['零號月台','失物管理處','血月公寓','鏡城病院','未知裂隙'].map(world=><div className="iw-map-line" key={world}><span>✧</span><strong>{world}</strong><small>{game.cleared.includes(world)?'✓ 已完成':world==='未知裂隙'?'每次重新組合':'未通關'}</small></div>)}
-          <button className="iw-modal-action" onClick={()=>{setOverlay(null);if(mode==='story'){setGame(prev=>({...prev,scene:'hub_portals',line:0}))}}} disabled={mode!=='story'}>返回世界傳送門</button>
+          <button className="iw-modal-action" onClick={()=>{setOverlay(null);if(mode==='story' && scene.world==='主神中轉站'){setGame(prev=>({...prev,scene:'hub_portals',line:0}))}}} disabled={mode!=='story'||scene.world!=='主神中轉站'}>返回世界傳送門</button>
         </div>}
         {overlay==='shop'&&<div className="iw-sheet-scroll"><p className="iw-note">可用積分：{game.points}。購買後會即時更新，跨世界保留。</p>{shopItems.map(item=><div className="iw-shop-row" key={item.key}><span>{item.icon}</span><div><strong>{item.name}</strong><small>{item.note}</small></div><button onClick={()=>buy(item.key)} disabled={game.points<item.cost||item.key==='med'&&game.hp===100||item.key==='calm'&&game.sp===100||item.key==='mirror'&&game.items.includes('鏡界護符')}>{item.cost} ✦</button></div>)}</div>}
         {overlay==='menu'&&<div className="iw-sheet-scroll"><p className="iw-note">手機直向優先 ・ 自動儲存於目前瀏覽器</p>
