@@ -172,6 +172,8 @@ export default function HomePage() {
   const [fx,setFx] = useState('')
   const [visibleChars,setVisibleChars]=useState(0)
   const [textInstant,setTextInstant]=useState(false)
+  const [choicePage,setChoicePage]=useState(0)
+  const [choicesPerPage,setChoicesPerPage]=useState(2)
   const block = useRef(false)
   const activeTimer=useRef<ReturnType<typeof setTimeout>|null>(null)
 
@@ -207,8 +209,14 @@ export default function HomePage() {
   const currentLine=Math.min(game.line,lines.length-1)
   const fullText=lines[currentLine]||''
   useEffect(()=>{
-    setTextInstant(false);setVisibleChars(0)
+    setTextInstant(false);setVisibleChars(0);setChoicePage(0)
   },[game.scene,game.line])
+  useEffect(()=>{
+    const resize=()=>setChoicesPerPage(window.innerHeight<715?2:3)
+    resize()
+    window.addEventListener('resize',resize)
+    return ()=>window.removeEventListener('resize',resize)
+  },[])
   useEffect(()=>{
     if(mode!=='story'||textInstant||visibleChars>=fullText.length)return
     const t=setTimeout(()=>setVisibleChars(n=>Math.min(n+2,fullText.length)),14)
@@ -216,6 +224,9 @@ export default function HomePage() {
   },[mode,game.scene,game.line,fullText,visibleChars,textInstant])
   const atChoices=currentLine===lines.length-1
   const choices=availableChoices(scene,game)
+  const pageCount=Math.max(1,Math.ceil(choices.length/choicesPerPage))
+  const activeChoicePage=Math.min(choicePage,pageCount-1)
+  const visibleChoices=choices.slice(activeChoicePage*choicesPerPage,(activeChoicePage+1)*choicesPerPage)
   const choose=(choice:Choice)=>{
     if(block.current||mode!=='story')return
     if(choice.action==='shop'){setOverlay('shop');return}
@@ -362,8 +373,18 @@ export default function HomePage() {
 
     {mode==='story'?<section className="iw-actions" aria-label="故事選擇">
       {!atChoices||visibleChars<fullText.length?<button className="iw-next" onClick={advance}><span>{visibleChars<fullText.length?'點擊顯示完整對話':'繼續閱讀故事'}</span><strong>{visibleChars<fullText.length?'顯示全文':'下一句 →'}</strong></button>:
-        <div className="iw-choices">{choices.map((choice,i)=><button className="iw-choice" key={i} onClick={()=>choose(choice)}><span className="iw-choice-count">{String(i+1).padStart(2,'0')}</span><span className="iw-choice-text"><strong>{choice.label}</strong>{choice.hint&&<small>{choice.hint}</small>}</span><span className="iw-choice-arrow">›</span></button>)}
+        <div className="iw-choices iw-choices-paged">
+          {visibleChoices.map((choice,i)=><button className="iw-choice" key={activeChoicePage*choicesPerPage+i} onClick={()=>choose(choice)}>
+            <span className="iw-choice-count">{String(activeChoicePage*choicesPerPage+i+1).padStart(2,'0')}</span>
+            <span className="iw-choice-text"><strong>{choice.label}</strong>{choice.hint&&<small>{choice.hint}</small>}</span>
+            <span className="iw-choice-arrow">›</span>
+          </button>)}
           {choices.length===0&&<button className="iw-choice" onClick={returnHub}>返回主神空間 →</button>}
+          {pageCount>1&&<div className="iw-choice-pager">
+            <button disabled={activeChoicePage===0} onClick={()=>setChoicePage(n=>Math.max(0,n-1))}>‹ 上一頁</button>
+            <span>選擇 {activeChoicePage+1} / {pageCount}</span>
+            <button disabled={activeChoicePage===pageCount-1} onClick={()=>setChoicePage(n=>Math.min(pageCount-1,n+1))}>下一頁 ›</button>
+          </div>}
         </div>}
     </section>:
     mode==='battle'?<section className="iw-actions iw-combat-panel" aria-label="戰鬥指令">
