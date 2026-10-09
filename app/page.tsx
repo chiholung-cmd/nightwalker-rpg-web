@@ -35,7 +35,7 @@ function HudPortrait({ kind }: { kind: 'hero' | 'clerk' | 'clock' }) {
       <circle cx="32" cy="30" r="25" fill="#1a1628" stroke="#c18d9c" strokeWidth="4"/>
       <circle cx="32" cy="30" r="20" fill="url(#nw-small-clock)" stroke="#e5c6ae" strokeWidth="2"/>
       <circle cx="32" cy="30" r="15" fill="#3c2b3e" stroke="#785366" strokeWidth="2"/>
-      {Array.from({length:12},(_,i)=><path key={i} d="M32 11V15" stroke="#f6d8c4" strokeWidth="1.5" transform={\`rotate(\${i*30} 32 30)\`}/>)}
+      {Array.from({length:12},(_,i)=><path key={i} d="M32 11V15" stroke="#f6d8c4" strokeWidth="1.5" transform={`rotate(${i*30} 32 30)`}/>)}
       <path d="M32 30L39 18M32 30L20 34" stroke="#ff7aa6" strokeWidth="3" strokeLinecap="round"/><circle cx="32" cy="30" r="3" fill="#fff0ce"/>
       <path d="M6 12L12 3M54 11L59 2" stroke="#ff4c7c" strokeWidth="2"/>
     </svg>
