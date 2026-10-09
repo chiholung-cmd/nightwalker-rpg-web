@@ -19,5 +19,7 @@ jobs:
         run: node scripts/validate-story.cjs
       - name: Typecheck
         run: npx tsc --noEmit
+      - name: Validate story graph and progression
+        run: node scripts/check-story.cjs
       - name: Build
         run: npm run build
