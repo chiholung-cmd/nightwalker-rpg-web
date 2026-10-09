@@ -1,6 +1,7 @@
 import { awardXp, maxHp, maxSp, talentRank } from './progression'
 import { CLASSIC_WORLDS } from './classicWorlds'
 import { STORY_WORLDS } from './storyWorlds'
+import { SCREEN_WORLDS } from './screenWorlds'
 export type WorldTheme = 'nexus' | 'archive' | 'apartment' | 'hospital' | 'rift' | 'gothic' | 'arctic' | 'cinema'
 export type Effect = {
   hp?: number
@@ -136,23 +137,13 @@ export const SCENES: Record<string, Scene> = {
     ]
   },
   hub_portals: {
-    id:'hub_portals',title:'下一道門',world:HUB,theme:'nexus',speaker:'主神系統',face:'system',
-    lines:[
-      '三道傳送門喺半空浮現：第一道散發金屬同舊紙氣味；第二道滲出潮濕嘅紅光；第三道不斷傳出醫院心電圖聲。',
-      '【每個世界都有獨立任務、規則、人物同結局。完成副本後可返回中轉站，攜帶因果進入下一個世界。】'
-    ],
+    id:'hub_portals',title:'光幕・世界選擇',world:HUB,theme:'nexus',speaker:'主神系統',face:'system',
+    lines:['【傳送權限啟動】你面前係電影、劇集同動漫三種主世界。每道門內都有原本嘅人物、故事同結局。','你作出嘅每個決定，都可能改變主角、反派甚至整個世界線；舊世界仍保留喺檔案庫。'],
     choices:[
-      {label:'副本 002：凌晨四點失物管理處',hint:'怪談・調查・可選擇避戰',to:'lost_arrival',notCleared:'失物管理處'},
-      {label:'副本 003：血月公寓',hint:'住戶規則・救人定逃生',to:'blood_arrival',notCleared:'血月公寓'},
-      {label:'副本 004：鏡城病院',hint:'身份交換・記憶與真相',to:'hospital_arrival',notCleared:'鏡城病院'},
-      {label:'前往不穩定裂隙',hint:'完成三個世界後解鎖・可重複探索',to:'rift_arrival',needsCleared:'失物管理處|血月公寓|鏡城病院'},
-      {label:'小說世界：《德古拉》',hint:'哥德恐怖・1897 年經典文學世界',to:'gothic_start',notCleared:'德古拉'},
-      {label:'小說世界：《科學怪人》',hint:'人性抉擇・1818 年經典文學世界',to:'arctic_start',notCleared:'科學怪人'},
-      {label:'電影世界：《第十三號放映室》',hint:'原創黑白電影・改寫角色必死劇情',to:'cinema_start',notCleared:'第十三號放映室'},
-      {label:'電影世界：《沒有片尾的電影》',hint:'電影法則・拯救被困演員',to:'film_arrival',notCleared:'午夜放映廳'},
-      {label:'小說世界：《霧中第七章》',hint:'文字會改寫命運・人物自主選擇',to:'novel_arrival',notCleared:'霧中第七章'},
-      {label:'開啟被主神封鎖嘅第四道門',hint:'第二章・跨世界因果・完成三個副本後解鎖',to:'fourth_threshold',needsCleared:'失物管理處|血月公寓|鏡城病院',notCleared:'第四道門'},
-      {label:'返回候車廳，同阿霧傾偈',to:'hub_return'}
+      {label:'進入電影／劇集／動漫世界',hint:'主要冒險入口',to:'screen_hub'},
+      {label:'第四道門・主神真正秘密',hint:'完成三個舊世界後解鎖',to:'fourth_threshold',needsCleared:'失物管理處|血月公寓|鏡城病院',notCleared:'第四道門'},
+      {label:'不穩定裂隙',hint:'完成三個舊世界後解鎖',to:'rift_arrival',needsCleared:'失物管理處|血月公寓|鏡城病院'},
+      {label:'同阿霧傾偈',to:'hub_return'}
     ]
   },
   hub_return: {
@@ -723,6 +714,7 @@ Object.assign(SCENES,{
 Object.assign(SCENES, CLASSIC_WORLDS)
 
 Object.assign(SCENES, STORY_WORLDS)
+Object.assign(SCENES, SCREEN_WORLDS)
 // Minimal emotional cues: performance follows the active dialogue line instead of huge portraits.
 const acting: Record<string, Scene['moods']> = {
   hub_arrival:['mystery','fear','resolve'],guide_first:['joy','mystery','sad'],
