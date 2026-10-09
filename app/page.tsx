@@ -143,6 +143,7 @@ export default function HomePage() {
   const [popup, setPopup] = useState<'bag' | 'info' | null>(null)
   const [muted, setMuted] = useState(true)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const introTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lock = useRef(false)
 
   useEffect(() => {
@@ -156,7 +157,10 @@ export default function HomePage() {
       }
     } catch { /* corrupted local save: start fresh */ }
     setReady(true)
-    return () => { if (timer.current) clearTimeout(timer.current) }
+    return () => {
+      if (timer.current) clearTimeout(timer.current)
+      if (introTimer.current) clearTimeout(introTimer.current)
+    }
   }, [])
 
   useEffect(() => { if (ready) localStorage.setItem(SAVE, JSON.stringify(g)) }, [g, ready])
@@ -183,10 +187,11 @@ export default function HomePage() {
   const fx = (name: string) => {
     setAnim('')
     requestAnimationFrame(() => setAnim(name))
-    timer.current = setTimeout(() => setAnim(''), 580)
+    timer.current = setTimeout(() => setAnim(''), name === 'intro' ? 1950 : 580)
   }
   const reset = () => {
     if (timer.current) clearTimeout(timer.current)
+    if (introTimer.current) clearTimeout(introTimer.current)
     lock.current = false; setAnim(''); setHit(null); setPopup(null); setG(fresh())
   }
 
@@ -272,12 +277,17 @@ export default function HomePage() {
       message: item === 'heal' ? '已回復生命 +30。' : item === 'calm' ? '已回復理智 +25。' : '劍刃獲得永久強化，攻擊 +6。', speaker: '神秘商人' })
   }
   const nextWave = () => {
-    lock.current = false
+    if (g.phase !== 'shop' || lock.current) return
+    lock.current = true
     setHit(null)
     fx('intro')
-    setG({ ...g, phase: 'fight', wave: 2, turn: 1, enemyHp: 145, weak: false,
+    setG({ ...g, phase: 'enemy', wave: 2, turn: 1, enemyHp: 145, weak: false,
       marks: 0, mirrorUsed: false, phoneUsed: false, speaker: '夜班裁定官',
       message: '「你根本唔應該通過第一關。」時鐘嘅指針開始倒轉。' })
+    introTimer.current = setTimeout(() => {
+      lock.current = false
+      setG(prev => prev.wave === 2 && prev.phase === 'enemy' ? { ...prev, phase: 'fight' } : prev)
+    }, 1900)
   }
   const full = () => {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {})
