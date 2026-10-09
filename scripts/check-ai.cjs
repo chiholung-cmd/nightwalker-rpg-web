@@ -59,6 +59,14 @@ assert.equal(p.effects.points,10)
 assert.equal(p.effects.xp,12)
 assert.equal(p.effects.time,25)
 assert.equal(capped.people.Dracula.trust,1)
+const mortal=parseTurn({title:'危險事故',location:'控制室',story:'一名隊員受到重傷，另一名同伴失去蹤影。突然之間有人死去，周圍無人能夠確定下一刻會發生什麼危險事件。',
+ dialogue:[],outcome:'發生意外',consequence:'人員傷亡',suggestions:['救援'],effects:{injured:['Rain'],dead:['Spence'],missing:['Kaplan']},
+ memory:'有角色失蹤及死亡',summary:'維持之前的故事記錄',missionComplete:false,missionProof:''})
+const casualties=applyTurn(t,'試圖保護同伴',mortal)
+assert.equal(casualties.people.Rain.condition,'受傷')
+assert.equal(casualties.people.Spence.condition,'死亡')
+assert.equal(casualties.people.Kaplan.condition,'失蹤')
+
 const system=makePrompt(t,'我想同 Anna 傾偈')
 assert(system.system.includes('2004')&&system.system.includes('Anna'))
 assert(system.user.includes('通行卡'))
