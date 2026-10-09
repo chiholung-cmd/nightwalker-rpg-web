@@ -1,5 +1,6 @@
 import { awardXp, maxHp, maxSp, talentRank } from './progression'
 import { CLASSIC_WORLDS } from './classicWorlds'
+import { STORY_WORLDS } from './storyWorlds'
 export type WorldTheme = 'nexus' | 'archive' | 'apartment' | 'hospital' | 'rift' | 'gothic' | 'arctic' | 'cinema'
 export type Effect = {
   hp?: number
@@ -36,6 +37,7 @@ export type Scene = {
   theme: WorldTheme
   speaker: string
   face?: 'guide' | 'girl' | 'clerk' | 'nurse' | 'neighbor' | 'system'
+  moods?: ('neutral'|'fear'|'sad'|'joy'|'anger'|'mystery'|'resolve')[]
   emotion?: 'calm'|'worried'|'afraid'|'angry'|'sad'|'hopeful'|'mysterious'
   lines: string[]
   choices: Choice[]
@@ -147,6 +149,8 @@ export const SCENES: Record<string, Scene> = {
       {label:'小說世界：《德古拉》',hint:'哥德恐怖・1897 年經典文學世界',to:'gothic_start',notCleared:'德古拉'},
       {label:'小說世界：《科學怪人》',hint:'人性抉擇・1818 年經典文學世界',to:'arctic_start',notCleared:'科學怪人'},
       {label:'電影世界：《第十三號放映室》',hint:'原創黑白電影・改寫角色必死劇情',to:'cinema_start',notCleared:'第十三號放映室'},
+      {label:'電影世界：《沒有片尾的電影》',hint:'電影法則・拯救被困演員',to:'film_arrival',notCleared:'午夜放映廳'},
+      {label:'小說世界：《霧中第七章》',hint:'文字會改寫命運・人物自主選擇',to:'novel_arrival',notCleared:'霧中第七章'},
       {label:'開啟被主神封鎖嘅第四道門',hint:'第二章・跨世界因果・完成三個副本後解鎖',to:'fourth_threshold',needsCleared:'失物管理處|血月公寓|鏡城病院',notCleared:'第四道門'},
       {label:'返回候車廳，同阿霧傾偈',to:'hub_return'}
     ]
@@ -620,6 +624,8 @@ Object.assign(SCENES,{
     ],
     choices:[
       {label:'展示小滿同被困住戶獲救嘅證據',hint:'救人路線・特殊證詞',to:'fourth_witnesses',requires:'lost_true_end'},
+      {label:'展示電影世界嘅未剪接畫面作證',hint:'跨世界證據・電影真結局',to:'fourth_witnesses',requires:'film_true_end'},
+      {label:'請紀青展示佢親筆寫下嘅第七章',hint:'跨世界證據・小說真結局',to:'fourth_witnesses',requires:'novel_true_end'},
       {label:'透過真相視界查看管理者弱點',hint:'調查天賦分支',to:'fourth_witnesses',requiresTalent:'insight',effect:{flags:['fourth_witness_insight'],sp:-7}},
       {label:'問管理者點解反覆清除自己記憶',to:'fourth_revelation'},
       {label:'接受測試，直接見最終監察者',hint:'放棄部分調查',to:'fourth_judgment',effect:{flags:['fourth_no_witness']}}
@@ -715,3 +721,20 @@ Object.assign(SCENES,{
 
 // Newly created journeys preserve the same save, journal, relationship and consequence engine.
 Object.assign(SCENES, CLASSIC_WORLDS)
+
+Object.assign(SCENES, STORY_WORLDS)
+// Minimal emotional cues: performance follows the active dialogue line instead of huge portraits.
+const acting: Record<string, Scene['moods']> = {
+  hub_arrival:['mystery','fear','resolve'],guide_first:['joy','mystery','sad'],
+  guide_trust:['sad','resolve','joy'],lost_girl:['fear','sad','fear'],
+  lost_clerk:['anger','anger','mystery'],hospital_mirror:['mystery','sad','resolve'],
+  film_arrival:['mystery','fear','sad','resolve'],film_actress:['sad','fear','resolve'],
+  film_projectionist:['mystery','anger','resolve'],film_director:['anger','mystery','anger'],
+  film_backstage:['fear','fear','sad'],film_edit:['fear','anger','sad'],
+  film_final_frame:['mystery','joy','resolve'],novel_arrival:['mystery','fear','mystery','resolve'],
+  novel_librarian:['sad','mystery','anger'],novel_heroine:['sad','anger','resolve'],
+  novel_confession:['sad','resolve','joy'],novel_rewrite:['fear','resolve','anger'],
+  gothic_start:['mystery','fear','resolve'],arctic_start:['fear','sad','mystery'],
+  cinema_start:['mystery','fear','resolve']
+}
+for(const [id,moods] of Object.entries(acting))if(SCENES[id])SCENES[id].moods=moods
