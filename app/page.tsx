@@ -392,12 +392,12 @@ export default function HomePage() {
       <section className="nw-controls">
         <div className="nw-control-head"><span>▣ COMBAT COMMAND</span><span>{g.weak ? '◉ 弱點已識破 +11' : '◎ 敵方弱點：未知'}</span></div>
         <div className="nw-action-grid">
-          <button disabled={actionDisabled('attack')} onClick={() => act('attack')}><b>⚔ 斬擊</b><small>{17 + (g.weak ? 11 : 0) + (g.weapon ? 6 : 0)} 傷害</small></button>
-          <button disabled={actionDisabled('guard')} onClick={() => act('guard')}><b>◈ 防禦</b><small>減傷 75%</small></button>
-          <button disabled={actionDisabled('inspect')} onClick={() => act('inspect')}><b>◎ 偵查</b><small>識破弱點</small></button>
-          <button className="nw-ultimate" disabled={actionDisabled('seal')} onClick={() => act('seal')}><b>✧ 遺忘印記</b><small>SP −18</small></button>
-          <button disabled={actionDisabled('mirror')} onClick={() => act('mirror')}><b>◇ 鏡像斬</b><small>{g.mirrorUsed ? '本場已用' : '打斷攻擊'}</small></button>
-          <button onClick={() => setPopup('bag')} disabled={g.phase === 'enemy'}><b>▣ 背包</b><small>特殊道具</small></button>
+          <button className="nw-command nw-command-attack" disabled={actionDisabled('attack')} onClick={() => act('attack')}><span className="nw-command-icon">⚔</span><b>斬擊</b><small>{17 + (g.weak ? 11 : 0) + (g.weapon ? 6 : 0)} 傷害</small></button>
+          <button className="nw-command nw-command-guard" disabled={actionDisabled('guard')} onClick={() => act('guard')}><span className="nw-command-icon">◇</span><b>防禦</b><small>減傷 75%</small></button>
+          <button className="nw-command nw-command-inspect" disabled={actionDisabled('inspect')} onClick={() => act('inspect')}><span className="nw-command-icon">◎</span><b>偵查</b><small>{g.weak ? '弱點已識破' : '識破弱點'}</small></button>
+          <button className="nw-command nw-ultimate" disabled={actionDisabled('seal')} onClick={() => act('seal')}><span className="nw-command-icon nw-command-sigil">✧</span><b>遺忘印記</b><small>SP −18</small></button>
+          <button className="nw-command nw-command-mirror" disabled={actionDisabled('mirror')} onClick={() => act('mirror')}><span className="nw-command-icon">✦</span><b>鏡像斬</b><small>{g.mirrorUsed ? '本場已用' : '打斷攻擊'}</small></button>
+          <button className="nw-command nw-command-bag" onClick={() => setPopup('bag')} disabled={g.phase === 'enemy'}><span className="nw-command-icon">▣</span><b>背包</b><small>特殊道具</small></button>
         </div>
       </section>
       <footer className="nw-footer"><span>ONE SCREEN · AUTO SAVE</span><button onClick={() => setPopup('info')}>☰ 遊戲資料</button></footer>
