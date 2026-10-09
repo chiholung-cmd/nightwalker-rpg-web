@@ -39,7 +39,7 @@ export const HELSING_WORLD: Record<string, Scene> = {
       '「呢一程唔係去殺幾隻怪物咁簡單。」獵魔人問你願意幫邊個。'
     ],
     choices:[
-      {label:'答應全力保護 Anna 同 Velkan',hint:'救援支線',to:'vh_anna',effect:{flags:['vh_guard_valerious'],bond:1}},
+      {label:'答應全力保護 Anna 同 Velkan',hint:'救援支線',to:'vh_anna',effect:{flags:['vh_guard_valerious'],relation:{id:'Van Helsing',delta:1}}},
       {label:'重點追查 Dracula 同 Frankenstein 研究',hint:'真相路線',to:'vh_village',effect:{flags:['vh_investigate_frank']}},
       {label:'表示以主神任務成功為優先',hint:'保持距離',to:'vh_village',effect:{flags:['vh_mission_first']}}
     ]
@@ -53,7 +53,7 @@ export const HELSING_WORLD: Record<string, Scene> = {
       '佢終於收起武器：「你有幾大把握可以救返我弟弟？」'
     ],
     choices:[
-      {label:'承認唔能夠保證，但會與佢一齊搵方法',hint:'建立 Anna 信任',to:'vh_village',effect:{flags:['vh_anna_trust'],bond:1,journal:'你答應 Anna 會將保護 Velkan 作為真正目標。'}},
+      {label:'承認唔能夠保證，但會與佢一齊搵方法',hint:'建立 Anna 信任',to:'vh_village',effect:{flags:['vh_anna_trust'],relation:{id:'Anna Valerious',delta:1},journal:'你答應 Anna 會將保護 Velkan 作為真正目標。'}},
       {label:'直接透露佢原本會死亡嘅結局',hint:'驚動 Anna・理智 -9',to:'vh_village',effect:{flags:['vh_anna_prophecy'],sp:-9}},
       {label:'教佢先派人監視山谷同狼人行蹤',hint:'掌握遭遇時間',to:'vh_village',effect:{flags:['vh_valley_watch'],sp:-4}}
     ]
@@ -67,7 +67,7 @@ export const HELSING_WORLD: Record<string, Scene> = {
       '【選擇後果】先救村民、保護 Anna、或者保存研究設備，會改變你稍後可用嘅資源。'
     ],
     choices:[
-      {label:'與 Anna 合作撤走街上村民',hint:'信任＋保命線',to:'vh_velkan',effect:{flags:['vh_villagers_saved'],hp:-12,bond:1}},
+      {label:'與 Anna 合作撤走街上村民',hint:'信任＋保命線',to:'vh_velkan',effect:{flags:['vh_villagers_saved'],hp:-12,relation:{id:'Anna Valerious',delta:1}}},
       {label:'掩護 Carl 保存獵魔設備',hint:'科技線',to:'vh_velkan',effect:{flags:['vh_carl_saved_gear'],sp:-6}},
       {label:'追擊新娘獲取 Dracula 計劃嘅線索',hint:'高風險調查',to:'vh_velkan',effect:{flags:['vh_bride_clue'],items:['新娘徽印'],hp:-15}}
     ]
@@ -95,7 +95,7 @@ export const HELSING_WORLD: Record<string, Scene> = {
       '造物望住你：「你會唔會同佢哋一樣，覺得我只係一件工具？」'
     ],
     choices:[
-      {label:'答應保護造物，不交佢畀 Dracula',hint:'建立造物信任',to:'vh_ball',effect:{flags:['vh_monster_ally'],bond:1,journal:'你將 Frankenstein 造物視作需要保護的生命。'}},
+      {label:'答應保護造物，不交佢畀 Dracula',hint:'建立造物信任',to:'vh_ball',effect:{flags:['vh_monster_ally'],relation:{id:'Frankenstein 造物',delta:1},journal:'你將 Frankenstein 造物視作需要保護的生命。'}},
       {label:'與 Carl 研究機器故障及幼體弱點',hint:'科技路線',to:'vh_ball',effect:{flags:['vh_machine_analysis'],items:['Frankenstein 能量草圖'],sp:-8}},
       {label:'表面答應交出造物，交換 Anna 安全',hint:'危險談判',to:'vh_ball',effect:{flags:['vh_monster_trade'],sp:-12}}
     ]
@@ -126,7 +126,7 @@ export const HELSING_WORLD: Record<string, Scene> = {
     choices:[
       {label:'用之前分析嘅裝置設計安全注射距離',hint:'需要科學情報；救 Anna 條件之一',to:'vh_last_choice',requires:'vh_machine_analysis',effect:{flags:['vh_cure_delivery'],sp:-8}},
       {label:'請 Frankenstein 造物牽制其他吸血鬼',hint:'需保護造物',to:'vh_last_choice',requires:'vh_monster_saved',effect:{flags:['vh_safe_corridor'],hp:-6}},
-      {label:'將 Karl 嘅裝備交畀 Anna 自己決定',hint:'需 Carl 支援',to:'vh_last_choice',requires:'vh_escape_gear',effect:{flags:['vh_anna_can_choose'],bond:1}},
+      {label:'將 Karl 嘅裝備交畀 Anna 自己決定',hint:'需 Carl 支援',to:'vh_last_choice',requires:'vh_escape_gear',effect:{flags:['vh_anna_can_choose'],relation:{id:'Anna Valerious',delta:1}}},
       {label:'依原本電影流程行動，靠最後一刻施救',hint:'保留既定歷史',to:'vh_last_choice',effect:{flags:['vh_follow_canon'],sp:-9}}
     ]
   },
