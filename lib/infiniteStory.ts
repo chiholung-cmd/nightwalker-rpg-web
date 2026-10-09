@@ -1,5 +1,6 @@
 import { awardXp, maxHp, maxSp, talentRank } from './progression'
-export type WorldTheme = 'nexus' | 'archive' | 'apartment' | 'hospital' | 'rift'
+import { CLASSIC_WORLDS } from './classicWorlds'
+export type WorldTheme = 'nexus' | 'archive' | 'apartment' | 'hospital' | 'rift' | 'gothic' | 'arctic' | 'cinema'
 export type Effect = {
   hp?: number
   sp?: number
@@ -35,6 +36,7 @@ export type Scene = {
   theme: WorldTheme
   speaker: string
   face?: 'guide' | 'girl' | 'clerk' | 'nurse' | 'neighbor' | 'system'
+  emotion?: 'calm'|'worried'|'afraid'|'angry'|'sad'|'hopeful'|'mysterious'
   lines: string[]
   choices: Choice[]
 }
@@ -142,6 +144,9 @@ export const SCENES: Record<string, Scene> = {
       {label:'副本 003：血月公寓',hint:'住戶規則・救人定逃生',to:'blood_arrival',notCleared:'血月公寓'},
       {label:'副本 004：鏡城病院',hint:'身份交換・記憶與真相',to:'hospital_arrival',notCleared:'鏡城病院'},
       {label:'前往不穩定裂隙',hint:'完成三個世界後解鎖・可重複探索',to:'rift_arrival',needsCleared:'失物管理處|血月公寓|鏡城病院'},
+      {label:'小說世界：《德古拉》',hint:'哥德恐怖・1897 年經典文學世界',to:'gothic_start',notCleared:'德古拉'},
+      {label:'小說世界：《科學怪人》',hint:'人性抉擇・1818 年經典文學世界',to:'arctic_start',notCleared:'科學怪人'},
+      {label:'電影世界：《第十三號放映室》',hint:'原創黑白電影・改寫角色必死劇情',to:'cinema_start',notCleared:'第十三號放映室'},
       {label:'開啟被主神封鎖嘅第四道門',hint:'第二章・跨世界因果・完成三個副本後解鎖',to:'fourth_threshold',needsCleared:'失物管理處|血月公寓|鏡城病院',notCleared:'第四道門'},
       {label:'返回候車廳，同阿霧傾偈',to:'hub_return'}
     ]
@@ -242,7 +247,7 @@ export const SCENES: Record<string, Scene> = {
       {label:'展示檔案同守則，指出佢嘅邏輯矛盾',hint:'解謎通關・無需戰鬥',to:'lost_ending',requires:'archive_truth',effect:{flags:['defeated_by_logic'],points:25,journal:'利用玩家檔案推翻管理員的收容邏輯，成功避免戰鬥。'}},
       {label:'用半張染血車票換取放行',hint:'犧牲一次性道具',to:'lost_ending',requiresItem:'半張染血車票',effect:{removeItems:['半張染血車票'],flags:['ticket_trade'],journal:'你用染血車票換取管理員放行。'}},
       {label:'抱起小滿，從貨架後面偷偷離開',hint:'小滿帶路・無戰鬥',to:'lost_ending',requires:'save_xiaoman',effect:{flags:['rescued_xiaoman','stealth_route'],points:15}},
-      {label:'拔出鏡面碎片，直接迎戰管理員',hint:'進入戰鬥模式',action:'battle',enemy:'clerk',to:'lost_after_battle'},
+      {label:'用鏡面碎片製造假身，趁亂逃出',hint:'敘事動作・生命 -18、理智 -8',to:'lost_after_battle',effect:{hp:-18,sp:-8,flags:['clerk_mirror_escape'],journal:'你利用鏡面碎片製造幻影逃過管理員追捕。'}},
       {label:'屈服並交出所有證明',hint:'快速離開・重大代價',to:'lost_ending',effect:{sp:-25,points:-35,flags:['surrendered_to_clerk']}}
     ]
   },
@@ -470,7 +475,7 @@ export const SCENES: Record<string, Scene> = {
       {label:'拼合玩家0000與鏡中人的完整記憶',hint:'跨世界隱藏線・大量積分',to:'rift_exit',requires:'hospital_freed_echo',requiresItem:'玩家0000檔案',effect:{sp:-9,points:85,flags:['rift_combined_memory'],journal:'你在裂隙中拼湊到主神輪迴核心的重要記憶。'}},
       {label:'調查深處的斷裂記憶',hint:'理智 -12・情報',to:'rift_exit',effect:{sp:-12,points:35,flags:['rift_truth'],journal:'你在不穩定世界捕捉到另一段主神輪迴記憶。'}},
       {label:'嘗試救助被困嘅陌生人',hint:'生命 -18・羈絆',to:'rift_exit',effect:{hp:-18,bond:1,points:20}},
-      {label:'擊退異常世界守門者',hint:'可選戰鬥',action:'battle',enemy:'echo',to:'rift_exit'},
+      {label:'利用鏡像引走異常守門者',hint:'行動選擇・理智 -12、生命 -10',to:'rift_exit',effect:{sp:-12,hp:-10,flags:['rift_mirror_decoy'],points:35}},
       {label:'直接尋找離開嘅門',hint:'安全但獎勵較少',to:'rift_exit',effect:{points:10}}
     ]
   },
@@ -529,7 +534,7 @@ export function effectiveLines(scene:Scene,state:SaveState):string[]{
     state.flags.includes('lost_true_end') ? '「小滿話，你真係守住咗承諾。」你驚訝地望住阿霧——原來不同世界嘅人，真係會記得你。' :
     state.flags.includes('hospital_freed_echo') ? '阿霧見到你帶返嚟嘅鏡中記憶，忽然避開你嘅目光。' :
     '「你返嚟就好。」阿霧望住你身上嘅傷，冇再追問。',
-    '下一道門正等待你。你可以隨時翻查記錄、補給，或者繼續穿越。'
+    state.flags.includes('cinema_good_end') ? '「黎音喺放映室外面等緊你。」阿霧輕聲話：「你真係改變到一套電影嘅結局。」' : state.flags.includes('arctic_good_end') ? '「你竟然令科學怪人嗰對父子肯面對彼此。」阿霧微微一笑，眼神少咗一分戒備。' : state.flags.includes('gothic_saved_end') ? '「艾莉娜今次終於唔使再死。」阿霧望住你：「小說劇本都開始改變，主神一定會注意到你。」' : '下一道門正等待你。你可以隨時翻查記錄、補給，或者繼續穿越。'
   ]
   if(scene.id==='rift_arrival' || scene.id==='rift_choice') {
     const theme=['雨夜戲院','白霧校園','逆行列車'][state.riftCount%3]
@@ -706,3 +711,7 @@ Object.assign(SCENES,{
     choices:[{label:'帶住名字，選擇仍然繼續探索',to:'hub_return',effect:{clearWorld:'第四道門',flags:['fourth_self_end'],items:['被取回的名字'],bond:-4,points:90,xp:80,journal:'第四道門自由結局：取回名字，卻犧牲阿霧對你的記憶。'}}]
   }
 })
+
+
+// Newly created journeys preserve the same save, journal, relationship and consequence engine.
+Object.assign(SCENES, CLASSIC_WORLDS)
