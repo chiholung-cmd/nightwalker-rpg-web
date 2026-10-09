@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run test:story && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:story": "node scripts/check-story.cjs"
   },
   "dependencies": {
     "@types/node": "^20.11.30",
