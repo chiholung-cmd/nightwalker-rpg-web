@@ -142,3 +142,23 @@
 @media(max-width:350px){.nw-hud-avatar{width:28px;height:28px}.nw-hudname{margin-left:34px}.nw-hud{padding-inline:6px}}
 @media(max-height:580px){.nw-hud{min-height:73px}.nw-hudname{height:27px}.nw-hud-avatar{width:26px;height:26px}.nw-hudname{margin-left:31px}.nw-hudrow{margin:3px 0 2px}}
 @media(prefers-reduced-motion:reduce){.nw-enraged .nw-clockboss-art,.nw-enraged .nw-intent{animation:none}}
+
+/* v0.3 combat commands · small visual skill cards with separate identity */
+.nw-controls{padding:6px 8px 8px}
+.nw-action-grid button.nw-command{min-height:59px;gap:1px;padding:4px 2px 5px;background:linear-gradient(145deg,#253958,#131e32);border-color:#49698a;box-shadow:inset 0 1px #ffffff1b,0 3px 5px #02070f60}
+.nw-action-grid button.nw-command .nw-command-icon{display:grid;place-items:center;width:27px;height:27px;margin-bottom:1px;border-radius:7px;background:radial-gradient(circle at 50% 38%,#82d8ff43,transparent 75%);color:#b9f5ff;font-size:19px;line-height:1;filter:drop-shadow(0 0 6px #82bfff66);font-weight:700}
+.nw-action-grid button.nw-command b{font-size:11px;letter-spacing:.4px;line-height:1.1}
+.nw-action-grid button.nw-command small{font-size:9px;line-height:1.1}
+.nw-action-grid button.nw-command-attack{border-color:#4984aa}.nw-command-attack .nw-command-icon{color:#8df1ff!important}
+.nw-action-grid button.nw-command-guard{border-color:#537f95}.nw-command-guard .nw-command-icon{color:#a6e9de!important}
+.nw-action-grid button.nw-command-inspect{border-color:#54698f}.nw-command-inspect .nw-command-icon{color:#b9c7ff!important}
+.nw-action-grid button.nw-command-mirror{border-color:#567ca7}.nw-command-mirror .nw-command-icon{color:#acdaff!important}
+.nw-action-grid button.nw-command-bag{border-color:#515e79}.nw-command-bag .nw-command-icon{color:#dedaf0!important}
+.nw-action-grid button.nw-command.nw-ultimate{background:radial-gradient(circle at top,#683d8b 0%,#302448 72%,#211d38);border-color:#ae75e6;box-shadow:inset 0 1px #f5d8ff3b,0 0 17px #9743d036}
+.nw-action-grid button.nw-command.nw-ultimate .nw-command-icon{width:30px;height:28px;font-size:27px;color:#e9c4ff;background:radial-gradient(circle,#bb69ef88,transparent 75%);animation:nw-command-magic 2.8s ease-in-out infinite}
+.nw-action-grid button.nw-command.nw-ultimate small{color:#deb4ff}
+.nw-action-grid button.nw-command:disabled{opacity:.37;filter:saturate(.3);box-shadow:none}
+@keyframes nw-command-magic{0%,100%{filter:drop-shadow(0 0 5px #aa63f1)}50%{filter:drop-shadow(0 0 14px #e19eff);transform:rotate(16deg) scale(1.08)}}
+@media(max-height:700px){.nw-action-grid button.nw-command{min-height:47px}.nw-action-grid button.nw-command .nw-command-icon{width:21px;height:20px;font-size:15px;margin-bottom:0}.nw-action-grid button.nw-command.nw-ultimate .nw-command-icon{height:20px;font-size:20px}}
+@media(max-width:350px){.nw-action-grid button.nw-command b{font-size:10px}.nw-action-grid button.nw-command small{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.nw-action-grid button.nw-command.nw-ultimate .nw-command-icon{animation:none}}
