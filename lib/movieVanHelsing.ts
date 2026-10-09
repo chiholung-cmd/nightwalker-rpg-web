@@ -26,7 +26,7 @@ export const HELSING_WORLD: Record<string, Scene> = {
     ],
     choices:[
       {label:'幫 Carl 做抗狼人拘束器',hint:'救 Velkan 路線',to:'vh_helsing',effect:{items:['改良銀鎖'],flags:['vh_restrain_wolf'],sp:-6}},
-      {label:'用蜂巢科技記錄輔助 Carl 研究',hint:'跨世界科技專屬',to:'vh_helsing',requires:'re_spence_exposed',effect:{items:['動力封鎖器'],flags:['vh_science_merge'],xp:30}},
+      {label:'將蜂巢科技應用到 Carl 嘅銀鎖設計',hint:'跨世界科技傳承 Lv.1',to:'vh_helsing',requiresMastery:{key:'tech',rank:1},effect:{items:['動力封鎖器'],flags:['vh_science_merge'],xp:30}},
       {label:'要求改良吸血鬼防衛武器',hint:'降低遭遇風險',to:'vh_helsing',effect:{items:['便攜銀弩'],flags:['vh_weapon_prepared']}}
     ]
   },
