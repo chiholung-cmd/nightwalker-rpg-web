@@ -11,6 +11,7 @@ export type Effect = {
   sp?: number
   points?: number
   bond?: number
+  relation?: {id:string;delta:number}
   flags?: string[]
   items?: string[]
   removeItems?: string[]
@@ -31,6 +32,7 @@ export type Choice = {
   without?: string
   requiresItem?: string
   bondAtLeast?: number
+  relationshipAtLeast?: {id:string;value:number}
   requiresTalent?: 'insight' | 'mirror'
   requiresMastery?: {key:'tech'|'occult'|'martial';rank:number}
   notCleared?: string
@@ -57,6 +59,7 @@ export type SaveState = {
   sp: number
   points: number
   bond: number
+  relationships?: Record<string,number>
   items: string[]
   flags: string[]
   cleared: string[]
@@ -73,7 +76,7 @@ export type SaveState = {
 }
 export const INITIAL: SaveState = {
   scene: 'hub_arrival', line: 0,
-  hp: 100, sp: 74, points: 105, bond: 0,
+  hp: 100, sp: 74, points: 105, bond: 0, relationships:{},
   items: ['舊式手機', '半張染血車票', '鏡面碎片', '遺忘者印記'],
   flags: ['no_name','zero_station_survivor'],
   cleared: ['零號月台'],
@@ -508,6 +511,7 @@ export function availableChoices(scene: Scene, state: SaveState): Choice[] {
     if(c.without && state.flags.includes(c.without)) return false
     if(c.requiresItem && !state.items.includes(c.requiresItem)) return false
     if(c.bondAtLeast !== undefined && state.bond < c.bondAtLeast) return false
+    if(c.relationshipAtLeast && (state.relationships?.[c.relationshipAtLeast.id]||0)<c.relationshipAtLeast.value)return false
     if(c.requiresTalent && talentRank(state,c.requiresTalent)<1)return false
     if(c.requiresMastery && (state.mastery?.[c.requiresMastery.key]||0)<c.requiresMastery.rank)return false
     if(c.notCleared && state.cleared.includes(c.notCleared)) return false
@@ -523,6 +527,8 @@ export function applyEffect(state: SaveState, effect?: Effect): SaveState {
   const cleared = effect.clearWorld && !state.cleared.includes(effect.clearWorld)
     ? [...state.cleared, effect.clearWorld] : state.cleared
   const firstClear=!!effect.clearWorld&&!state.cleared.includes(effect.clearWorld)
+  const relationships={...(state.relationships||{})}
+  if(effect.relation)relationships[effect.relation.id]=Math.max(-5,Math.min(5,(relationships[effect.relation.id]||0)+effect.relation.delta))
   const futureHp=Math.max(0,Math.min(maxHp(state),state.hp+(effect.hp||0)))
   const futureSp=Math.max(0,Math.min(maxSp(state),state.sp+(effect.sp||0)))
   // First-clear healing happens after surviving a world, never during a film.
@@ -538,7 +544,7 @@ export function applyEffect(state: SaveState, effect?: Effect): SaveState {
     sp:afterSp,
     points: Math.max(0,state.points+(effect.points||0)),
     bond: Math.max(-5,Math.min(10,state.bond+(effect.bond||0))),
-    items, flags, cleared,branches,mastery,
+    items, flags, cleared,branches,mastery,relationships,
     riftCount: state.riftCount+(effect.riftAdvance?1:0),
     chapter: Math.max(state.chapter,cleared.length),
     journal: effect.journal ? [effect.journal,...state.journal].slice(0,30):state.journal
