@@ -2,6 +2,9 @@ import { awardXp, maxHp, maxSp, talentRank } from './progression'
 import { CLASSIC_WORLDS } from './classicWorlds'
 import { STORY_WORLDS } from './storyWorlds'
 import { SCREEN_WORLDS } from './screenWorlds'
+import { MOVIE_TRILOGY } from './movieResidentEvil'
+import { HELSING_WORLD } from './movieVanHelsing'
+import { STORM_WORLD } from './movieStormRiders'
 export type WorldTheme = 'nexus' | 'archive' | 'apartment' | 'hospital' | 'rift' | 'gothic' | 'arctic' | 'cinema'
 export type Effect = {
   hp?: number
@@ -15,6 +18,8 @@ export type Effect = {
   journal?: string
   riftAdvance?: boolean
   xp?: number
+  branch?: 'D'|'C'|'B'
+  mastery?: 'tech'|'occult'|'martial'
 }
 export type Choice = {
   label: string
@@ -61,6 +66,8 @@ export type SaveState = {
   xp: number
   talentPoints: number
   talents: { vitality:number; composure:number; insight:number; mirror:number }
+  branches?: {D:number;C:number;B:number}
+  mastery?: {tech:number;occult:number;martial:number}
 }
 export const INITIAL: SaveState = {
   scene: 'hub_arrival', line: 0,
@@ -71,7 +78,8 @@ export const INITIAL: SaveState = {
   journal: ['你喺零號月台放棄名字，獲得「無名生還者」身份。'],
   path: ['零號月台：車票 → 鏡面 → 放棄名字'],
   riftCount: 0, chapter: 1, level:1, xp:0, talentPoints:0,
-  talents:{vitality:0,composure:0,insight:0,mirror:0}
+  talents:{vitality:0,composure:0,insight:0,mirror:0},
+  branches:{D:0,C:0,B:0},mastery:{tech:0,occult:0,martial:0}
 }
 const HUB = '主神中轉站'
 export const SCENES: Record<string, Scene> = {
@@ -137,12 +145,15 @@ export const SCENES: Record<string, Scene> = {
     ]
   },
   hub_portals: {
-    id:'hub_portals',title:'光幕・世界選擇',world:HUB,theme:'nexus',speaker:'主神系統',face:'system',
-    lines:['【傳送權限啟動】你面前係電影、劇集同動漫三種主世界。每道門內都有原本嘅人物、故事同結局。','你作出嘅每個決定，都可能改變主角、反派甚至整個世界線；舊世界仍保留喺檔案庫。'],
+    id:'hub_portals',title:'主神光球・電影輪迴序列',world:HUB,theme:'nexus',speaker:'主神系統',face:'system',
+    lines:[
+      '【核心電影主線】《生化危機》（2002）→《Van Helsing》（2004）→《風雲雄霸天下》（1998）。完成前一世界先可以啟動下一道門。',
+      '每個世界都按照原電影人物、時間線同危機開始。你可以救原本會死嘅人、改變結局，亦可以選擇只求生還。'
+    ],
     choices:[
-      {label:'進入電影／劇集／動漫世界',hint:'主要冒險入口',to:'screen_hub'},
-      {label:'第四道門・主神真正秘密',hint:'完成三個舊世界後解鎖',to:'fourth_threshold',needsCleared:'失物管理處|血月公寓|鏡城病院',notCleared:'第四道門'},
-      {label:'不穩定裂隙',hint:'完成三個舊世界後解鎖',to:'rift_arrival',needsCleared:'失物管理處|血月公寓|鏡城病院'},
+      {label:'進入三部曲主神任務',hint:'先睇主神規則、再按順序穿越',to:'movie_brief'},
+      {label:'直接選擇已解鎖電影世界',hint:'依次解鎖三個世界',to:'movie_portals'},
+      {label:'過往存檔：其他副本檔案',hint:'舊世界保留，但唔係正式主線',to:'screen_old_archives'},
       {label:'同阿霧傾偈',to:'hub_return'}
     ]
   },
@@ -508,13 +519,17 @@ export function applyEffect(state: SaveState, effect?: Effect): SaveState {
   const cleared = effect.clearWorld && !state.cleared.includes(effect.clearWorld)
     ? [...state.cleared, effect.clearWorld] : state.cleared
   const firstClear=!!effect.clearWorld&&!state.cleared.includes(effect.clearWorld)
+  const branches={D:state.branches?.D||0,C:state.branches?.C||0,B:state.branches?.B||0}
+  const mastery={tech:state.mastery?.tech||0,occult:state.mastery?.occult||0,martial:state.mastery?.martial||0}
+  if(effect.branch)branches[effect.branch]+=1
+  if(effect.mastery)mastery[effect.mastery]+=1
   return awardXp({
     ...state,
     hp: Math.max(0,Math.min(maxHp(state),state.hp+(effect.hp||0))),
     sp: Math.max(0,Math.min(maxSp(state),state.sp+(effect.sp||0))),
     points: Math.max(0,state.points+(effect.points||0)),
     bond: Math.max(-5,Math.min(10,state.bond+(effect.bond||0))),
-    items, flags, cleared,
+    items, flags, cleared,branches,mastery,
     riftCount: state.riftCount+(effect.riftAdvance?1:0),
     chapter: Math.max(state.chapter,cleared.length),
     journal: effect.journal ? [effect.journal,...state.journal].slice(0,30):state.journal
@@ -529,7 +544,7 @@ export function effectiveLines(scene:Scene,state:SaveState):string[]{
     state.flags.includes('lost_true_end') ? '「小滿話，你真係守住咗承諾。」你驚訝地望住阿霧——原來不同世界嘅人，真係會記得你。' :
     state.flags.includes('hospital_freed_echo') ? '阿霧見到你帶返嚟嘅鏡中記憶，忽然避開你嘅目光。' :
     '「你返嚟就好。」阿霧望住你身上嘅傷，冇再追問。',
-    state.flags.includes('cinema_good_end') ? '「黎音喺放映室外面等緊你。」阿霧輕聲話：「你真係改變到一套電影嘅結局。」' : state.flags.includes('arctic_good_end') ? '「你竟然令科學怪人嗰對父子肯面對彼此。」阿霧微微一笑，眼神少咗一分戒備。' : state.flags.includes('gothic_saved_end') ? '「艾莉娜今次終於唔使再死。」阿霧望住你：「小說劇本都開始改變，主神一定會注意到你。」' : '下一道門正等待你。你可以隨時翻查記錄、補給，或者繼續穿越。'
+    state.flags.includes('fy_kongchi_good_end') ? '「連孔慈都獲救咗？」阿霧望住你：「你喺天下會做嘅選擇，真係改咗電影中一個人嘅命。」' : state.flags.includes('vh_anna_survived') ? '「Anna 得以活落去。」阿霧望向教廷銀章：「主神唔會忘記呢種偏離。」' : state.flags.includes('re_rain_saved') ? '「Rain 呢次竟然返到地面。」阿霧有啲驚訝：「你令蜂巢多咗一個生還者。」' : state.flags.includes('cinema_good_end') ? '「黎音喺放映室外面等緊你。」阿霧輕聲話：「你真係改變到一套電影嘅結局。」' : state.flags.includes('arctic_good_end') ? '「你竟然令科學怪人嗰對父子肯面對彼此。」阿霧微微一笑，眼神少咗一分戒備。' : state.flags.includes('gothic_saved_end') ? '「艾莉娜今次終於唔使再死。」阿霧望住你：「小說劇本都開始改變，主神一定會注意到你。」' : '下一道門正等待你。你可以隨時翻查記錄、補給，或者繼續穿越。'
   ]
   if(scene.id==='rift_arrival' || scene.id==='rift_choice') {
     const theme=['雨夜戲院','白霧校園','逆行列車'][state.riftCount%3]
@@ -715,6 +730,7 @@ Object.assign(SCENES, CLASSIC_WORLDS)
 
 Object.assign(SCENES, STORY_WORLDS)
 Object.assign(SCENES, SCREEN_WORLDS)
+Object.assign(SCENES, MOVIE_TRILOGY, HELSING_WORLD, STORM_WORLD)
 // Minimal emotional cues: performance follows the active dialogue line instead of huge portraits.
 const acting: Record<string, Scene['moods']> = {
   hub_arrival:['mystery','fear','resolve'],guide_first:['joy','mystery','sad'],
