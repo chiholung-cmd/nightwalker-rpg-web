@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { INITIAL, SCENES, applyEffect, availableChoices, effectiveLines, sceneFor, type Choice, type SaveState, type WorldTheme } from '../lib/infiniteStory'
 import { maxHp, maxSp, TALENTS, spendTalent, talentRank, withProgress, xpToNext, type TalentId } from '../lib/progression'
+import { nightwalkerAtlas } from '../lib/characterPortraitAtlas'
+import { nightwalkerCast } from '../lib/characterCast'
 import './story.css'
 
 const SAVE_KEY = 'nightwalker-multiverse-story-v1'
@@ -14,33 +16,41 @@ const DEFAULT_SETTINGS: ReaderSettings = {images:true,largeText:false,typing:tru
 const clamp = (v:number,max:number) => Math.max(0,Math.min(max,v))
 const WORLD_ART: Partial<Record<WorldTheme,string>> = {
   // High-resolution photographs only. Never enlarge the old 70-180px portrait atlas.
-  nexus:'https://images.unsplash.com/photo-1770772411636-9bccbce0664a?auto=format&fit=crop&w=1800&q=83',
-  archive:'https://images.unsplash.com/photo-1770772411636-9bccbce0664a?auto=format&fit=crop&w=1800&q=83',
+  nexus:'https://images.unsplash.com/photo-1649316956806-0f91196bf29c?auto=format&fit=crop&w=1800&q=83',
+  archive:'https://images.unsplash.com/photo-1617721930761-42fe8e5efad0?auto=format&fit=crop&w=1800&q=83',
   gothic: 'https://images.unsplash.com/photo-1767779670933-9df4ea401954?auto=format&fit=crop&w=1600&q=82',
   arctic: 'https://images.unsplash.com/photo-1742458499886-1e953d2be323?auto=format&fit=crop&w=1600&q=82',
-  cinema: 'https://images.unsplash.com/photo-1760170437237-a3654545ab4c?auto=format&fit=crop&w=1600&q=82'
+  cinema: 'https://images.unsplash.com/photo-1760170437237-a3654545ab4c?auto=format&fit=crop&w=1600&q=82',
+  apartment:'https://images.unsplash.com/photo-1649316956806-0f91196bf29c?auto=format&fit=crop&w=1800&q=83',
+  hospital:'https://images.unsplash.com/photo-1617721930761-42fe8e5efad0?auto=format&fit=crop&w=1800&q=83',
+  rift:'https://images.unsplash.com/photo-1649316956806-0f91196bf29c?auto=format&fit=crop&w=1800&q=83'
 }
 const SPECIAL_ART:Record<string,string> = {
   '午夜放映廳':'https://images.unsplash.com/photo-1768381937064-0cff674a09ca?auto=format&fit=crop&w=1800&q=83',
+  '深海零號艙':'https://images.unsplash.com/photo-1760170437237-a3654545ab4c?auto=format&fit=crop&w=1800&q=83',
+  '倒數七日':'https://images.unsplash.com/photo-1649316956806-0f91196bf29c?auto=format&fit=crop&w=1800&q=83',
+  '逆時學園':'https://images.unsplash.com/photo-1617721930761-42fe8e5efad0?auto=format&fit=crop&w=1800&q=83',
   '霧中第七章':'https://images.unsplash.com/photo-1508107536691-b1449928187d?auto=format&fit=crop&w=1800&q=83'
 }
 const WORLD_LABEL:Record<WorldTheme,string> = {
-  nexus:'主神空間', archive:'規則怪談', apartment:'現代驚悚',hospital:'鏡像懸疑',
+  nexus:'主神空間', archive:'規則怪談', apartment:'劇集・懸疑',hospital:'動漫・超自然',
   rift:'世界裂隙',gothic:'哥德文學',arctic:'科幻文學',cinema:'電影世界'
 }
 const WORLD_GLYPH:Record<WorldTheme,string> = {
   nexus:'∞',archive:'▤',apartment:'▥',hospital:'✚',rift:'✧',gothic:'♜',arctic:'❄',cinema:'▣'
 }
 const WORLD_LIST=[
-  {name:'零號月台',category:'已發生',start:null,clear:'零號月台',theme:'archive' as WorldTheme},
-  {name:'凌晨四點失物處',category:'原創・怪談',start:'lost_arrival',clear:'失物管理處',theme:'archive' as WorldTheme},
-  {name:'血月公寓',category:'原創・驚悚',start:'blood_arrival',clear:'血月公寓',theme:'apartment' as WorldTheme},
-  {name:'鏡城病院',category:'原創・懸疑',start:'hospital_arrival',clear:'鏡城病院',theme:'hospital' as WorldTheme},
-  {name:'德古拉',category:'文學・1897',start:'gothic_start',clear:'德古拉',theme:'gothic' as WorldTheme},
-  {name:'科學怪人',category:'文學・1818',start:'arctic_start',clear:'科學怪人',theme:'arctic' as WorldTheme},
+  {name:'深海零號艙',category:'電影・科幻災難',start:'film_sub_arrival',clear:'深海零號艙',theme:'cinema' as WorldTheme},
+  {name:'倒數七日',category:'劇集・懸疑推理',start:'tv_week_arrival',clear:'倒數七日',theme:'apartment' as WorldTheme},
+  {name:'逆時學園',category:'動漫・超自然',start:'anime_school_arrival',clear:'逆時學園',theme:'hospital' as WorldTheme},
   {name:'第十三號放映室',category:'原創・電影',start:'cinema_start',clear:'第十三號放映室',theme:'cinema' as WorldTheme},
   {name:'沒有片尾的電影',category:'原創・電影懸疑',start:'film_arrival',clear:'午夜放映廳',theme:'cinema' as WorldTheme},
-  {name:'霧中第七章',category:'原創・小說怪談',start:'novel_arrival',clear:'霧中第七章',theme:'gothic' as WorldTheme}
+  {name:'失物管理處',category:'舊副本・規則怪談',start:'lost_arrival',clear:'失物管理處',theme:'archive' as WorldTheme},
+  {name:'血月公寓',category:'舊副本・驚悚',start:'blood_arrival',clear:'血月公寓',theme:'apartment' as WorldTheme},
+  {name:'鏡城病院',category:'舊副本・懸疑',start:'hospital_arrival',clear:'鏡城病院',theme:'hospital' as WorldTheme},
+  {name:'德古拉',category:'封存・小說',start:'gothic_start',clear:'德古拉',theme:'gothic' as WorldTheme},
+  {name:'科學怪人',category:'封存・小說',start:'arctic_start',clear:'科學怪人',theme:'arctic' as WorldTheme},
+  {name:'霧中第七章',category:'封存・小說',start:'novel_arrival',clear:'霧中第七章',theme:'gothic' as WorldTheme}
 ]
 const ENTER_SCENES = new Set(['hub_arrival','hub_portals','lost_arrival','blood_arrival','hospital_arrival','gothic_start','arctic_start','cinema_start','fourth_threshold','rift_arrival','film_arrival','film_final_frame','novel_arrival','novel_rewrite'])
 const EMOTIONS:Record<string,string>={calm:'平靜',worried:'憂慮',afraid:'驚恐',angry:'憤怒',sad:'悲傷',hopeful:'期待',mysterious:'難以捉摸'}
@@ -54,6 +64,27 @@ const expressionFor=(face:string|undefined,world:string,sceneId:string,bond:numb
   return ''
 }
 const isHub=(world:string)=>world==='主神中轉站'
+
+// Actual raster sprite sheets are used for expressions; this is NOT a text-only label.
+function CharacterArt({face,speaker,mood}:{face?:string;speaker:string;mood:string}){
+  const isSystem=face==='system'||!face
+  const guide=face==='guide'||speaker==='阿霧'
+  const female=guide||face==='girl'||face==='nurse'
+  const fear=/驚|不安|害怕|憂慮|恐/.test(mood)
+  const angry=/怒|憤|氣/.test(mood)
+  const sad=/悲|傷|失落/.test(mood)
+  const happy=/欣|喜|笑|期待|希望/.test(mood)
+  const hero=isSystem
+  const variant=hero?'hero':fear?'fear':angry?'angry':sad?'sad':happy?'happy':'neutral'
+  const pos=variant==='hero'?'0% 0%':variant==='fear'?'100% 0%':variant==='neutral'?'50% 0%':
+    variant==='angry'?'20% 100%':variant==='sad'?'40% 100%':'60% 100%'
+  const sheetSize=['angry','sad','happy'].includes(variant)?'600% 287.5%':'300% 153.33%'
+  const avatarPos=face==='neighbor'?'75% 50%':face==='clerk'?'50% 50%':face==='nurse'?'25% 50%':guide?'0% 50%':'100% 50%'
+  return <div className={'reader-actor '+(hero?'actor-hero':female?'actor-female':'actor-male')+' actor-'+variant} aria-label={speaker+'角色圖片'}>
+    <div className="reader-actor-paint" style={{backgroundImage:`url("${hero||female?nightwalkerAtlas:nightwalkerCast}")`,
+      backgroundPosition:hero||female?pos:avatarPos,backgroundSize:hero||female?sheetSize:'500% 100%'}}/>
+  </div>
+}
 function safeLoad():SaveState {
   try{
     const current=localStorage.getItem(SESSION_KEY)
@@ -106,7 +137,7 @@ export default function HomePage(){
   const canProceed= !blocked && g.hp>0 && g.sp>0
   const worldKey=scene.theme
   const image= SPECIAL_ART[scene.world] || WORLD_ART[worldKey]
-  const showWorldImage=settings.images&&!!image&&!imageFailed&&ENTER_SCENES.has(g.scene)
+  const showWorldImage=settings.images&&!!image&&!imageFailed
   const expression=scene.moods?.[idx]?LINE_MOODS[scene.moods[idx]]:(scene.emotion?EMOTIONS[scene.emotion]:expressionFor(scene.face,scene.world,scene.id,g.bond))
   useEffect(()=>{
     setChoicePage(0);setVisible(0);setSkipTyping(false);setImageFailed(false)
@@ -173,6 +204,7 @@ export default function HomePage(){
 
     <div className={'reader-atmosphere'+(showWorldImage?' reader-illustrated':'')}>
       {showWorldImage?<img src={image} alt={scene.world+'場景背景'} onError={()=>setImageFailed(true)}/>:<div className="reader-symbol">{WORLD_GLYPH[worldKey]}</div>}
+      {settings.images&&<CharacterArt key={scene.id+'-'+expression} face={scene.face} speaker={scene.speaker} mood={expression}/>}
       <div className="reader-atmosphere-shade"/>
       <div className="reader-atmosphere-inner"><small>{scene.world}</small><h1>{scene.title}</h1>{showWorldImage&&<span className="reader-illustration-mark">WORLD ARRIVAL</span>}</div>
     </div>
@@ -181,6 +213,7 @@ export default function HomePage(){
 
     <section className="reader-story" aria-live="polite">
       <div className="reader-speaking">
+        <div className="reader-speaking-avatar" aria-hidden="true" style={{backgroundImage:`url(${nightwalkerCast})`,backgroundPosition:scene.face==='guide'?'0% 50%':scene.face==='girl'?'25% 50%':scene.face==='clerk'?'50% 50%':scene.face==='neighbor'?'75% 50%':'100% 50%'}}/>
         <div className="reader-speaker-name"><span>{scene.speaker}</span>{expression&&<em>{expression}</em>}</div>
         <div className="reader-progression"><span>{idx+1} / {lines.length}</span><span>{settings.typing?'點擊對話可顯示全文':'閱讀模式'}</span></div>
       </div>
@@ -218,8 +251,8 @@ export default function HomePage(){
       <header className="reader-sheet-head"><h2>{sheet==='worlds'?'世界書架':sheet==='journal'?'因果紀錄':sheet==='character'?'無名生還者':sheet==='bag'?'隨身物品':sheet==='shop'?'積分商店':'遊戲設定'}</h2><button onClick={()=>setSheet(null)}>✕</button></header>
       <div className="reader-sheet-content">
         {sheet==='worlds'&&<>
-          <p className="reader-note">不同世界擁有獨立故事。完成後會保留你嘅選擇、物品同角色關係。只有喺主神中轉站先可以轉換世界。</p>
-          {WORLD_LIST.map(w=><div className="reader-world-item" key={w.name}><div className={'reader-world-symbol theme-'+w.theme}>{WORLD_GLYPH[w.theme]}</div><div><strong>{w.name}</strong><small>{w.category} · {g.cleared.includes(w.clear)?'已通關':'待探索'}</small></div></div>)}
+          <p className="reader-note">電影、劇集、動漫係主要冒險類型；早期小說同怪談仍然保留於舊檔案。所有選擇同物品會跨世界延續。</p>
+          {WORLD_LIST.map(w=><div className="reader-world-item" key={w.name}><div className={'reader-world-symbol theme-'+w.theme} style={{backgroundImage:`linear-gradient(90deg,#070d19aa,#18233f69),url(${SPECIAL_ART[w.name]||WORLD_ART[w.theme]||''})`}}><span>{WORLD_GLYPH[w.theme]}</span></div><div><strong>{w.name}</strong><small>{w.category} · {g.cleared.includes(w.clear)?'已通關':'待探索'}</small></div></div>)}
           <button className="reader-action" onClick={goToHub} disabled={!isHub(scene.world)}>前往世界傳送門</button>
         </>}
         {sheet==='journal'&&<>
@@ -239,12 +272,12 @@ export default function HomePage(){
         </>}
         {sheet==='settings'&&<>
           <p className="reader-note">遊戲完全單機操作，劇情進度保存在目前瀏覽器。已暫停戰鬥系統開發，集中改善敘事及跨世界因果。</p>
-          <label className="reader-setting"><span>開啟場景插畫 <small>只於世界入場及重要場景展示</small></span><input type="checkbox" checked={settings.images} onChange={e=>setSettings(s=>({...s,images:e.target.checked}))}/></label>
+          <label className="reader-setting"><span>開啟場景及人物圖片 <small>場景背景與角色表情隨劇情切換</small></span><input type="checkbox" checked={settings.images} onChange={e=>setSettings(s=>({...s,images:e.target.checked}))}/></label>
           <label className="reader-setting"><span>大字閱讀模式</span><input type="checkbox" checked={settings.largeText} onChange={e=>setSettings(s=>({...s,largeText:e.target.checked}))}/></label>
           <label className="reader-setting"><span>對話逐字演出</span><input type="checkbox" checked={settings.typing} onChange={e=>setSettings(s=>({...s,typing:e.target.checked}))}/></label>
           <button className="reader-action" onClick={()=>{navigator.clipboard?.writeText(JSON.stringify(g)).then(()=>setFeedback('存檔資料已複製')).catch(()=>setFeedback('瀏覽器未授權複製'))}}>複製存檔資料</button>
           <button className="reader-danger" onClick={reset}>{confirmation?'確認清除所有劇情進度':'清除本機進度並重玩'}</button>
-          <div className="reader-credits"><strong>場景攝影授權</strong><small>Unsplash License · Zoshua Colah、Lawrence Krowdeed、Peter Herrmann、Annie Spratt、Quentin Baret、y i。場景圖按世界進入或重要事件載入；低解析人物圖不再使用。</small></div>
+          <div className="reader-credits"><strong>圖片來源</strong><small>Unsplash License · Zoshua Colah、Lawrence Krowdeed、Peter Herrmann、Annie Spratt、Quentin Baret、y i。場景圖按世界進入或重要事件載入；低解析人物圖不再使用。</small></div>
         </>}
       </div>
     </section></div>}
