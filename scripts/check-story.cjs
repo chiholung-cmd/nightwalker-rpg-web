@@ -30,6 +30,15 @@ for(const [id,scene] of Object.entries(SCENES)){
   }
 }
 assert.deepEqual(missing,[],'Dangling story links')
+assert(Object.keys(SCENES).length>=70,'Expected full literary, original and movie-world episodes')
+for(const [world,route] of [['德古拉','gothic_start'],['科學怪人','arctic_start'],['第十三號放映室','cinema_start']]) {
+  assert(availableChoices(SCENES.hub_portals,INITIAL).some(c=>c.to===route),'Missing portal: '+world)
+  assert(!availableChoices(SCENES.hub_portals,applyEffect(INITIAL,{clearWorld:world})).some(c=>c.to===route),'Cleared world should not reward repeated visits: '+world)
+}
+assert(!Object.values(SCENES).flatMap(x=>x.choices).some(c=>c.action==='battle'),'Story scenes still trigger the on-hold combat system')
+assert(availableChoices(SCENES.gothic_castle,INITIAL).some(c=>c.to==='gothic_tower'),'Castle must be escapable without prerequisite items')
+assert(availableChoices(SCENES.cinema_set,{...INITIAL,items:[...INITIAL.items,'改寫場景剪刀']}).some(c=>c.requiresItem==='改寫場景剪刀'),'Cinema film editing path not available')
+
 assert(Object.keys(SCENES).length>=70,'Expected branching across the main, classic, cinema, and novel worlds')
 for(const [label,start,world] of [
   ['cinema','film_arrival','午夜放映廳'],
