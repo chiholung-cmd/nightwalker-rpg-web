@@ -197,6 +197,7 @@ export default function HomePage(){
     <header className="reader-header">
       <div className="reader-logo">N<span>∞</span></div>
       <div className="reader-brand"><strong>NIGHTWALKER</strong><span>文字無限流 · 單人劇情冒險</span></div>
+      <a href="/ai" className="reader-ai-mode">AI 自由模式 →</a>
       <button className="reader-menu" aria-label="選單" onClick={()=>setSheet('settings')}>☰</button>
     </header>
 
