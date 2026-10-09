@@ -217,7 +217,8 @@ export const SCENES: Record<string, Scene> = {
     choices:[
       {label:'將檔案收好，作為自己存在過嘅證據',to:'lost_clerk',hint:'解鎖無戰鬥通關',effect:{flags:['archive_truth'],items:['玩家0000檔案'],sp:-6,journal:'玩家0000曾被清除記憶至少七次；04:44不是第一次。'}},
       {label:'撕毀照片，拒絕相信呢個真相',to:'lost_clerk',effect:{sp:5,flags:['reject_truth']}},
-      {label:'將照片藏喺小滿嘅布偶入面',to:'lost_clerk',requires:'save_xiaoman',effect:{flags:['archive_truth','protected_proof'],items:['玩家0000檔案'],journal:'你利用小滿的布偶保存了玩家0000的死亡證據。'}}
+      {label:'將照片藏喺小滿嘅布偶入面',to:'lost_clerk',requires:'save_xiaoman',effect:{flags:['archive_truth','protected_proof'],items:['玩家0000檔案'],journal:'你利用小滿的布偶保存了玩家0000的死亡證據。'}},
+      {label:'請鏡中人辨認這些死亡照片',hint:'跨世界線索・需要鏡中人的記憶',to:'lost_clerk',requiresItem:'鏡中人的記憶',effect:{flags:['archive_truth','mirror_proof'],points:20,journal:'鏡中人的記憶補完玩家0000的死亡照片。'}}
     ]
   },
   lost_clerk: {
@@ -243,7 +244,7 @@ export const SCENES: Record<string, Scene> = {
     ],
     choices:[
       {label:'帶埋失物簿同鑰匙離開',to:'lost_ending',effect:{items:['鏽蝕檔案鑰匙'],flags:['clerk_defeated','archive_key'],journal:'戰勝失物管理員，取得刻有0000的鏽蝕鑰匙。'}},
-      {label:'先救出仲困住嘅人',hint:'額外生命代價・改變結局',to:'lost_ending',effect:{hp:-10,flags:['clerk_defeated','rescued_many'],items:['鏽蝕檔案鑰匙'],journal:'你冒險救出寄存櫃內的失蹤者。'}}
+      {label:'先救出仲困住嘅人',hint:'額外生命代價・改變結局',to:'lost_ending',effect:{hp:-10,flags:['clerk_defeated','rescued_many','rescued_xiaoman'],items:['鏽蝕檔案鑰匙'],journal:'你冒險救出寄存櫃內的失蹤者，包括小滿。'}}
     ]
   },
   lost_ending: {
@@ -254,7 +255,7 @@ export const SCENES: Record<string, Scene> = {
       '【副本結算：你的調查、救人及交涉選擇已被記錄，將影響之後世界對「玩家0000」的認知。】'
     ],
     choices:[
-      {label:'帶住小滿嘅承諾返去中轉站',hint:'特殊結局・被記住的無名者',to:'hub_return',requires:'save_xiaoman',effect:{clearWorld:'失物管理處',points:100,bond:1,flags:['lost_true_end'],journal:'失物管理處達成「被記住的無名者」結局。'}},
+      {label:'帶住成功救出嘅小滿返去中轉站',hint:'特殊結局・被記住的無名者',to:'hub_return',requires:'rescued_xiaoman',effect:{clearWorld:'失物管理處',points:100,bond:1,flags:['lost_true_end'],journal:'失物管理處達成「被記住的無名者」結局。'}},
       {label:'帶走檔案嘅真相，返回中轉站',hint:'調查結局',to:'hub_return',requires:'archive_truth',effect:{clearWorld:'失物管理處',points:80,flags:['lost_truth_end'],journal:'失物管理處達成「玩家0000」調查結局。'}},
       {label:'收下積分，立即離開',hint:'普通結局',to:'hub_return',effect:{clearWorld:'失物管理處',points:55,flags:['lost_normal_end'],journal:'失物管理處達成普通生還結局。'}}
     ]
@@ -317,6 +318,7 @@ export const SCENES: Record<string, Scene> = {
     choices:[
       {label:'用家庭照解開門鎖',hint:'需要家庭照・真相路線',to:'blood_truth',requiresItem:'刮花的家庭照'},
       {label:'聽孩子指示，拒絕承認自己係住戶',to:'blood_truth',requires:'blood_child_warning',effect:{flags:['blood_resisted']}},
+      {label:'按照阿霧紙條尋找真正的第一道門',hint:'盟友提示・隱藏安全路線',to:'blood_truth',requiresItem:'阿霧的紙條',effect:{flags:['blood_hidden_door'],journal:'阿霧的紙條幫你避開血月公寓的假出口。'}},
       {label:'拆開封住門嘅紅線',hint:'生命 -14・危險捷徑',to:'blood_breach',effect:{hp:-14,flags:['blood_broken_line']}},
       {label:'答應成為十三樓新住戶換取安全',hint:'理智 -20・黑暗結局',to:'blood_ending',effect:{sp:-20,flags:['blood_new_resident']}}
     ]
@@ -418,7 +420,8 @@ export const SCENES: Record<string, Scene> = {
     choices:[
       {label:'答應帶鏡中人離開',hint:'真相路線・理智 -15',to:'hospital_ending',effect:{sp:-15,flags:['hospital_freed_echo'],items:['鏡中人的記憶'],journal:'你保留鏡中人的記憶，決定與主神系統對抗。'}},
       {label:'用鏡面碎片打碎醫院鏡子',hint:'安全逃生・犧牲真相',to:'hospital_ending',effect:{flags:['hospital_destroyed_mirror'],sp:8}},
-      {label:'同鏡中人討價還價，要求先還部分記憶',hint:'需要阿霧信任',to:'hospital_ending',bondAtLeast:2,effect:{flags:['hospital_partial_memory'],sp:-5,items:['失去的第七段記憶'],journal:'第七段記憶顯示主神中轉站有一位玩家正在假扮引路人。'}}
+      {label:'同鏡中人討價還價，要求先還部分記憶',hint:'需要阿霧信任',to:'hospital_ending',bondAtLeast:2,effect:{flags:['hospital_partial_memory'],sp:-5,items:['失去的第七段記憶'],journal:'第七段記憶顯示主神中轉站有一位玩家正在假扮引路人。'}},
+      {label:'用血月公寓的紅線封住鏡面裂口',hint:'跨世界道具・穩住鏡中人',to:'hospital_ending',requiresItem:'紅線斷片',effect:{flags:['hospital_freed_echo','hospital_redline'],sp:5,items:['鏡中人的記憶'],journal:'你用另一個世界嘅紅線保護鏡中人離開病院。'}}
     ]
   },
   hospital_ending: {
@@ -453,6 +456,7 @@ export const SCENES: Record<string, Scene> = {
       '一把聲音喺耳邊講：「你可以犧牲一部分生命換線索，或者保住自己，帶走更多力量。」'
     ],
     choices:[
+      {label:'拼合玩家0000與鏡中人的完整記憶',hint:'跨世界隱藏線・大量積分',to:'rift_exit',requires:'hospital_freed_echo',requiresItem:'玩家0000檔案',effect:{sp:-9,points:85,flags:['rift_combined_memory'],journal:'你在裂隙中拼湊到主神輪迴核心的重要記憶。'}},
       {label:'調查深處的斷裂記憶',hint:'理智 -12・情報',to:'rift_exit',effect:{sp:-12,points:35,flags:['rift_truth'],journal:'你在不穩定世界捕捉到另一段主神輪迴記憶。'}},
       {label:'嘗試救助被困嘅陌生人',hint:'生命 -18・羈絆',to:'rift_exit',effect:{hp:-18,bond:1,points:20}},
       {label:'擊退異常世界守門者',hint:'可選戰鬥',action:'battle',enemy:'echo',to:'rift_exit'},
