@@ -7,6 +7,7 @@ import {
 } from '../lib/infiniteStory'
 import { TALENTS, awardXp, combatDamage, maxHp, maxSp, spendTalent, talentRank, withProgress, xpToNext, type TalentId } from '../lib/progression'
 import { heroPortrait, guidePortrait } from '../lib/nightwalkerRaster'
+import { hubBackground, archiveBackground } from '../lib/nightwalkerBackground'
 import './story.css'
 
 const SAVE_KEY = 'nightwalker-multiverse-story-v1'
@@ -324,7 +325,11 @@ export default function HomePage() {
     </header>
 
     <section className={'iw-stage iw-theme-'+theme+(isBattle?' iw-battle-active iw-fx-'+fx:'')}>
-      <WorldBackdrop key={isBattle?'encounter-'+(fight?.enemy||'clerk'):scene.id} theme={theme} battle={isBattle} count={game.riftCount}/>
+      {(theme==='nexus'||theme==='archive') ?
+        <div key={isBattle?'battle-art-'+(fight?.enemy||'clerk'):scene.id} className={'iw-environment-art iw-environment-'+theme} aria-hidden="true">
+          <img src={theme==='nexus'?hubBackground:archiveBackground} alt="" decoding="async" />
+        </div> :
+        <WorldBackdrop key={isBattle?'encounter-'+(fight?.enemy||'clerk'):scene.id} theme={theme} battle={isBattle} count={game.riftCount}/>}
       {!isBattle && (scene.face==='guide' || (scene.face==='system'&&scene.world==='主神中轉站')) ?
         <div key={'raster-'+scene.id} className={'iw-raster-frame '+(scene.face==='guide'?'iw-raster-guide':'iw-raster-hero')} aria-hidden="true">
           <img src={scene.face==='guide'?guidePortrait:heroPortrait} alt="" decoding="async" />
