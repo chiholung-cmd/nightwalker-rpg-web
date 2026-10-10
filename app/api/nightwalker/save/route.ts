@@ -2,6 +2,18 @@ import {NextRequest,NextResponse} from 'next/server'
 import {createHash} from 'node:crypto'
 import {getMongoClient} from '../../../../lib/mongodb'
 import {normalizeGame} from '../../../../lib/nightwalkerGame'
+const dbFailure=(e:unknown)=>{
+ // Never log or return connection URI, Atlas hostnames, user names or passwords.
+ const reason=e&&typeof e==='object'&&'name' in e?String(e.name):'Unknown'
+ const code=e&&typeof e==='object'&&'code' in e?String(e.code):''
+ if(reason==='MongoParseError'||reason==='MongoInvalidArgumentError'||reason==='MongoAPIError')
+  return {error:'MongoDB 連線字串格式不正確，請檢查 Vercel MONGODB_URI 的完整內容。',code:'MONGO_URI_INVALID'}
+ if(code==='18'||reason==='MongoAuthenticationError')
+  return {error:'MongoDB 身份驗證失敗。請核對 Atlas Database Access 使用者、密碼及權限。',code:'MONGO_AUTH_FAILED'}
+ if(reason==='MongoServerSelectionError'||reason==='MongoNetworkError'||reason==='MongoNetworkTimeoutError')
+  return {error:'MongoDB 連接失敗，請檢查 Atlas Network Access IP Allowlist、Cluster 狀態及連線字串。',code:'MONGO_NETWORK_UNREACHABLE'}
+ return {error:'MongoDB 存檔未成功，請確認專用 nightwalker 資料庫有 readWrite 權限。',code:'MONGO_OPERATION_FAILED'}
+}
 export const runtime='nodejs'
 export const dynamic='force-dynamic'
 const headers=(req:NextRequest)=>{
@@ -19,7 +31,7 @@ export async function GET(req:NextRequest){
   const record=await client.db('nightwalker').collection('game_saves_v2').findOne({playerId:auth.id,tokenHash:auth.hash})
   if(!record)return NextResponse.json({error:'雲端仲未有你嘅存檔',code:'NOT_FOUND'}, {status:404})
   return NextResponse.json({state:normalizeGame(record.state),revision:record.revision||1,updatedAt:record.updatedAt})
- }catch{return NextResponse.json({error:'雲端讀取失敗，本地存檔未受影響'}, {status:503})}
+ }catch(e){return NextResponse.json({...dbFailure(e),detail:'本地存檔未受影響'}, {status:503})}
 }
 export async function POST(req:NextRequest){
  if(!config())return NextResponse.json({error:'雲端存檔未配置',code:'NO_DATABASE'}, {status:503})
@@ -39,6 +51,6 @@ export async function POST(req:NextRequest){
    {$set:{state,revision,updatedAt:new Date()},$setOnInsert:{playerId:auth.id,tokenHash:auth.hash,createdAt:new Date()}},
    {upsert:true})
   return NextResponse.json({success:true,revision})
- }catch{return NextResponse.json({error:'雲端保存失敗；本地存檔未受影響'}, {status:503})}
+ }catch(e){return NextResponse.json({...dbFailure(e),detail:'本地存檔未受影響'}, {status:503})}
 }
 
