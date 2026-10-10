@@ -277,7 +277,7 @@ export function storyBeat(state:Game,action:string,turn:{story:string;dialogue?:
  // Persist the exact dramatic beats, so their intended emotional timing survives reload.
  // Older saves with one narration entry remain fully supported.
  if(Array.isArray(turn.beats)&&turn.beats.length){
-  for(const [i,beat] of turn.beats.slice(0,10).entries()){
+  turn.beats.slice(0,10).forEach((beat,i)=>{
    const text=str(beat.text,450)
    if(!text)continue
    const mood=EMOTION_MOODS.includes(beat.mood)?beat.mood:'calm'
@@ -285,7 +285,7 @@ export function storyBeat(state:Game,action:string,turn:{story:string;dialogue?:
    log.push({id:s.turn+2+i,kind,text,mood,
     speaker:kind==='dialogue'?str(beat.speaker,50):undefined,
     prelude:(mood==='eerie'||mood==='anger')?str(beat.prelude,400):undefined})
-  }
+  })
  }
  if(log.length===1){
   log.push({id:s.turn+2,kind:'narration',text:story,mood:'calm'})
