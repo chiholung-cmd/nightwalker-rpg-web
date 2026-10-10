@@ -12,7 +12,11 @@ const dbFailure=(e:unknown)=>{
   return {error:'MongoDB 身份驗證失敗。請核對 Atlas Database Access 使用者、密碼及權限。',code:'MONGO_AUTH_FAILED'}
  if(reason==='MongoServerSelectionError'||reason==='MongoNetworkError'||reason==='MongoNetworkTimeoutError')
   return {error:'MongoDB 連接失敗，請檢查 Atlas Network Access IP Allowlist、Cluster 狀態及連線字串。',code:'MONGO_NETWORK_UNREACHABLE'}
- return {error:'MongoDB 存檔未成功，請確認專用 nightwalker 資料庫有 readWrite 權限。',code:'MONGO_OPERATION_FAILED'}
+ if(reason==='MongoServerError'&&(code==='13'||code==='8000'||code==='11'))
+  return {error:'MongoDB Atlas 已收到請求但拒絕存取。請檢查 Database Access 使用者嘅 readWrite 角色同密碼。',code:'MONGO_ACCESS_DENIED'}
+ const safeType=/^[A-Za-z][A-Za-z0-9]{0,49}$/.test(reason)?reason:'Unknown'
+ const safeCode=/^[0-9]{1,6}$/.test(code)?code:'none'
+ return {error:'MongoDB 存檔失敗。此診斷只回傳錯誤類型，唔會暴露連線密碼或主機資料。',code:'MONGO_OPERATION_FAILED',errorType:safeType,mongoCode:safeCode}
 }
 export const runtime='nodejs'
 export const dynamic='force-dynamic'
