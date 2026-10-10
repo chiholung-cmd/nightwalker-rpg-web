@@ -56,6 +56,12 @@ export default function Play(){
  const [fontSize,setFontSize]=useState(false)
  const [reduced,setReduced]=useState(false)
  const [revision,setRevision]=useState<number|null>(null)
+ const [autoCloud,setAutoCloud]=useState(true)
+ const cloudRevision=useRef<number|null>(null)
+ const cloudInFlight=useRef(false)
+ const cloudPending=useRef<Game|null>(null)
+ const cloudBlocked=useRef(false)
+ const syncedPayload=useRef('')
  const [cloudInfo,setCloudInfo]=useState('')
  const [confirmReset,setConfirmReset]=useState(false)
  const [expanded,setExpanded]=useState(false)
@@ -73,7 +79,7 @@ export default function Play(){
   try{const val=localStorage.getItem(SAVE);if(val){setGame(normalizeGame({...JSON.parse(val),heroId:id}));setScreen('story')}
    else setGame(freshGame(id))}catch{setGame(freshGame(id))}
   try{setAccessCode(sessionStorage.getItem('nightwalker-access-v2')||'')}catch{}
-  try{const rev=localStorage.getItem('nightwalker-cloud-revision-v2');if(rev)setRevision(Number(rev))}catch{}
+  try{const rev=localStorage.getItem('nightwalker-cloud-revision-v2');if(rev){setRevision(Number(rev));cloudRevision.current=Number(rev)}}catch{}
   fetch('/api/nightwalker').then(r=>r.json()).then(x=>setModel({configured:!!x.configured,cloudSaveConfigured:!!x.cloudSaveConfigured})).catch(()=>setModel({configured:false,cloudSaveConfigured:false}))
   setHydrated(true)
  },[])
@@ -120,23 +126,80 @@ export default function Play(){
    setGame(normalizeGame({...data,heroId:idFor()}));setPanel(null);setScreen('hub');setError('');setNotice('匯入成功')
   }catch{setError('存檔格式錯誤，未作任何更改。')}
  }
- const reset=()=>{if(!confirmReset){setConfirmReset(true);return};setGame(freshGame(idFor()));setRevision(null);try{localStorage.removeItem('nightwalker-cloud-revision-v2')}catch{}setNotice('新遊戲已建立');setPanel(null);setScreen('hub');setConfirmReset(false)}
+ const reset=()=>{if(!confirmReset){setConfirmReset(true);return};cloudPending.current=null;setGame(freshGame(idFor()));setNotice('新遊戲已建立；開始遊玩後，雲端自動備份會更新進度');setPanel(null);setScreen('hub');setConfirmReset(false)}
  const authHeaders=()=>({'content-type':'application/json','x-nightwalker-player':idFor(),'x-nightwalker-save-token':tokenFor()})
- const cloudSave=async()=>{
-  if(!model?.cloudSaveConfigured){setCloudInfo('未有雲端資料庫，請先設定 MONGODB_URI；本機自動存檔正常。');return}
+
+ // Serialize cloud writes so revision numbers are never reused by overlapping saves.
+ // A 409 halts autosave; only an explicit restore may resolve the conflict.
+ const persistCloud=async(snapshot:Game,manual=false):Promise<void>=>{
+  if(!model?.cloudSaveConfigured){
+   if(manual)setCloudInfo('雲端資料庫未設定；本機自動存檔仍然有效。')
+   return
+  }
+  if(cloudBlocked.current){
+   if(manual)setCloudInfo('雲端存檔版本衝突：自動備份已暫停。請先按「由雲端恢復」檢查最新進度。')
+   return
+  }
+  if(cloudInFlight.current){
+   cloudPending.current=snapshot
+   if(manual)setCloudInfo('雲端正在保存上一節；最新進度已排隊。')
+   return
+  }
+  const payload=JSON.stringify(snapshot)
+  if(!manual&&payload===syncedPayload.current)return
+  cloudInFlight.current=true
   try{
-   const r=await fetch('/api/nightwalker/save',{method:'POST',headers:authHeaders(),body:JSON.stringify({state:game,revision})})
-   const data=await r.json();if(!r.ok)throw Error(data.error)
-   setRevision(data.revision);try{localStorage.setItem('nightwalker-cloud-revision-v2',String(data.revision))}catch{}setCloudInfo('雲端存檔已更新，第 '+data.revision+' 版')
-  }catch(e){setCloudInfo(e instanceof Error?e.message:'雲端儲存失敗')}
+   const r=await fetch('/api/nightwalker/save',{
+    method:'POST',headers:authHeaders(),
+    body:JSON.stringify({state:snapshot,revision:cloudRevision.current})
+   })
+   const data=await r.json()
+   if(!r.ok){
+    if(data.code==='REVISION_CONFLICT')cloudBlocked.current=true
+    throw Error(data.error||'雲端備份失敗')
+   }
+   cloudRevision.current=Number(data.revision)
+   setRevision(cloudRevision.current)
+   syncedPayload.current=payload
+   try{localStorage.setItem('nightwalker-cloud-revision-v2',String(data.revision))}catch{}
+   if(manual)setCloudInfo('雲端存檔已更新，第 '+data.revision+' 版')
+  }catch(e){
+   setCloudInfo((e instanceof Error?e.message:'雲端儲存失敗')+(cloudBlocked.current?'；已暫停自動備份，避免覆蓋新進度':'；本機進度不受影響'))
+  }finally{
+   cloudInFlight.current=false
+   const pending=cloudPending.current
+   cloudPending.current=null
+   if(pending&&!cloudBlocked.current&&JSON.stringify(pending)!==syncedPayload.current){
+    void persistCloud(pending,false)
+   }
+  }
  }
+ const cloudSave=()=>persistCloud(game,true)
  const cloudLoad=async()=>{
   if(!model?.cloudSaveConfigured){setCloudInfo('未有雲端資料庫。');return}
-  try{const r=await fetch('/api/nightwalker/save',{headers:authHeaders()});const data=await r.json()
-   if(!r.ok)throw Error(data.error);setGame(normalizeGame(data.state));setRevision(data.revision);try{localStorage.setItem('nightwalker-cloud-revision-v2',String(data.revision))}catch{}setScreen('hub');setPanel(null)
-   setCloudInfo('雲端存檔已讀取')
+  if(cloudInFlight.current){setCloudInfo('請等待正在進行的雲端備份完成，再讀取存檔。');return}
+  try{
+   const r=await fetch('/api/nightwalker/save',{headers:authHeaders()})
+   const data=await r.json()
+   if(!r.ok)throw Error(data.error||'雲端讀取失敗')
+   const restored=normalizeGame(data.state)
+   cloudRevision.current=Number(data.revision)
+   setRevision(cloudRevision.current)
+   syncedPayload.current=JSON.stringify(restored)
+   cloudBlocked.current=false
+   cloudPending.current=null
+   try{localStorage.setItem('nightwalker-cloud-revision-v2',String(data.revision))}catch{}
+   setGame(restored);setScreen('hub');setPanel(null)
+   setCloudInfo('雲端存檔已讀取，第 '+data.revision+' 版')
   }catch(e){setCloudInfo(e instanceof Error?e.message:'雲端讀取失敗')}
  }
+ useEffect(()=>{
+  if(!hydrated||!autoCloud||!model?.cloudSaveConfigured||cloudBlocked.current)return
+  // Do not upload a blank new game on mount and overwrite an existing save.
+  if(game.stage==='hub'&&game.worldTurns===0&&game.logs.length===0)return
+  const t=setTimeout(()=>{void persistCloud(game,false)},1700)
+  return ()=>clearTimeout(t)
+ },[game,hydrated,autoCloud,model?.cloudSaveConfigured])
  const items=Object.entries(game.items).filter(([,v])=>v&&v>0) as [ItemId,number][]
  const actionBar=game.stage==='combat'
  const storyReady=game.stage==='explore'&&model?.configured
@@ -203,7 +266,7 @@ export default function Play(){
     {panel==='exchange'&&<><p>兌換只喺主神空間進行。點數由程式核對，升級同寵物唔會由 AI 憑空送出。</p><div className="nw-pt">目前持有 <strong>{game.points} PT</strong> · LV.{level(game)}</div><div className="nw-categories">{GRP.map(x=><button key={x.id} onClick={()=>setCategory(x.id)} className={category===x.id?'active':''}>{x.label}</button>)}</div><div className="nw-section-note">{GRP.find(x=>x.id===category)?.desc}</div>{SHOP.filter(x=>x.category===category).map(offer=><div className="nw-item" key={offer.id}><div><strong>{offer.name}</strong><small>{offer.description}</small>{offer.requires&&<small>解鎖：{offer.requires}</small>}</div><button disabled={busy||game.stage!=='hub'||game.points<offer.price} onClick={()=>update('purchase',{id:offer.id})}>{offer.price} PT</button></div>)}</>}
     {panel==='pets'&&<><p>寵物有獨立擁有狀態；冇召喚契約，就唔可以喺戰鬥中突然叫出寵物。</p>{game.pets.length?game.pets.map(id=><div className="nw-row" key={id}>{PET_INFO[id].name}<span>{PET_INFO[id].description}</span></div>):<p>未擁有寵物。可以喺「主神強化 → 寵物／夥伴」兌換。</p>}<h3>已認識 NPC</h3>{Object.entries(game.npcs).length?Object.entries(game.npcs).map(([name,n])=><div className="nw-row" key={name}>{name}<span>信任 {n.trust} · {n.status}</span></div>):<p>未有同伴記錄</p>}</>}
     {panel==='memory'&&<><p>長期記憶分成：跨世界重要事件、近期行動、人物關係、物品裝備以及最新劇情摘要。</p><h3>長期摘要</h3><p>{game.summary}</p><h3>重要事件</h3>{game.memory.filter(x=>x.important).slice(-15).reverse().map((e,i)=><div className="nw-memory" key={i}><small>{e.world} · {e.type}</small><p>{e.text}</p></div>)}<h3>最近行動</h3>{game.memory.slice(-8).reverse().map((e,i)=><div className="nw-memory" key={i}><small>回合 {e.turn}</small><p>{e.text}</p></div>)}</>}
-    {panel==='settings'&&<><p>Nightwalker v2：AI 生成故事，遊戲引擎確認裝備、升級及戰鬥；本機自動存檔。</p><div className="nw-row">AI 模型<span>{model?.configured?'已設定':'未設定 API Key'}</span></div><div className="nw-row">雲端存檔<span>{model?.cloudSaveConfigured?'已設定':'未接資料庫'}</span></div><label className="nw-field">私人遊戲存取碼（如有）<input type="password" value={accessCode} onChange={e=>{setAccessCode(e.target.value);try{sessionStorage.setItem('nightwalker-access-v2',e.target.value)}catch{}}}/></label><label className="nw-switch">大字模式 <input type="checkbox" checked={fontSize} onChange={e=>setFontSize(e.target.checked)}/></label><label className="nw-switch">減少動畫 <input type="checkbox" checked={reduced} onChange={e=>setReduced(e.target.checked)}/></label><button className="nw-wide" onClick={saveFile}>匯出完整存檔 JSON</button><button className="nw-wide" onClick={()=>file.current?.click()}>匯入存檔 JSON</button><input ref={file} hidden type="file" accept=".json" onChange={e=>loadFile(e.target.files?.[0])}/><button className="nw-wide" onClick={cloudSave}>備份到雲端</button><button className="nw-wide" onClick={cloudLoad}>由雲端恢復</button>{cloudInfo&&<p>{cloudInfo}</p>}<button className="nw-wide critical" onClick={reset}>{confirmReset?'再次點擊確認重開':'開始新遊戲（重置進度）'}</button><div className="nw-section-note">正式雲端功能需要獨立 MONGODB_URI。唔會將其他專案資料庫混用。</div></>}
+    {panel==='settings'&&<><p>Nightwalker v2：AI 生成故事，遊戲引擎確認裝備、升級及戰鬥；本機自動存檔。</p><div className="nw-row">AI 模型<span>{model?.configured?'已設定':'未設定 API Key'}</span></div><div className="nw-row">雲端存檔<span>{model?.cloudSaveConfigured?'已設定':'未接資料庫'}</span></div><label className="nw-field">私人遊戲存取碼（如有）<input type="password" value={accessCode} onChange={e=>{setAccessCode(e.target.value);try{sessionStorage.setItem('nightwalker-access-v2',e.target.value)}catch{}}}/></label><label className="nw-switch">大字模式 <input type="checkbox" checked={fontSize} onChange={e=>setFontSize(e.target.checked)}/></label><label className="nw-switch">減少動畫 <input type="checkbox" checked={reduced} onChange={e=>setReduced(e.target.checked)}/></label><button className="nw-wide" onClick={saveFile}>匯出完整存檔 JSON</button><button className="nw-wide" onClick={()=>file.current?.click()}>匯入存檔 JSON</button><input ref={file} hidden type="file" accept=".json" onChange={e=>loadFile(e.target.files?.[0])}/><label className="nw-switch">自動備份至 MongoDB <input type="checkbox" checked={autoCloud} onChange={e=>setAutoCloud(e.target.checked)}/></label><div className="nw-row">雲端備份版本<span>{revision===null?'尚未備份':'第 '+revision+' 版'}</span></div><button className="nw-wide" onClick={cloudSave}>立即備份到雲端</button><button className="nw-wide" onClick={cloudLoad}>由雲端恢復</button>{cloudInfo&&<p>{cloudInfo}</p>}<button className="nw-wide critical" onClick={reset}>{confirmReset?'再次點擊確認重開':'開始新遊戲（重置進度）'}</button><div className="nw-section-note">正式雲端功能需要獨立 MONGODB_URI。唔會將其他專案資料庫混用。</div></>}
     {error&&<p className="nw-error" role="alert">{error}</p>}
     {notice&&<p className="nw-notice">{notice}</p>}
    </div>
