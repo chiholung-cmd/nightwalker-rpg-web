@@ -34,7 +34,11 @@ Body attributes, trained skills, special bloodlines, pets, equipment/consumables
 
 Set `GROQ_API_KEY` (or `OPENAI_API_KEY`) on Vercel. The API uses an OpenAI-compatible chat completions endpoint; optional `AI_MODEL` and `AI_BASE_URL` override defaults. The browser never receives the secret.
 
-Optional MongoDB cloud-save key: `MONGODB_URI` (use a dedicated Nightwalker MongoDB cluster/database). This project's Vercel currently has neither secret. The product must NOT claim AI generation or cloud saves work until explicitly configured and tested.
+Vercel currently has `GROQ_API_KEY` and `AI_MODEL` saved for both Production and Preview. These settings require a **new deployment** before they can be tested; a stored secret is not proof the upstream model works. The secret value must never be exposed in logs. `AI_MODEL` must name a model supported by the selected Groq plan (example: `llama-3.3-70b-versatile`).
+
+Optional MongoDB cloud-save key: `MONGODB_URI` (use a dedicated Nightwalker MongoDB cluster/database). It is **not** configured. The product must NOT claim cloud saves work until independently tested.
+
+AI smoke test after deployment: GET `/api/nightwalker` must return `configured:true`. Then POST `operation:new` and `operation:enter`; POST one genuine Chinese `operation:turn`, confirm a coherent story turn without invented inventory or secrets, and inspect only HTTP status and public result. 503 means no key in that deployment, 502 can indicate model/upstream issues, 422 means the story consistency checker rejected a draft. Keep a successful local backup before enabling production.
 
 Optional `ADVENTURE_ACCESS_CODE` to restrict AI requests. For multi-user/multi-device secure gameplay, implement session authentication and a server-authoritative ledger before broad public release; the current single-player v2 state is client-managed and normalized but can be tampered with by a technically skilled user.
 
