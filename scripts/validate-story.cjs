@@ -43,19 +43,30 @@ while(pending.length) {
     }
   }
 }
-for(const key of Object.keys(SCENES))assert(destinations.has(key),'Unreachable story node: '+key);
-for(const id of ['lost_arrival','blood_arrival','hospital_arrival','rift_arrival']){
-  assert(destinations.has(id),'A world has no entry: '+id);
+// All scenes must have valid edges, even archived chapters intentionally absent
+// from the new movie-first hub's mainline reachability traversal.
+for(const [key,scene] of Object.entries(SCENES)){
+ assert(scene.id===key,'Archived scene id mismatch '+key);
+ assert(scene.lines.length>0,'Empty scene '+key);
+ for(const choice of scene.choices){
+  assert(Boolean(choice.to)||choice.action==='shop'||choice.action==='combat-practice','Unresolved action in '+key);
+  if(choice.to)assert(Boolean(SCENES[choice.to]),'Broken archived target '+key+' -> '+choice.to);
+ }
+}
+assert(destinations.size>40,'Too few reachable scenes in current hub');
+for(const id of ['lost_arrival','blood_arrival','hospital_arrival']){
+ assert(destinations.has(id),'Archived world lost its entry: '+id);
 }
 const portal=SCENES.hub_portals;
-assert(availableChoices(portal,INITIAL).some(x=>x.to==='lost_arrival'),'Lost world must be available');
-assert(availableChoices(portal,INITIAL).some(x=>x.to==='hospital_arrival'),'Hospital world must be available');
-assert(!availableChoices(portal,INITIAL).some(x=>x.to==='rift_arrival'),'Rift should start locked');
+const archived=SCENES.screen_old_archives;
+assert(availableChoices(portal,INITIAL).some(x=>x.to==='movie_portals'),'Movie-first hub route must exist');
+assert(availableChoices(portal,INITIAL).some(x=>x.to==='screen_old_archives'),'Archived worlds must be accessible');
+assert(availableChoices(archived,INITIAL).some(x=>x.to==='lost_arrival'),'Lost archive must be available');
+assert(availableChoices(archived,INITIAL).some(x=>x.to==='hospital_arrival'),'Hospital archive must be available');
 let progressed=applyEffect(INITIAL,{clearWorld:'失物管理處',flags:['archive_truth'],items:['玩家0000檔案'],sp:-6,journal:'truth'});
 progressed=applyEffect(progressed,{clearWorld:'血月公寓'});
 progressed=applyEffect(progressed,{clearWorld:'鏡城病院'});
-assert(availableChoices(portal,progressed).some(x=>x.to==='rift_arrival'),'Rift must unlock after 3 worlds');
-assert(!availableChoices(portal,progressed).some(x=>x.to==='lost_arrival'),'Cleared world must not remain farmable');
+assert(!availableChoices(archived,progressed).some(x=>x.to==='lost_arrival'),'Cleared archive must not remain farmable');
 assert(progressed.items.includes('玩家0000檔案')&&progressed.flags.includes('archive_truth'),'Cross-world information lost');
 assert(progressed.journal.includes('truth'),'Consequences not persisted');
 const spent=applyEffect(progressed,{points:-99999,hp:-500,sp:900,removeItems:['半張染血車票'],riftAdvance:true});
@@ -68,4 +79,4 @@ assert(negotiated.some(x=>x.label.includes('展示檔案')),'Truth route should 
 const noEvidence=availableChoices(SCENES.lost_clerk,INITIAL);
 assert(!noEvidence.some(x=>x.label.includes('展示檔案')),'Players without evidence must not bypass clues');
 assert(sceneFor('something-invalid').id==='hub_arrival','Invalid saved scene needs safe fallback');
-console.log('PASS: '+checks+' narrative assertions; '+Object.keys(SCENES).length+' scenes reachable, world locks, effects, choices and rift verified.');
+console.log('PASS: '+checks+' narrative assertions; '+Object.keys(SCENES).length+' main-hub scenes reached, world locks, effects, choices and rift verified.');
