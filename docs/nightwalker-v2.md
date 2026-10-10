@@ -48,3 +48,20 @@ Optional `ADVENTURE_ACCESS_CODE` to restrict AI requests. For multi-user/multi-d
 
 
 Note (2026-10-10): Groq retired `llama-3.3-70b-versatile` for free/developer-tier users in August 2026. The recommended free-plan replacement is `openai/gpt-oss-120b` (subject to Groq's published rate/token limits).
+
+## v2.1 Cinematic Chinese web-novel reading
+
+- Novel narration follows natural paragraph breaks and automatically splits older dense lines into readable blocks. Narration no longer appears as a stack of chat cards.
+- Dialogue should appear naturally inside novel prose instead of being repeated as separate NPC messages. Written language: Traditional Chinese characters, standard Mandarin literary syntax and mainland online novel pacing (original prose, not imitation of one specific author).
+- Touch options are 45–53+ CSS pixels high on mobile with 15–17px text, instead of the previous 28–31px rows. Novel copy uses approximately 17–21px type and 1.87–1.96 line spacing.
+- Story viewport scrolls to the beginning of the latest narrative turn; the original older chapters remain in the log.
+
+### MongoDB Atlas (free M0) connection
+
+1. Sign up at https://cloud.mongodb.com and create a separate Nightwalker project, Free/M0 cluster, database user, and Network Access IP list.
+2. Grant the database user only `readWrite` on database `nightwalker`; do not use an Atlas admin credential for the app.
+3. For Vercel without static outbound IP, a broad allowlist (0.0.0.0/0) may be required temporarily; combine with strong least-privilege credentials, protect your connection string, and later restrict networking where possible.
+4. Copy the Node.js driver URI, substitute username/password and percent-encode URL-reserved characters. Set `MONGODB_URI` as a Vercel **Secret** for Production and Preview.
+5. Redeploy, then check the settings page. Cloud sync is **manual** with `備份到雲端` and `由雲端恢復` until more advanced user account-based sync is implemented. Browser local saves work without MongoDB.
+
+Never commit an Atlas URI or disclose it in chat. Each browser uses a device-local player ID/token; proper cross-device account linking is a separate feature, not automatically granted by creating a database.
