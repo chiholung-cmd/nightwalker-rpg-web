@@ -21,7 +21,26 @@ const idFor=()=>{
 const tokenFor=()=>{
  try{let token=localStorage.getItem(TOKEN);if(token)return token;const bytes=crypto.getRandomValues(new Uint8Array(32));token=Array.from(bytes).map(v=>v.toString(16).padStart(2,'0')).join('');localStorage.setItem(TOKEN,token);return token}catch{return ''}}
 const readerLabel=(k:string)=>k==='narration'?'旁白':k==='dialogue'?'對話':k==='combat'?'戰鬥':'系統'
-const human=(s:string)=>s.split('\n').filter(Boolean)
+const human=(s:string)=>s.split(/\n+/).map(v=>v.trim()).filter(Boolean)
+/** Read old compact AI turns as chapters, even when they contain no paragraph breaks. */
+const novelParagraphs=(content:string)=>{
+ const blocks=content.replace(/\r\n/g,'\n').split(/\n\s*\n|\n/).map(v=>v.trim()).filter(Boolean)
+ const result:string[]=[]
+ for(const block of blocks){
+  if(block.length<=95){result.push(block);continue}
+  // Prefer natural sentence breaks, while keeping quotations and terminal punctuation intact.
+  const sentences=block.match(/[^。！？!?]+[。！？!?]+[」』”’）]?|[^。！？!?]+$/g)||[block]
+  let para=''
+  for(const sentence of sentences){
+   const next=sentence.trim()
+   if(para&&para.length+next.length>90){result.push(para);para=next}
+   else para+=next
+  }
+  if(para)result.push(para)
+ }
+ return result
+}
+const isSpoken=(text:string)=>/^[「“『]/.test(text.trim()) || /^.{1,12}[：:][「“]/.test(text.trim())
 export default function Play(){
  const [game,setGame]=useState<Game>(freshGame('solo'))
  const [hydrated,setHydrated]=useState(false)
@@ -54,7 +73,16 @@ export default function Play(){
   setHydrated(true)
  },[])
  useEffect(()=>{if(hydrated){try{localStorage.setItem(SAVE,JSON.stringify(game))}catch{setCloudInfo('本地儲存容量不足，建議匯出備份')}}},[game,hydrated])
- useEffect(()=>{if(reader.current)reader.current.scrollTop=reader.current.scrollHeight},[game.logs.length,screen,notice,expanded])
+ useEffect(()=>{
+  const container=reader.current
+  if(!container)return
+  // New chapters begin at the opening sentence, not at the final NPC dialogue.
+  const chapter=container.querySelector<HTMLElement>('[data-current-chapter="true"]')
+  if(chapter){
+   const pos=chapter.getBoundingClientRect().top-container.getBoundingClientRect().top
+   container.scrollTop+=pos-9
+  }else if(game.logs.length>0)container.scrollTop=container.scrollHeight
+ },[game.turn,screen,game.logs.length])
  const update=useCallback(async(operation:string,payload:Record<string,unknown>={})=>{
   if(busy)return false
   setBusy(true);setBusyChoice(operation);setError('');setNotice('')
@@ -130,9 +158,9 @@ export default function Play(){
    <div className="nw-story-meta"><span>{game.location}</span><span>{game.stage==='combat'?'危險 · 戰鬥中':game.stage==='down'?'你已經失去行動能力':'第 '+game.worldTurns+' 回合'}</span></div>
    <div className="nw-story-reader" ref={reader}>
     {game.logs.length===0&&<article className="nw-paragraph"><small>主神系統</small><p>歡迎來到 Nightwalker。進入輪迴世界，你嘅身份、背包、裝備、能力、寵物同此前所有選擇都會延續。</p></article>}
-    {latest.map((entry,i)=><article key={entry.id+'-'+i} className={'nw-entry '+entry.kind+(i===latest.length-1?' current':'')}>
-      <small>{entry.speaker||readerLabel(entry.kind)}</small>
-      {human(entry.text).map((p,j)=><p key={j}>{p}</p>)}
+    {latest.map((entry,i)=><article key={entry.id+'-'+i} data-current-chapter={entry.kind==='narration'&&i===latest.findLastIndex(e=>e.kind==='narration')?'true':undefined} className={'nw-entry '+entry.kind+(i===latest.length-1?' current':'')}>
+      {entry.kind==='narration'?<div className="nw-chapter-divider"><span>第 {String(Math.max(1,game.worldTurns-latest.slice(i+1).filter(log=>log.kind==='narration').length)).padStart(2,'0')} 回合</span><i/></div>:<small>{entry.speaker||readerLabel(entry.kind)}</small>}
+      {(entry.kind==='narration'?novelParagraphs(entry.text):human(entry.text)).map((paragraph,j)=><p key={j} className={entry.kind==='narration'&&isSpoken(paragraph)?'nw-spoken':''}>{paragraph}</p>)}
      </article>)}
     {game.lootAvailable.length>0&&game.stage==='explore'&&<div className="nw-loot"><small>SCENE / 可拾取物品</small>{game.lootAvailable.map(id=><button disabled={busy} key={id} onClick={()=>update('loot',{id})}>拾取 {ITEM_INFO[id].name} →</button>)}</div>}
     {game.stage==='combat'&&game.enemy&&<section className="nw-foebox"><small>ENCOUNTER / 敵人</small><strong>{game.enemy.name}</strong><span>HP {game.enemy.hp}/{game.enemy.maxHp}</span><p>你手上武器：{game.equipment.weapon?ITEM_INFO[game.equipment.weapon].name:'徒手'} · {game.equipment.weapon==='pistol'?'剩餘子彈 '+owned(game,'ammo')+' 發':'可以進行戰鬥'}</p></section>}

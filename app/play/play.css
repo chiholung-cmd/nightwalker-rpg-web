@@ -78,3 +78,53 @@ button,input{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:tran
 
 
 .nw-loot{border:1px solid #526b7e;padding:8px 10px;margin:4px 0 14px;display:flex;flex-wrap:wrap;align-items:center;gap:7px;background:#152636aa}.nw-loot small{width:100%;font:500 10px Georgia,serif;letter-spacing:1px;color:#a6bfca}.nw-loot button{border:1px solid #80a2b5;background:#263e50;padding:8px;color:#e9f2f4;font-size:11px}
+
+/* v2.1 — 中式網文閱讀體驗: larger choices, paragraphs and unobtrusive turns. */
+.nw-story-reader{padding:18px clamp(16px,4.5vw,27px) 36px;scroll-padding-top:12px}
+.nw-entry{padding:0;border:0;margin:0 0 22px;animation:nw-in .34s ease both}
+.nw-entry.narration{font-size:clamp(18px,4.5vw,21px);font-weight:410;line-height:1.96;letter-spacing:.35px;color:#e7e9e9}
+.nw-entry.narration p{margin:0 0 1.1em;text-indent:2em;overflow-wrap:anywhere;word-break:normal}
+.nw-entry.narration p.nw-spoken{text-indent:0;margin:0 0 1.1em 0;padding-left:11px;border-left:2px solid #8194a6;color:#f0f1f2}
+.nw-chapter-divider{display:flex;align-items:center;gap:14px;margin:4px 0 22px;color:#a5bdd0;font-size:11px;font-weight:600;letter-spacing:2px}
+.nw-chapter-divider i{height:1px;background:linear-gradient(90deg,#69899e,transparent);flex:1}
+.nw-entry.choice{margin:13px 0 17px;font-size:13px;color:#819aaa;border:0;display:flex;gap:8px}
+.nw-entry.choice>small{font-size:9px;letter-spacing:1.5px;color:#839aa9;margin:2px 0 0;white-space:nowrap}
+.nw-entry.choice>p{margin:0;line-height:1.65;font-size:13px}
+.nw-entry.dialogue{border:0;border-left:2px solid #637d91;padding:4px 0 3px 14px;margin:10px 0 18px;font-weight:500;font-size:clamp(17px,4.15vw,19px);line-height:1.85}
+.nw-entry.dialogue small{font-size:10px;margin-bottom:7px}
+.nw-entry.system{border:1px solid #3b5066;background:#17253561;padding:12px 13px;margin:12px 0 18px;border-radius:3px}
+.nw-entry.system small{font-size:9px}
+.nw-entry.current{border-color:inherit}
+.nw-actions{padding:12px 15px 10px;max-height:min(46dvh,367px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.nw-choice-title{margin:0 0 10px;font-size:13px;color:#d1e0e8;font-weight:600}
+.nw-choice-title button{font-size:12px}
+.nw-choices{gap:8px}
+.nw-choices button{min-height:53px;padding:11px 13px;font-size:clamp(15px,3.7vw,17px);font-weight:500;line-height:1.55;gap:13px;align-items:center;border:1px solid #53687b;background:#1725346b;border-radius:4px}
+.nw-choices button:active{background:#324b60}
+.nw-choices button b{font:600 12px Georgia,serif;border-right:1px solid #435d70;flex:0 0 27px;align-self:stretch;display:flex;align-items:center;color:#bcd5df}
+.nw-choices button span{white-space:normal;overflow-wrap:anywhere}
+.nw-compose{margin-top:10px;gap:8px}
+.nw-compose input{height:46px;padding:10px 13px;font-size:16px;background:#0b1520;border-radius:4px}
+.nw-compose button{min-width:65px;padding:0 13px;font-size:14px;border-radius:4px}
+.nw-story-shortcuts{margin-top:8px}
+.nw-story-shortcuts button{font-size:11px}
+.nw-entry.combat{padding-left:12px;border-left:2px solid #b87782}
+.larger .nw-entry.narration{font-size:clamp(21px,5.2vw,24px)}
+@media(max-height:710px){
+ .nw-story-reader{padding:9px 15px 24px}
+ .nw-entry.narration{font-size:clamp(17px,4.5vw,19px);line-height:1.87}
+ .nw-entry.narration p{margin-bottom:.85em}
+ .nw-chapter-divider{margin:1px 0 12px}
+ .nw-actions{padding:7px 10px 7px;max-height:48dvh}
+ .nw-choice-title{font-size:12px;margin-bottom:6px}
+ .nw-choices{gap:5px}
+ .nw-choices button{min-height:47px;padding:8px 10px;font-size:15px;line-height:1.45}
+ .nw-compose{margin-top:7px}
+ .nw-compose input{height:42px;font-size:16px}
+ .nw-compose button{font-size:13px}
+ .nw-story-shortcuts{margin-top:5px}
+}
+@media(max-height:570px){
+ .nw-actions{max-height:52dvh}
+ .nw-choices button{min-height:45px}
+}
