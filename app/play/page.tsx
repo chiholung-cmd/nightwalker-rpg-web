@@ -1,8 +1,9 @@
 'use client'
 import {useCallback,useEffect,useRef,useState} from 'react'
 import {freshGame,normalizeGame,SHOP,ITEM_INFO,SKILL_INFO,BLOODLINE_INFO,PET_INFO,level,owned,type Game,type ItemId,type BattleAction} from '../../lib/nightwalkerGame'
+import NightwalkerStage from '../../components/NightwalkerStage'
 import './play.css'
-type Panel='character'|'bag'|'missions'|'exchange'|'pets'|'memory'|'settings'|null
+type Panel='character'|'bag'|'missions'|'exchange'|'pets'|'memory'|'history'|'settings'|null
 type Group='body'|'skills'|'bloodlines'|'pets'|'equipment'|'healing'
 type Status={configured:boolean;cloudSaveConfigured:boolean}
 const SAVE='nightwalker-cinematic-rpg-v2'
@@ -66,10 +67,10 @@ export default function Play(){
  const [confirmReset,setConfirmReset]=useState(false)
  const [expanded,setExpanded]=useState(false)
  const [busyChoice,setBusyChoice]=useState<string|null>(null)
- const reader=useRef<HTMLDivElement>(null)
+ const [playbackDone,setPlaybackDone]=useState(false)
+ const reportPlayback=useCallback((done:boolean)=>setPlaybackDone(done),[])
  const file=useRef<HTMLInputElement>(null)
- const latest=game.logs.filter(e=>e.kind==='narration'||e.kind==='dialogue'||e.kind==='combat').slice(-18)
- const needsOpening=game.stage==='explore'&&game.worldTurns===0&&!game.logs.some(e=>e.kind==='narration')
+ const needsOpening=game.stage==='explore'&&game.worldTurns===0
  const chapterNumber=(game.worldTurns||1)
  const chineseCount=['零','一','二','三','四','五','六','七','八','九','十']
  const displayChapter=chapterNumber<=10?chineseCount[chapterNumber]:String(chapterNumber)
@@ -84,16 +85,6 @@ export default function Play(){
   setHydrated(true)
  },[])
  useEffect(()=>{if(hydrated){try{localStorage.setItem(SAVE,JSON.stringify(game))}catch{setCloudInfo('本地儲存容量不足，建議匯出備份')}}},[game,hydrated])
- useEffect(()=>{
-  const container=reader.current
-  if(!container)return
-  // New chapters begin at the opening sentence, not at the final NPC dialogue.
-  const chapter=container.querySelector<HTMLElement>('[data-current-chapter="true"]')
-  if(chapter){
-   const pos=chapter.getBoundingClientRect().top-container.getBoundingClientRect().top
-   container.scrollTop+=pos-9
-  }else if(game.logs.length>0)container.scrollTop=container.scrollHeight
- },[game.turn,screen,game.logs.length])
  const update=useCallback(async(operation:string,payload:Record<string,unknown>={})=>{
   if(busy)return false
   setBusy(true);setBusyChoice(operation);setError('');setNotice('')
@@ -101,7 +92,7 @@ export default function Play(){
    const r=await fetch('/api/nightwalker',{method:'POST',headers:{'content-type':'application/json','x-adventure-access-code':accessCode},body:JSON.stringify({operation,state:game,...payload})})
    const body=await r.json()
    if(!r.ok)throw new Error(body.error||'操作未完成')
-   setGame(normalizeGame(body.state));setScreen(body.state.stage==='hub'?'hub':'story')
+   setPlaybackDone(false);setGame(normalizeGame(body.state));setScreen(body.state.stage==='hub'?'hub':'story')
    if(body.state.lastResult&&!['turn','enter','opening','combat'].includes(operation))setNotice(body.state.lastResult)
    return true
   }catch(e){setError(e instanceof Error?e.message:'無法連接伺服器');return false}
@@ -204,8 +195,8 @@ export default function Play(){
  const actionBar=game.stage==='combat'
  const storyReady=game.stage==='explore'&&model?.configured
  
- return <div className={'nw-v2'+(screen==='story'?' reading':'')+(fontSize?' larger':'')+(reduced?' no-motion':'')}>
-  <header className="nw-head"><button className="nw-brand" onClick={openHome}><strong>NIGHTWALKER ∞</strong><small>你的選擇，會成為故事的一部分</small></button><div className="nw-headright"><span>{screen==='story'?'正在閱讀':game.stage==='hub'?'主神空間':'輪迴世界'}</span><button onClick={()=>changePanel('settings')}>設定</button></div></header>
+ return <div lang="zh-Hant" className={'nw-v2'+(screen==='story'?' reading':'')+(fontSize?' larger':'')+(reduced?' no-motion':'')}>
+  <header className="nw-head"><button className="nw-brand" onClick={openHome}><strong>NIGHTWALKER ∞</strong><small>你的選擇，會成為故事的一部分</small></button><div className="nw-headright"><span>{screen==='story'?'正在演出':game.stage==='hub'?'主神空間':'輪迴世界'}</span><button onClick={()=>changePanel('settings')}>設定</button></div></header>
   <main className="nw-main">
   {screen==='hub'?<section className="nw-home">
    <div className="nw-nexus"><small>THE MAIN GOD · STATUS ONLINE</small><div className="orb">◯</div><h1>主神空間</h1><p>{game.stage==='hub'?'「輪迴者，請作好下一次生存準備。」':'「時間不會等待任何一個輪迴者。」'}</p></div>
@@ -222,23 +213,25 @@ export default function Play(){
    <div className="nw-homehint">【主神】所有兌換同能力變化都由規則引擎確認。</div>
   </section>:
   <section className={'nw-story genre-'+game.genre}>
-   <div className="nw-story-head nw-novel-head"><button className="nw-back" onClick={openHome} aria-label="返回主神空間">〈 返回</button><div><small>夜行者 · 無限輪迴</small><strong>{game.worldName.split(' · ')[0]}</strong></div><button className="nw-back" onClick={()=>changePanel('bag')}>行囊</button></div>
-   <div className="nw-story-meta nw-novel-meta"><span>第一卷 · {game.worldName.split(' · ')[0]}</span><span>{game.location}</span></div>
-   <div className="nw-story-reader" ref={reader}>
-    {needsOpening&&<div className="nw-novel-opening"><small>序章 · 輪迴</small><h2>{game.worldName.split(' · ')[0]}</h2><p>你眼前的世界尚未展開。</p><button disabled={busy||!model?.configured} onClick={()=>update('opening')}>翻開第一章　→</button></div>}
-    {latest.map((entry,i)=><article key={entry.id+'-'+i} data-current-chapter={entry.kind==='narration'&&i===latest.findLastIndex(e=>e.kind==='narration')?'true':undefined} className={'nw-entry '+entry.kind+(i===latest.length-1?' current':'')}>
-      {entry.kind==='narration'?<div className="nw-chapter-divider"><span>第 {Math.max(1,game.worldTurns-latest.slice(i+1).filter(log=>log.kind==='narration').length)} 節</span><i/></div>:<small>{entry.speaker||readerLabel(entry.kind)}</small>}
-      {(entry.kind==='narration'?novelParagraphs(entry.text):human(entry.text)).map((paragraph,j)=><p key={j} className={entry.kind==='narration'&&isSpoken(paragraph)?'nw-spoken':''}>{paragraph}</p>)}
-     </article>)}
-    {game.lootAvailable.length>0&&game.stage==='explore'&&<div className="nw-loot"><small>SCENE / 可拾取物品</small>{game.lootAvailable.map(id=><button disabled={busy} key={id} onClick={()=>update('loot',{id})}>拾取 {ITEM_INFO[id].name} →</button>)}</div>}
-    {game.stage==='combat'&&game.enemy&&<div className="nw-narrative-danger">危險正在逼近。{game.enemy.name}沒有退去，你必須作出回應。</div>}
-    {game.stage==='down'&&<section className="nw-foebox"><strong>你已失去行動能力。</strong><p>生命值歸零。請讀取較早存檔或開始新遊戲；唔會自動復活。</p></section>}
-    {error&&<div className="nw-error" role="alert">{error}</div>}
-    {notice&&<div className="nw-notice">{notice}</div>}
-    {busy&&<div className="nw-wait">故事正在續寫……</div>}
+   <div className="nw-story-head nw-novel-head"><button className="nw-back" onClick={openHome} aria-label="返回主神空間">〈 返回</button><div><small>NIGHTWALKER · 互動敘事</small><strong>{game.worldName.split(' · ')[0]}</strong></div><button className="nw-back" onClick={()=>changePanel('history')}>紀錄</button><button className="nw-back" onClick={()=>changePanel('bag')}>行囊</button></div>
+   <div className="nw-story-meta nw-novel-meta"><span>世界 {String(game.world).padStart(2,'0')} · 第 {Math.max(1,game.worldTurns)} 幕</span><span>你將決定接下來的故事</span></div>
+
+   <div className="nw-story-stage">
+    {needsOpening?<div className="nw-cinematic-opening">
+     <div className="nw-cinematic-seal">◉</div>
+     <small>WORLD ENTRY / 世界載入</small>
+     <h2>{game.worldName.split(' · ')[0]}</h2>
+     <p>光線消失後，你將成為故事裡的人。<br/>下一步，由你決定。</p>
+     <button disabled={busy||!model?.configured} onClick={()=>update('opening')}>進入第一幕　→</button>
+    </div>:<NightwalkerStage entries={game.logs.slice(-26)} turn={game.turn} worldName={game.worldName} location={game.location} genre={game.genre} reduced={reduced} large={fontSize} characters={Object.keys(game.npcs)} onPlaybackChange={reportPlayback}/>}
+    {game.lootAvailable.length>0&&game.stage==='explore'&&playbackDone&&<div className="nw-stage-loot"><span>可拾取物品</span>{game.lootAvailable.map(id=><button disabled={busy} key={id} onClick={()=>update('loot',{id})}>拾取 {ITEM_INFO[id].name} →</button>)}</div>}
+    {game.stage==='down'&&<div className="nw-stage-overlay">你失去了行動能力，這次輪迴就此中斷。</div>}
+    {error&&<div className="nw-stage-error" role="alert">{error}</div>}
+    {notice&&<div className="nw-stage-notice">{notice}</div>}
+    {busy&&<div className="nw-stage-loading"><span className="nw-cinema-spinner"/>命運正在回應你的選擇……</div>}
    </div>
-   <div className={'nw-actions nw-novel-actions'+(needsOpening?' nw-no-choices':'')}>
-    {game.stage==='combat'?<>
+   <div className={'nw-actions nw-novel-actions'+(needsOpening||!playbackDone?' nw-no-choices':'')}>
+    {game.stage==='combat'&&!playbackDone?<div className="nw-cinema-hold">危機仍在眼前。看完演出，再選擇應對方式。</div>:game.stage==='combat'?<>
      <div className="nw-choice-title">此刻，你打算如何應對？</div>
      <div className="nw-choices">
       <button disabled={busy} onClick={()=>update('combat',{action:'attack'})}><b>一</b><span>握緊手中的武器，尋找機會還擊</span></button>
@@ -246,7 +239,7 @@ export default function Play(){
       <button disabled={busy} onClick={()=>update('combat',{action:'flee'})}><b>三</b><span>趁對方不備，試著脫離眼前的險境</span></button>
      </div>
      <div className="nw-novel-secondary"><button disabled={busy} onClick={()=>update('combat',{action:'skill'})}>施展已學技能</button><button disabled={busy} onClick={()=>update('combat',{action:'pet'})}>同伴協助</button><button disabled={busy} onClick={()=>changePanel('bag')}>查看行囊</button></div>
-    </>:game.stage==='down'?<button className="nw-full" onClick={()=>changePanel('settings')}>查看保存的篇章</button>:game.stage==='hub'?<button className="nw-full" disabled={busy} onClick={()=>update('enter')}>翻開新的一卷　→</button>:needsOpening?null:<>
+    </>:game.stage==='down'?<button className="nw-full" onClick={()=>changePanel('settings')}>查看保存的篇章</button>:game.stage==='hub'?<button className="nw-full" disabled={busy} onClick={()=>update('enter')}>進入下一個世界　→</button>:needsOpening?null:!playbackDone?<div className="nw-cinema-hold">繼續上方演出，看看事情如何發展。</div>:<>
      <div className="nw-choice-title"><span>接下來，你決定——</span><button onClick={()=>changePanel('memory')}>回顧前情</button></div>
      <div className="nw-choices">{game.suggestions.slice(0,3).map((choice,i)=><button key={i} disabled={busy||!readingReady} onClick={()=>send(choice)}><b>{['一','二','三'][i]}</b><span>{choice}</span></button>)}</div>
      <form className="nw-compose" onSubmit={e=>{e.preventDefault();send()}}><input value={action} maxLength={550} placeholder="又或者，寫下你想做的事……" onChange={e=>setAction(e.target.value)} disabled={busy}/><button disabled={busy||!readingReady||!action.trim()}>繼續</button></form>
@@ -258,13 +251,14 @@ export default function Play(){
   </main>
   <nav className="nw-nav"><button className={screen==='hub'?'current':''} onClick={openHome}>主神空間</button><button className={screen==='story'?'current':''} onClick={openStory}>文字冒險</button><button onClick={()=>changePanel('memory')}>記憶</button><button onClick={()=>changePanel('settings')}>設定</button></nav>
   {panel&&<div className="nw-overlay" onClick={()=>changePanel(null)}><section className="nw-sheet" onClick={e=>e.stopPropagation()}>
-   <header><div><small>NIGHTWALKER / MAIN GOD</small><h2>{panel==='character'?'角色檔案':panel==='bag'?'背包與裝備':panel==='missions'?'輪迴任務':panel==='exchange'?'主神強化':panel==='pets'?'寵物與同伴':panel==='memory'?'記憶回廊':'系統與存檔'}</h2></div><button onClick={()=>changePanel(null)}>關閉</button></header>
+   <header><div><small>NIGHTWALKER / MAIN GOD</small><h2>{panel==='character'?'角色檔案':panel==='bag'?'背包與裝備':panel==='missions'?'輪迴任務':panel==='exchange'?'主神強化':panel==='pets'?'寵物與同伴':panel==='memory'?'記憶回廊':panel==='history'?'劇情回顧':'系統與存檔'}</h2></div><button onClick={()=>changePanel(null)}>關閉</button></header>
    <div className="nw-sheetbody">
     {panel==='character'&&<><p>輪迴者等級 LV.{level(game)}｜經驗 {game.xp} XP</p><div className="nw-stats">{Object.entries(game.attributes).map(([name,val])=><div key={name}><span>{name}</span><b>{val}</b></div>)}</div><h3>已學習技能</h3>{Object.entries(game.skills).filter(([,n])=>n).length?Object.entries(game.skills).filter(([,n])=>n).map(([id,n])=><div className="nw-row" key={id}>{SKILL_INFO[id as keyof typeof SKILL_INFO].name}<span>LV.{n}</span></div>):<p>未學習技能</p>}<h3>血脈</h3><div className="nw-row">{BLOODLINE_INFO[game.bloodline].name}<span>{BLOODLINE_INFO[game.bloodline].description}</span></div></>}
     {panel==='bag'&&<><p>只有實際擁有嘅裝備同消耗品先可以使用。裝備數量同狀態會影響戰鬥。</p>{items.map(([id,n])=><div className="nw-item" key={id}><div><strong>{ITEM_INFO[id].name} × {n}</strong><small>{ITEM_INFO[id].slot==='weapon'?'武器':ITEM_INFO[id].slot==='armor'?'護具':ITEM_INFO[id].slot==='supply'?'消耗品':'任務物品'}</small></div>{ITEM_INFO[id].slot==='weapon'||ITEM_INFO[id].slot==='armor'?<button disabled={busy||game.equipment.weapon===id||game.equipment.armor===id} onClick={()=>update('equip',{id})}>{game.equipment.weapon===id||game.equipment.armor===id?'使用中':'裝備'}</button>:ITEM_INFO[id].heal?<button disabled={busy||game.hp>=100} onClick={()=>update('use',{id})}>使用</button>:null}</div>)}<div className="nw-section-note">目前武器：{game.equipment.weapon?ITEM_INFO[game.equipment.weapon].name:'徒手'}　|　護甲：{game.equipment.armor?ITEM_INFO[game.equipment.armor].name:'無'}</div></>}
     {panel==='missions'&&<><h3>目前世界</h3><p>{game.worldName}｜{game.location}</p><div className="nw-row">進度<span>{game.worldTurns} 回合</span></div><div className="nw-row">世界狀態<span>{game.stage==='hub'?'主神空間':game.stage==='combat'?'戰鬥中':'探索中'}</span></div><p>劇情由 AI 生成；主神會保留跨世界事件同角色狀態。返回主神需要探索條件成立，唔接受單句「我通關」作為通關證明。</p></>}
     {panel==='exchange'&&<><p>兌換只喺主神空間進行。點數由程式核對，升級同寵物唔會由 AI 憑空送出。</p><div className="nw-pt">目前持有 <strong>{game.points} PT</strong> · LV.{level(game)}</div><div className="nw-categories">{GRP.map(x=><button key={x.id} onClick={()=>setCategory(x.id)} className={category===x.id?'active':''}>{x.label}</button>)}</div><div className="nw-section-note">{GRP.find(x=>x.id===category)?.desc}</div>{SHOP.filter(x=>x.category===category).map(offer=><div className="nw-item" key={offer.id}><div><strong>{offer.name}</strong><small>{offer.description}</small>{offer.requires&&<small>解鎖：{offer.requires}</small>}</div><button disabled={busy||game.stage!=='hub'||game.points<offer.price} onClick={()=>update('purchase',{id:offer.id})}>{offer.price} PT</button></div>)}</>}
     {panel==='pets'&&<><p>寵物有獨立擁有狀態；冇召喚契約，就唔可以喺戰鬥中突然叫出寵物。</p>{game.pets.length?game.pets.map(id=><div className="nw-row" key={id}>{PET_INFO[id].name}<span>{PET_INFO[id].description}</span></div>):<p>未擁有寵物。可以喺「主神強化 → 寵物／夥伴」兌換。</p>}<h3>已認識 NPC</h3>{Object.entries(game.npcs).length?Object.entries(game.npcs).map(([name,n])=><div className="nw-row" key={name}>{name}<span>信任 {n.trust} · {n.status}</span></div>):<p>未有同伴記錄</p>}</>}
+    {panel==='history'&&<><p>這裡保留已經發生的劇情。演出模式只顯示當前一幕，不會重複播放整篇小說。</p>{game.logs.filter(x=>x.kind==='choice'||x.kind==='narration'||x.kind==='dialogue'||x.kind==='combat').slice(-42).map((entry,i)=><article className="nw-stage-history" key={String(entry.id)+'-'+String(i)}><small>{entry.kind==='choice'?'你的選擇':entry.kind==='dialogue'?entry.speaker||'角色對話':entry.kind==='combat'?'戰鬥':'劇情'}</small>{entry.text.split(/\n\s*\n|\n/).filter(Boolean).map((p,j)=><p key={j}>{p}</p>)}</article>)}</>}
     {panel==='memory'&&<><p>長期記憶分成：跨世界重要事件、近期行動、人物關係、物品裝備以及最新劇情摘要。</p><h3>長期摘要</h3><p>{game.summary}</p><h3>重要事件</h3>{game.memory.filter(x=>x.important).slice(-15).reverse().map((e,i)=><div className="nw-memory" key={i}><small>{e.world} · {e.type}</small><p>{e.text}</p></div>)}<h3>最近行動</h3>{game.memory.slice(-8).reverse().map((e,i)=><div className="nw-memory" key={i}><small>回合 {e.turn}</small><p>{e.text}</p></div>)}</>}
     {panel==='settings'&&<><p>Nightwalker v2：AI 生成故事，遊戲引擎確認裝備、升級及戰鬥；本機自動存檔。</p><div className="nw-row">AI 模型<span>{model?.configured?'已設定':'未設定 API Key'}</span></div><div className="nw-row">雲端存檔<span>{model?.cloudSaveConfigured?'已設定':'未接資料庫'}</span></div><label className="nw-field">私人遊戲存取碼（如有）<input type="password" value={accessCode} onChange={e=>{setAccessCode(e.target.value);try{sessionStorage.setItem('nightwalker-access-v2',e.target.value)}catch{}}}/></label><label className="nw-switch">大字模式 <input type="checkbox" checked={fontSize} onChange={e=>setFontSize(e.target.checked)}/></label><label className="nw-switch">減少動畫 <input type="checkbox" checked={reduced} onChange={e=>setReduced(e.target.checked)}/></label><button className="nw-wide" onClick={saveFile}>匯出完整存檔 JSON</button><button className="nw-wide" onClick={()=>file.current?.click()}>匯入存檔 JSON</button><input ref={file} hidden type="file" accept=".json" onChange={e=>loadFile(e.target.files?.[0])}/><label className="nw-switch">自動備份至 MongoDB <input type="checkbox" checked={autoCloud} onChange={e=>setAutoCloud(e.target.checked)}/></label><div className="nw-row">雲端備份版本<span>{revision===null?'尚未備份':'第 '+revision+' 版'}</span></div><button className="nw-wide" onClick={cloudSave}>立即備份到雲端</button><button className="nw-wide" onClick={cloudLoad}>由雲端恢復</button>{cloudInfo&&<p>{cloudInfo}</p>}<button className="nw-wide critical" onClick={reset}>{confirmReset?'再次點擊確認重開':'開始新遊戲（重置進度）'}</button><div className="nw-section-note">正式雲端功能需要獨立 MONGODB_URI。唔會將其他專案資料庫混用。</div></>}
     {error&&<p className="nw-error" role="alert">{error}</p>}
