@@ -2,14 +2,26 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const ts = require('typescript');
-const vm = require('node:vm');
-const src=fs.readFileSync(path.join(__dirname,'../lib/infiniteStory.ts'),'utf8');
-const compiled=ts.transpileModule(src,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS},reportDiagnostics:true});
-const errors=(compiled.diagnostics||[]).filter(x=>x.category===ts.DiagnosticCategory.Error);
-if(errors.length)throw new Error('TypeScript syntax: '+errors.map(x=>ts.flattenDiagnosticMessageText(x.messageText,' ')).join(' | '));
-const mod={exports:{}};
-vm.runInNewContext(compiled.outputText,{module:mod,exports:mod.exports,require},{timeout:1500});
-const {SCENES,INITIAL,availableChoices,applyEffect,sceneFor,effectiveLines}=mod.exports;
+
+// The narrative world imports progression and other TypeScript modules.
+// Resolve them relative to their actual source file, not this test script.
+const moduleCache = new Map();
+function load(file) {
+ const filename=path.resolve(file);
+ if(moduleCache.has(filename))return moduleCache.get(filename).exports;
+ const mod={exports:{}};
+ moduleCache.set(filename,mod);
+ const source=fs.readFileSync(filename,'utf8');
+ const compiled=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS},reportDiagnostics:true});
+ const errors=(compiled.diagnostics||[]).filter(x=>x.category===ts.DiagnosticCategory.Error);
+ if(errors.length)throw new Error('TypeScript syntax: '+errors.map(x=>ts.flattenDiagnosticMessageText(x.messageText,' ')).join(' | '));
+ const localRequire=(name)=>name.startsWith('.')
+  ?load(path.resolve(path.dirname(filename),name)+'.ts')
+  :require(name);
+ new Function('require','module','exports',compiled.outputText)(localRequire,mod,mod.exports);
+ return mod.exports;
+}
+const {SCENES,INITIAL,availableChoices,applyEffect,sceneFor,effectiveLines}=load(path.join(__dirname,'../lib/infiniteStory.ts'));
 let checks=0;
 function assert(test,message){if(!test)throw new Error(message);checks++}
 assert(Object.keys(SCENES).length>=30,'Expected a real multi-world branching story');
