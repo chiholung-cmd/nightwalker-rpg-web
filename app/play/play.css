@@ -291,3 +291,60 @@ button,input{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:tran
 @media(prefers-reduced-motion:reduce){
  .nw-cinema *, .nw-cinema *:before,.nw-cinema *:after,.nw-cinematic-opening *{animation:none!important;transition:none!important}
 }
+
+
+/* E+ emotional direction. Existing hub, dialogue and choice UI remain unchanged. */
+.nw-emotion-calm{--cinema-glow:#99b9cb}
+.nw-emotion-suspense{--cinema-glow:#c1b1d9}
+.nw-emotion-system{--cinema-glow:#79d0ec}
+.nw-emotion-eerie{--cinema-glow:#ac9ce3}
+.nw-emotion-anger,.nw-emotion-shock{--cinema-glow:#e9919c}
+.nw-emotion-grief{--cinema-glow:#899ab9}
+.nw-emotion-resolve{--cinema-glow:#e6c38a}
+.nw-cinema-mood{display:flex;align-items:center;gap:7px;margin:-3px 0 13px;font:600 10px/1.5 system-ui,sans-serif;color:var(--cinema-glow);letter-spacing:.6px}
+.nw-cinema-mood>span:last-child{font:500 9px/1.5 ui-monospace,monospace;letter-spacing:.6px;color:#839caf;margin-left:auto;text-align:right}
+.nw-cinema-mood-signal{width:5px;height:5px;flex:0 0 5px;border-radius:50%;background:var(--cinema-glow);box-shadow:0 0 10px var(--cinema-glow)}
+.nw-cinema-lines{position:relative;min-height:100px;white-space:pre-wrap}
+.nw-cinema-lines .nw-cinema-line{margin-bottom:0;min-height:1em}
+.nw-cinema-panel.emotion-system{position:relative;overflow:hidden;border-color:#699db5a8;background:linear-gradient(120deg,#0c2b3bea,#0b1625eb)}
+.nw-cinema-panel.emotion-system .nw-cinema-line{font:500 clamp(16px,4.5vw,20px)/1.82 ui-monospace,"Noto Sans TC","Microsoft JhengHei",monospace;color:#c8edfa;text-shadow:0 0 13px #63bdec35}
+.nw-emotion-scan{position:absolute;left:0;right:0;top:12%;height:1px;background:#91daf5;box-shadow:0 0 21px 2px #43b7eb8a;pointer-events:none;animation:nw-emotion-scan 2.3s ease-in-out infinite}
+.nw-cinema-panel.emotion-suspense .nw-cinema-line{color:#edeaf5}
+.nw-cinema-panel.emotion-suspense .nw-cinema-caret{background:#d5c4f4;animation-duration:1.2s}
+.nw-cinema-panel.emotion-shock{border-color:#c47584;background:linear-gradient(130deg,#371a2cea,#151622ee);box-shadow:0 0 32px #b8546538,0 24px 70px #0009}
+.nw-cinema-panel.emotion-shock.phase-pause .nw-cinema-lines{filter:brightness(.35)}
+.nw-cinema-panel.emotion-shock.phase-complete{animation:nw-emotion-impact .52s cubic-bezier(.2,.9,.3,1)}
+.nw-cinema-panel.emotion-shock .nw-cinema-line.impacted{font-size:clamp(22px,5.7vw,27px);font-weight:650;color:#ffdde2;letter-spacing:.9px;text-shadow:0 0 23px #df667778}
+.nw-cinema-panel.emotion-grief{background:linear-gradient(130deg,#121926ee,#1c2435e8);box-shadow:0 20px 65px #02050a88}
+.nw-cinema-panel.emotion-grief .nw-cinema-line{line-height:2.05;letter-spacing:.8px;color:#e2dce8}
+.nw-cinema-panel.emotion-grief .nw-cinema-line.revealed{animation:nw-emotion-sad 1.7s ease both}
+.nw-cinema-panel.emotion-eerie{background:linear-gradient(135deg,#1c1b33ee,#111827ec);border-color:#a38cce7b}
+.nw-cinema-panel.emotion-eerie .nw-cinema-line{color:#eee4fa}
+.nw-cinema-panel.emotion-eerie.phase-rewrite{animation:nw-emotion-glitch .38s 2 ease-in-out}
+.nw-cinema-panel.emotion-anger{background:linear-gradient(130deg,#321d2bee,#171822eb);border-color:#c4828a8a}
+.nw-cinema-panel.emotion-anger .nw-cinema-line{color:#ffe2dd}
+.nw-emotion-old{word-break:break-word;opacity:.87;transition:opacity .4s}
+.nw-cinema-panel.emotion-eerie .nw-emotion-old.fading{opacity:.2;filter:blur(2px);text-decoration:line-through;text-decoration-color:#bb9bd6}
+.nw-cinema-panel.emotion-anger .nw-emotion-old.fading{opacity:.36;text-decoration:line-through;text-decoration-color:#ff9b9b;filter:blur(1px)}
+.nw-cinema-panel.emotion-anger .nw-emotion-line.revealed{font-weight:650;animation:nw-emotion-anger-in .34s ease both}
+.nw-cinema-panel.emotion-resolve{border-color:#c6a66d8c;background:linear-gradient(130deg,#28271fdc,#181c28ee)}
+.nw-cinema-panel.emotion-resolve .nw-cinema-line{color:#ffedc5;font-weight:650}
+.nw-cinema-panel.emotion-resolve .nw-cinema-caret{background:#e9cc87}
+.nw-v2.no-motion .nw-emotion-scan{display:none}
+.nw-v2.no-motion .nw-cinema-panel,.nw-v2.no-motion .nw-emotion-line{animation:none!important}
+@keyframes nw-emotion-scan{0%{top:10%;opacity:0}15%,75%{opacity:.85}100%{top:93%;opacity:0}}
+@keyframes nw-emotion-impact{0%{opacity:.6;transform:scale(1.075);filter:blur(5px)}50%{opacity:1;transform:scale(.987);filter:blur(0)}100%{opacity:1;transform:scale(1)}}
+@keyframes nw-emotion-sad{from{opacity:0;transform:translateY(8px);filter:blur(3px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes nw-emotion-glitch{15%{transform:translateX(4px);text-shadow:-3px 0 #65d9ec,3px 0 #d66691}55%{transform:translateX(-3px)}100%{transform:none}}
+@keyframes nw-emotion-anger-in{from{opacity:0;transform:translateX(-9px)}to{opacity:1;transform:none}}
+@media(max-height:700px){
+ .nw-cinema-mood{margin:-2px 0 6px;font-size:9px}
+ .nw-cinema-mood>span:last-child{font-size:8px}
+ .nw-cinema-lines{min-height:67px}
+}
+@media(prefers-reduced-motion:reduce){
+ .nw-emotion-scan{display:none!important}
+ .nw-cinema-panel.emotion-shock.phase-complete,
+ .nw-cinema-panel.emotion-eerie.phase-rewrite,
+ .nw-cinema-panel.emotion-grief .nw-cinema-line.revealed{animation:none!important}
+}
