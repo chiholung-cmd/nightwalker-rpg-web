@@ -12,7 +12,7 @@ const config = () => {
   return {
     key,
     url: (process.env.AI_BASE_URL || (groq ? 'https://api.groq.com/openai/v1' : 'https://api.openai.com/v1')).replace(/\/+$/, '') + '/chat/completions',
-    model: process.env.AI_MODEL || (groq ? 'llama-3.3-70b-versatile' : 'gpt-4.1-mini')
+    model: process.env.AI_MODEL || (groq ? 'openai/gpt-oss-120b' : 'gpt-4.1-mini')
   }
 }
 const rate = new Map<string, number[]>()

@@ -34,7 +34,7 @@ Body attributes, trained skills, special bloodlines, pets, equipment/consumables
 
 Set `GROQ_API_KEY` (or `OPENAI_API_KEY`) on Vercel. The API uses an OpenAI-compatible chat completions endpoint; optional `AI_MODEL` and `AI_BASE_URL` override defaults. The browser never receives the secret.
 
-Vercel currently has `GROQ_API_KEY` and `AI_MODEL` saved for both Production and Preview. These settings require a **new deployment** before they can be tested; a stored secret is not proof the upstream model works. The secret value must never be exposed in logs. `AI_MODEL` must name a model supported by the selected Groq plan (example: `llama-3.3-70b-versatile`).
+Vercel currently has `GROQ_API_KEY` and `AI_MODEL` saved for both Production and Preview. These settings require a **new deployment** before they can be tested; a stored secret is not proof the upstream model works. The secret value must never be exposed in logs. `AI_MODEL` must name a model supported by the selected Groq plan (example: `openai/gpt-oss-120b`).
 
 Optional MongoDB cloud-save key: `MONGODB_URI` (use a dedicated Nightwalker MongoDB cluster/database). It is **not** configured. The product must NOT claim cloud saves work until independently tested.
 
@@ -46,3 +46,5 @@ Optional `ADVENTURE_ACCESS_CODE` to restrict AI requests. For multi-user/multi-d
 
 `npm run test:rpg` exercises weapon ownership, ammo, purchases, pet/skills, boss completion gating, item acquisition, narrative restrictions and memory recall. `npm run build` includes the existing story/AI tests and this new suite. `/classic` remains a fallback.
 
+
+Note (2026-10-10): Groq retired `llama-3.3-70b-versatile` for free/developer-tier users in August 2026. The recommended free-plan replacement is `openai/gpt-oss-120b` (subject to Groq's published rate/token limits).

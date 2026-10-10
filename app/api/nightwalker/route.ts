@@ -9,7 +9,7 @@ const config=()=>{
  if(!key)return null
  const groq=Boolean(process.env.GROQ_API_KEY&&!process.env.AI_API_KEY)
  const base=(process.env.AI_BASE_URL||(groq?'https://api.groq.com/openai/v1':'https://api.openai.com/v1')).replace(/\/+$/,'')
- return {key,endpoint:base+'/chat/completions',model:process.env.AI_MODEL||(groq?'llama-3.3-70b-versatile':'gpt-4.1-mini')}
+ return {key,endpoint:base+'/chat/completions',model:process.env.AI_MODEL||(groq?'openai/gpt-oss-120b':'gpt-4.1-mini')}
 }
 const result=(state:Game)=>NextResponse.json({state})
 export async function GET(){
@@ -66,7 +66,7 @@ export async function POST(req:NextRequest){
   ].join('\n')
   const response=await fetch(cfg.endpoint,{
    method:'POST',headers:{authorization:'Bearer '+cfg.key,'content-type':'application/json'},
-   body:JSON.stringify({model:cfg.model,temperature:0.78,max_tokens:1800,response_format:{type:'json_object'},
+   body:JSON.stringify({model:cfg.model,temperature:0.78,max_tokens:1800,reasoning_effort:cfg.model.startsWith('openai/gpt-oss-')?'low':undefined,response_format:{type:'json_object'},
     messages:[{role:'system',content:system},{role:'user',content:'玩家本回合行動：'+action}]}),
    signal:AbortSignal.timeout(54000),cache:'no-store'
   })
