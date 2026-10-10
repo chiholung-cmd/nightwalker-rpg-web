@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run test:story && npm run test:ai && next build",
+    "build": "npm run test:story && npm run test:ai && npm run test:rpg && next build",
     "start": "next start",
     "lint": "next lint",
     "test:story": "node scripts/check-story.cjs",
-    "test:ai": "node scripts/check-ai.cjs"
+    "test:ai": "node scripts/check-ai.cjs",
+    "test:rpg": "node scripts/check-nightwalker-v2.cjs"
   },
   "dependencies": {
     "@types/node": "^20.11.30",
