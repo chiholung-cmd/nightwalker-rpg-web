@@ -72,7 +72,7 @@ export async function POST(req:NextRequest){
   const response=await fetch(cfg.endpoint,{
    method:'POST',headers:{authorization:'Bearer '+cfg.key,'content-type':'application/json'},
    body:JSON.stringify({model:cfg.model,temperature:0.76,max_tokens:2300,reasoning_effort:cfg.model.startsWith('openai/gpt-oss-')?'low':undefined,response_format:{type:'json_object'},
-    messages:[{role:'system',content:system},{role:'user',content:'玩家本回合行動：'+action}]}),
+    messages:[{role:'system',content:system},{role:'user',content:'玩家本回合行動：'+action+'\n\n請把結果寫成可以直接閱讀的內地網文式小說正文，至少260個漢字、4至6個用\\n\\n分隔的自然段。不要寫成劇本、聊天記錄或廣東話對白。必須返回正好3個符合本回合情節的具體選項，不可省略 choices。必須採用以下JSON結構：'+JSON.stringify({story:'第一自然段……\\n\\n第二自然段……',dialogue:[],location:'目前具體位置',choices:['具體行動一','具體行動二','具體行動三'],summary:'更新後的長期摘要',discovery:'',encounter:false})}]}),
    signal:AbortSignal.timeout(54000),cache:'no-store'
   })
   if(!response.ok){

@@ -264,7 +264,11 @@ export function storyBeat(state:Game,action:string,turn:{story:string;dialogue?:
   npcs[name]={...before,trust:Math.max(-5,Math.min(5,before.trust+Math.max(-1,Math.min(1,between(turn.npc.trust,-5,5,before.trust)-before.trust)))),status:before.status==='死亡'?'死亡':status}
  }
  let next:Game={...s,turn:s.turn+1,worldTurns:s.worldTurns+1,location:str(turn.location,100)||s.location,
- logs:[...s.logs,...log].slice(-90),suggestions:choices.length?choices:['觀察周圍環境','向附近人物打聽','檢查目前狀況'],
+ logs:[...s.logs,...log].slice(-90),suggestions:choices.length===3?choices:[
+  /聲音|腳步|敲擊|低語|回音/.test(story)?'停下來辨認聲音傳來的方向，再尋找相關痕跡':'留意眼前細節，找出其他人忽略的線索',
+  /同伴|老人|女子|男人|人影|守衛/.test(story)?'詢問附近人物剛才發生了甚麼，觀察對方的神情':'沿著目前通道緩慢前進，留意每個可能的出口',
+  '暫時不冒險，先確認撤退方向與周圍的安全情況'
+ ],
  summary:str(turn.summary,2500)||s.summary,npcs,lastResult:'劇情已推進'}
  if(turn.discovery&&typeof turn.discovery==='string')next=remember(next,'discovery',turn.discovery.slice(0,220),true)
  next=remember(next,'choice','你選擇：'+action.slice(0,170))

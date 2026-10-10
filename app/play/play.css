@@ -128,3 +128,7 @@ button,input{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:tran
  .nw-actions{max-height:52dvh}
  .nw-choices button{min-height:45px}
 }
+
+/* Minimum comfortably readable size even at common 360-390px mobile widths. */
+.nw-choices button{font-size:clamp(16px,4vw,18px)}
+@media(max-width:340px){.nw-choices button{font-size:15.5px}}
