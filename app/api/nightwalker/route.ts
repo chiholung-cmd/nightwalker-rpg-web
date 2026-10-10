@@ -99,7 +99,7 @@ export async function POST(req:NextRequest){
   try{
    const n=parse(answer.npc)
    const validMoods=['calm','suspense','shock','grief','anger','eerie','resolve','system']
-   const beats:StoryBeat[]=Array.isArray(answer.beats)?answer.beats.slice(0,10).map(raw=>{
+   const beats:StoryBeat[]=Array.isArray(answer.beats)?answer.beats.slice(0,10).map((raw:unknown):StoryBeat=>{
     const beat=parse(raw),m=hant(beat.mood,20),kind=hant(beat.kind,20)
     return {text:hant(beat.text,400),mood:(validMoods.includes(m)?m:'calm') as EmotionMood,
      kind:kind==='dialogue'?'dialogue':kind==='system'?'system':'narration',
