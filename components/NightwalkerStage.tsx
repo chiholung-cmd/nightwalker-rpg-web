@@ -74,7 +74,7 @@ export default function NightwalkerStage({entries,turn,worldName,location,genre,
   if(index<beats.length-1){setIndex(n=>n+1);setVisible(0)}
  }
  const skip=()=>{if(beats.length){setIndex(beats.length-1);setVisible(beats[beats.length-1].text.length)}}
- const latestAction=entries.slice(Math.max(0,newest-1),newest).find(x=>x.kind==='choice'&&!x.text.startsWith('【')))
+ const latestAction=entries.slice(Math.max(0,newest-1),newest).find(x=>x.kind==='choice'&&!x.text.startsWith('【'))
  return <div className={'nw-cinema genre-'+genre+(large?' is-large':'')} aria-label="互動劇情演出">
   <div className="nw-cinema-atmos" aria-hidden="true"><span className="nw-cinema-ring"/><span className="nw-cinema-glow"/><span className="nw-cinema-grain"/></div>
   <div className="nw-cinema-bar"><span><i className="nw-cinema-live"/>輪迴場景 · {String(turn).padStart(2,'0')}</span><button type="button" onClick={skip} disabled={finished||beats.length<2}>跳過演出 <span aria-hidden="true">»</span></button></div>
