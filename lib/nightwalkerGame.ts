@@ -8,7 +8,10 @@ export type MemoryEvent={id:number;world:string;turn:number;type:'choice'|'comba
 export type NpcMemory={name:string;trust:number;status:'正常'|'受傷'|'失蹤'|'死亡';facts:string[]}
 export type Equipment={weapon:ItemId|null;armor:ItemId|null}
 export type Enemy={id:string;name:string;hp:number;maxHp:number;attack:number;defense:number;round:number;intent:string}
-export type Entry={id:number;kind:'narration'|'dialogue'|'system'|'combat'|'choice';speaker?:string;text:string;mood?:string}
+export type EmotionMood='calm'|'suspense'|'shock'|'grief'|'anger'|'eerie'|'resolve'|'system'
+export const EMOTION_MOODS:readonly EmotionMood[]=['calm','suspense','shock','grief','anger','eerie','resolve','system']
+export type StoryBeat={text:string;mood:EmotionMood;kind?:'narration'|'dialogue'|'system';speaker?:string;prelude?:string}
+export type Entry={id:number;kind:'narration'|'dialogue'|'system'|'combat'|'choice';speaker?:string;text:string;mood?:EmotionMood;prelude?:string}
 export type Game={
  version:2;heroId:string;world:number;stage:'hub'|'explore'|'combat'|'down';genre:string;worldName:string;location:string;
  turn:number;hp:number;sp:number;points:number;xp:number;attributes:Record<Attribute,number>;
@@ -119,7 +122,7 @@ export function normalizeGame(input:unknown):Game{
  if(!weapon||ITEM_INFO[weapon].slot!=='weapon'||!items[weapon])weapon=null;
  if(!armor||ITEM_INFO[armor].slot!=='armor'||!items[armor])armor=null;
  const logs:Entry[]=Array.isArray(p.logs)?p.logs.slice(-90).map((x:unknown,i:number)=>{
-  const m=(x&&typeof x==='object'?x:{}) as Record<string,unknown>;return {id:between(m.id,0,999999,i),kind:['narration','dialogue','system','combat','choice'].includes(String(m.kind))?m.kind as Entry['kind']:'narration',speaker:str(m.speaker,60),text:str(m.text,1400),mood:str(m.mood,30)}
+  const m=(x&&typeof x==='object'?x:{}) as Record<string,unknown>;return {id:between(m.id,0,999999,i),kind:['narration','dialogue','system','combat','choice'].includes(String(m.kind))?m.kind as Entry['kind']:'narration',speaker:str(m.speaker,60),text:str(m.text,1400),mood:EMOTION_MOODS.includes(m.mood as EmotionMood)?m.mood as EmotionMood:'calm',prelude:str(m.prelude,400)}
  }):[];
  let enemy:Enemy|null=null;
  if(p.enemy&&typeof p.enemy==='object'){
@@ -249,7 +252,7 @@ export function resolveCombat(state:Game,action:BattleAction):Game{
  else if(!succeeded&&hp===0)narrative+='痛楚驟然襲來，視野中的光一點點暗下去。你想要站穩，身體卻已經不聽使喚。'
  else if(!succeeded)narrative+='然而，'+enemy.name+'並未退去。它的反擊緊隨而至，你不得不再次調整腳步。'
  const next:Game={...s,turn:s.turn+1,stage,hp,sp,points,xp,items,flags,lootAvailable,enemy:stage==='combat'?{...enemy,round:enemy.round+1}:null,lastResult:detail,
- logs:[...s.logs,{id:s.turn+1,kind:'narration' as const,text:narrative,mood:stage==='down'?'恐懼':'緊張'}].slice(-90)}
+ logs:[...s.logs,{id:s.turn+1,kind:'combat' as const,text:narrative,mood:stage==='down'?'grief' as const:enemy.hp<=0?'resolve' as const:taken>0?'shock' as const:'suspense' as const}].slice(-90)}
  return remember(next,'combat',detail,stage!=='combat')
 }
 export function recentContext(state:Game,action:string){
@@ -263,15 +266,33 @@ export function recentContext(state:Game,action:string){
  npc:s.npcs,importantFacts:s.flags.slice(-40),longSummary:s.summary,memories:selected.map(x=>({world:x.world,text:x.text,type:x.type})),
  lastActions:s.logs.slice(-8).map(x=>x.kind+':'+x.text.slice(0,180)),availableLoot:s.lootAvailable.map(x=>ITEM_INFO[x].name),action}
 }
-export function storyBeat(state:Game,action:string,turn:{story:string;dialogue?:{speaker:string;text:string}[];location?:string;choices?:string[];summary?:string;discovery?:string;encounter?:boolean;npc?:{name:string;trust?:number;status?:string}}):Game{
+export function storyBeat(state:Game,action:string,turn:{story:string;dialogue?:{speaker:string;text:string}[];location?:string;choices?:string[];summary?:string;discovery?:string;encounter?:boolean;npc?:{name:string;trust?:number;status?:string};beats?:StoryBeat[]}):Game{
  const s=normalizeGame(state);if(s.stage!=='explore')throw Error('唔喺自由探索狀態')
  const story=str(turn.story,1500);if(!story)throw Error('AI 未產生有效劇情')
  const taboo=Object.entries(ITEM_INFO).filter(([id,v])=>v.slot==='weapon'&&!owned(s,id as ItemId)).map(([,v])=>v.name)
  const playerClaims=new RegExp('(?:你|玩家|主角)(?:立即|突然|竟然|已經|手中|從背包|掏出|拔出|拿起|揮動|握著|用)[^。！？\\n]{0,18}(?:'+taboo.join('|')+')')
  if(taboo.length&&playerClaims.test(story))throw Error('AI 描述咗玩家未擁有嘅武器，已攔截')
  const choices=Array.isArray(turn.choices)?turn.choices.filter(x=>typeof x==='string').slice(0,3).map(x=>x.slice(0,120)):[]
- const log:Entry[]=[{id:s.turn+1,kind:'choice',text:action.slice(0,500)},{id:s.turn+2,kind:'narration',text:story}]
- for(const d of Array.isArray(turn.dialogue)?turn.dialogue.slice(0,3):[]){if(typeof d.text==='string'&&typeof d.speaker==='string')log.push({id:s.turn+2,kind:'dialogue',speaker:d.speaker.slice(0,45),text:d.text.slice(0,250)})}
+ const log:Entry[]=[{id:s.turn+1,kind:'choice',text:action.slice(0,500)}]
+ // Persist the exact dramatic beats, so their intended emotional timing survives reload.
+ // Older saves with one narration entry remain fully supported.
+ if(Array.isArray(turn.beats)&&turn.beats.length){
+  for(const [i,beat] of turn.beats.slice(0,10).entries()){
+   const text=str(beat.text,450)
+   if(!text)continue
+   const mood=EMOTION_MOODS.includes(beat.mood)?beat.mood:'calm'
+   const kind:Entry['kind']=beat.kind==='dialogue'?'dialogue':beat.kind==='system'?'system':'narration'
+   log.push({id:s.turn+2+i,kind,text,mood,
+    speaker:kind==='dialogue'?str(beat.speaker,50):undefined,
+    prelude:(mood==='eerie'||mood==='anger')?str(beat.prelude,400):undefined})
+  }
+ }
+ if(log.length===1){
+  log.push({id:s.turn+2,kind:'narration',text:story,mood:'calm'})
+  for(const d of Array.isArray(turn.dialogue)?turn.dialogue.slice(0,3):[]){
+   if(typeof d.text==='string'&&typeof d.speaker==='string')log.push({id:s.turn+2,kind:'dialogue',speaker:d.speaker.slice(0,45),text:d.text.slice(0,250),mood:'calm'})
+  }
+ }
  const npcs={...s.npcs}
  if(turn.npc&&typeof turn.npc.name==='string'){
   const name=turn.npc.name.slice(0,40),before=npcs[name]||{name,trust:0,status:'正常' as const,facts:[]}
