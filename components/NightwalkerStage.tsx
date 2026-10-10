@@ -94,6 +94,7 @@ export default function NightwalkerStage({entries,turn,worldName,location,genre,
  const [index,setIndex]=useState(0)
  const [visible,setVisible]=useState(0)
  const [phase,setPhase]=useState<'pause'|'prelude'|'typing'|'rewrite'|'complete'>('typing')
+ const [skipped,setSkipped]=useState(false)
  const current=beats[Math.min(index,Math.max(0,beats.length-1))]
  const letters=Array.from(current?.text||'')
  const preview=Array.from(current?.prelude||'')
@@ -101,15 +102,15 @@ export default function NightwalkerStage({entries,turn,worldName,location,genre,
  const finished=Boolean(beats.length&&index===beats.length-1&&phase==='complete')
  const typing=Boolean(current&&phase!=='complete')
  const speaker=current?.speaker||'人物對話'
- useEffect(()=>{setIndex(0);setVisible(0);setPhase('typing')},[sceneId])
+ useEffect(()=>{setIndex(0);setVisible(0);setPhase('typing');setSkipped(false)},[sceneId])
  useEffect(()=>{
   if(!current)return
-  if(reduced){setVisible(letters.length);setPhase('complete');return}
+  if(reduced||skipped){setVisible(letters.length);setPhase('complete');return}
   setVisible(0)
   setPhase(current.mood==='shock'||current.mood==='grief'?'pause':
    (current.prelude&&(current.mood==='eerie'||current.mood==='anger'))?'prelude':'typing')
  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[sceneId,index,current?.mood,current?.prelude,reduced])
+ },[sceneId,index,current?.mood,current?.prelude,reduced,skipped])
  useEffect(()=>{
   if(!current||reduced||phase==='complete')return
   if(phase==='pause'){
@@ -142,7 +143,7 @@ export default function NightwalkerStage({entries,turn,worldName,location,genre,
  }
  const skip=()=>{
   if(!beats.length)return
-  setIndex(beats.length-1);setVisible(Array.from(beats[beats.length-1].text).length);setPhase('complete')
+  setSkipped(true);setIndex(beats.length-1);setVisible(Array.from(beats[beats.length-1].text).length);setPhase('complete')
  }
  const newestChoice=scene.find(x=>x.kind==='choice'&&!x.text.startsWith('【'))
  const mode=current?.mood||'calm'
