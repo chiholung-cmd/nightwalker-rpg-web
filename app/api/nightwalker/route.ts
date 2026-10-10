@@ -1,5 +1,5 @@
 import {NextRequest,NextResponse} from 'next/server'
-import {freshGame,normalizeGame,enterWorld,returnHub,purchase,equip,useItem,worldLoot,spawnEncounter,resolveCombat,storyBeat,containsUnauthorizedAction,recentContext,type Game,type ItemId,type BattleAction} from '../../../lib/nightwalkerGame'
+import {freshGame,normalizeGame,enterWorld,returnHub,purchase,equip,useItem,worldLoot,resolveCombat,storyBeat,containsUnauthorizedAction,recentContext,type Game,type ItemId,type BattleAction} from '../../../lib/nightwalkerGame'
 export const runtime='nodejs'
 export const dynamic='force-dynamic'
 export const maxDuration=60
@@ -31,7 +31,6 @@ export async function POST(req:NextRequest){
    if(op==='equip')return result(equip(state,str(input.id,40) as ItemId))
    if(op==='use')return result(useItem(state,str(input.id,40) as ItemId))
    if(op==='loot')return result(worldLoot(state,str(input.id,40) as ItemId))
-   if(op==='encounter')return result(spawnEncounter(state))
    if(op==='combat')return result(resolveCombat(state,str(input.action,30) as BattleAction))
   }catch(e){
    return NextResponse.json({error:e instanceof Error?e.message:'動作無法執行',code:'RULE_BLOCKED'}, {status:400})

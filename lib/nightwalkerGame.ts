@@ -225,7 +225,7 @@ export function resolveCombat(state:Game,action:BattleAction):Game{
  }
  let stage:Game['stage']='combat',points=s.points,xp=s.xp;let flags=[...s.flags];let lootAvailable=[...s.lootAvailable];
  if(succeeded){stage='explore'}
- else if(enemy.hp<=0){stage='explore';points+=25;xp+=24;flags=Array.from(new Set([...flags,'boss_cleared_'+s.world]));lootAvailable=Array.from(new Set([...lootAvailable,'beast_tooth' as ItemId]));detail+=' 敵人倒下，獲得 25 PT、24 XP。'}
+ else if(enemy.hp<=0){stage='explore';points+=25;xp+=24;flags=Array.from(new Set([...flags,'boss_cleared_'+s.world]));const prize:ItemId=s.genre==='scifi'?'ammo':s.genre==='wuxia'||s.genre==='historical'?'ancient_note':'beast_tooth';lootAvailable=Array.from(new Set([...lootAvailable,prize]));detail+=' 敵人倒下，獲得 25 PT、24 XP；現場留下 '+ITEM_INFO[prize].name+'，尚未拾取。'}
  else{
   const base=enemy.attack+(enemy.round%3)*2
   taken=Math.max(1,base-(s.equipment.armor&&owned(s,s.equipment.armor)?ITEM_INFO[s.equipment.armor].defense||0:0)-(action==='defend'?6:0)-(s.attributes.體魄>8?2:0))
@@ -261,14 +261,14 @@ export function storyBeat(state:Game,action:string,turn:{story:string;dialogue?:
   const name=turn.npc.name.slice(0,40),before=npcs[name]||{name,trust:0,status:'正常' as const,facts:[]}
   const status=['正常','受傷','失蹤','死亡'].includes(String(turn.npc.status))?turn.npc.status as NpcMemory['status']:before.status
   // Don't let a model revive dead NPCs.
-  npcs[name]={...before,trust:between(turn.npc.trust,-5,5,before.trust),status:before.status==='死亡'?'死亡':status}
+  npcs[name]={...before,trust:Math.max(-5,Math.min(5,before.trust+Math.max(-1,Math.min(1,between(turn.npc.trust,-5,5,before.trust)-before.trust)))),status:before.status==='死亡'?'死亡':status}
  }
  let next:Game={...s,turn:s.turn+1,worldTurns:s.worldTurns+1,location:str(turn.location,100)||s.location,
  logs:[...s.logs,...log].slice(-90),suggestions:choices.length?choices:['觀察周圍環境','向附近人物打聽','檢查目前狀況'],
  summary:str(turn.summary,2500)||s.summary,npcs,lastResult:'劇情已推進'}
  if(turn.discovery&&typeof turn.discovery==='string')next=remember(next,'discovery',turn.discovery.slice(0,220),true)
  next=remember(next,'choice','你選擇：'+action.slice(0,170))
- if(next.worldTurns===2&&next.lootAvailable.length===0)next.lootAvailable=['ancient_note']
+ if(/泛黃手記|舊手記|破舊筆記/.test(story)&&!next.lootAvailable.includes('ancient_note'))next.lootAvailable=[...next.lootAvailable,'ancient_note']
  if(!next.flags.includes('boss_cleared_'+next.world)&&next.worldTurns>=4&&((next.worldTurns===4)||turn.encounter===true))next=spawnEncounter(next)
  return next
 }
