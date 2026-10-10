@@ -232,8 +232,24 @@ export function resolveCombat(state:Game,action:BattleAction):Game{
   hp=Math.max(0,hp-taken);detail+=' 敵人反擊，造成 '+taken+' 傷害。'
   if(hp===0){stage='down';detail+=' 你失去行動能力。'}
  }
+ const weaponName=usableWeapon&&weapon?ITEM_INFO[weapon].name:'雙手'
+ let narrative=''
+ if(action==='attack'){
+  narrative='你攥緊'+weaponName+'，沒有再等下去。看準對方露出的空隙，你猛地迎了上去。'+(weapon==='pistol'&&usableWeapon?'槍聲劃破空氣，硝煙味短暫掩過四周的氣息。':'一聲悶響，攻擊結結實實落在了'+enemy.name+'身上。')
+ }else if(action==='defend'){
+  narrative='你沒有急著還手，而是壓低身體重心，將注意力牢牢鎖在'+enemy.name+'的動作上。對方的攻勢逼近，你咬緊牙關，竭力擋下這一擊。'
+ }else if(action==='flee'){
+  narrative=succeeded?'趁著對方一瞬間的停頓，你轉身衝了出去。急促的腳步聲在身後漸漸拉遠，直到你終於確定自己脫離了眼前的險境。':'你朝著出口猛地退去，卻被'+enemy.name+'攔住了去路。退路被封死，你只能重新面對眼前的威脅。'
+ }else if(action==='skill'){
+  narrative='你讓呼吸慢了下來，集中精神，運用先前學過的戰技抓住對方的破綻。這一次，你的動作比剛才更加果斷。'
+ }else if(action==='pet'){
+  narrative='陪伴你的'+PET_INFO[s.pets[0]].name+'察覺到危險，立刻從旁牽制'+enemy.name+'。你終於找到了一絲喘息的機會。'
+ }
+ if(!succeeded&&enemy.hp<=0)narrative+='終於，'+enemy.name+'再也支撐不住，重重倒下。短暫的寂靜重新籠罩四周，但這個世界的故事還沒有結束。'
+ else if(!succeeded&&hp===0)narrative+='痛楚驟然襲來，視野中的光一點點暗下去。你想要站穩，身體卻已經不聽使喚。'
+ else if(!succeeded)narrative+='然而，'+enemy.name+'並未退去。它的反擊緊隨而至，你不得不再次調整腳步。'
  const next:Game={...s,turn:s.turn+1,stage,hp,sp,points,xp,items,flags,lootAvailable,enemy:stage==='combat'?{...enemy,round:enemy.round+1}:null,lastResult:detail,
- logs:[...s.logs,{id:s.turn+1,kind:'combat' as const,text:detail,mood:stage==='down'?'恐懼':'警戒'}].slice(-90)}
+ logs:[...s.logs,{id:s.turn+1,kind:'narration' as const,text:narrative,mood:stage==='down'?'恐懼':'緊張'}].slice(-90)}
  return remember(next,'combat',detail,stage!=='combat')
 }
 export function recentContext(state:Game,action:string){
@@ -273,7 +289,7 @@ export function storyBeat(state:Game,action:string,turn:{story:string;dialogue?:
  if(turn.discovery&&typeof turn.discovery==='string')next=remember(next,'discovery',turn.discovery.slice(0,220),true)
  next=remember(next,'choice','你選擇：'+action.slice(0,170))
  if(/泛黃手記|舊手記|破舊筆記/.test(story)&&!next.lootAvailable.includes('ancient_note'))next.lootAvailable=[...next.lootAvailable,'ancient_note']
- if(!next.flags.includes('boss_cleared_'+next.world)&&next.worldTurns>=4&&((next.worldTurns===4)||turn.encounter===true))next=spawnEncounter(next)
+ if(!next.flags.includes('boss_cleared_'+next.world)&&next.worldTurns>=4&&turn.encounter===true)next=spawnEncounter(next)
  return next
 }
 export function containsUnauthorizedAction(state:Game,action:string):string|null{
