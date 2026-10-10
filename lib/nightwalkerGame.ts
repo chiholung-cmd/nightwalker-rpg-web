@@ -279,7 +279,7 @@ export function storyBeat(state:Game,action:string,turn:{story:string;dialogue?:
  if(Array.isArray(turn.beats)&&turn.beats.length){
   turn.beats.slice(0,10).forEach((beat,i)=>{
    const text=str(beat.text,450)
-   if(!text)continue
+   if(!text)return
    const mood=EMOTION_MOODS.includes(beat.mood)?beat.mood:'calm'
    const kind:Entry['kind']=beat.kind==='dialogue'?'dialogue':beat.kind==='system'?'system':'narration'
    log.push({id:s.turn+2+i,kind,text,mood,
