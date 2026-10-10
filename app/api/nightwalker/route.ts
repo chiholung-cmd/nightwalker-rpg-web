@@ -72,7 +72,8 @@ export async function POST(req:NextRequest){
   })
   if(!response.ok){
    console.error('Nightwalker upstream status',response.status)
-   return NextResponse.json({error:response.status===429?'AI 用量已達上限':'AI 模型暫時回覆失敗，請檢查模型設定。',code:'UPSTREAM_ERROR'}, {status:502})
+   const errorHint=response.status===400||response.status===404?'Groq 模型名稱或請求格式不被支援':response.status===401||response.status===403?'Groq API Key 驗證失敗或存取受限':response.status===429?'Groq 免費用量／速率限制': 'Groq 模型服務暫時出錯'
+   return NextResponse.json({error:errorHint,code:'UPSTREAM_ERROR',providerStatus:response.status}, {status:502})
   }
   const data=await response.json() as {choices?:{message?:{content?:string}}[]}
   const raw=data.choices?.[0]?.message?.content
