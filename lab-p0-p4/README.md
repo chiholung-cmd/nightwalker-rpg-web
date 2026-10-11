@@ -23,3 +23,11 @@ Data model: `data.js`. Authoritative rules: `engine.js`. UI: `app.js`. Styles: `
 - Mobile testing in the user's browser is not automatically guaranteed by successful Vercel deployment.
 - Before P4 can become true online multiplayer, use a separate dedicated backend, authenticated persistence, server-authoritative combat and state synchronization. Do **not** reuse the existing Supabase project assigned to an unrelated application.
 - Fan-project use of fictional IP settings does not imply licensing or endorsement.
+
+## Full recovery between reincarnations (October 2026)
+
+After mission resolution, accepting the reward immediately restores **HP 100/100, STA 100/100, MP 60/60, SAN 100/100** at zero cost. When a new assignment is accepted or a new world is entered, these values are normalized again before any world-specific bloodline penalties are applied. The currently active mission **does not** heal on page refresh. Existing save files in the main-god hub with partially depleted resources are normalized on load. Consumed potions and other items **remain consumed** and are not restocked. XP, level, credits, loot, party bonds and world records remain persistent.
+
+## Dedicated Supabase project and security
+
+The separate **Nightwalker RPG** project is provisioned in Singapore with five RLS-enabled tables: `nw_profiles`, `nw_game_saves`, `nw_mission_records`, `nw_character_relationships`, and `nw_party_rooms`. It is completely separate from other apps' databases. Policies grant authenticated players access only to their own records, and party rooms are presently owner-only. The static browser app still uses localStorage until player authentication and a server-authoritative save sync are implemented. Do not embed service-role credentials in the frontend. Creating a database does not activate live online multiplayer.
