@@ -63,6 +63,15 @@ isFight?{id:"guard",name:"防守、調息並尋找破綻",desc:"STA 恢復16；�
 ];
 for(let a of actions){a.reasons=[];if(a.id.startsWith("skill:"))a.reasons=availability(s,a.skill).reasons;if(a.id!=="guard"&&s.profile.sta<(a.sta||0))a.reasons.push("體力不足");if(s.profile.mp<(a.mp||0))a.reasons.push("靈力不足");if(a.id==="attack"&&weapon&&tierOK(s,weapon).length)a.reasons.push("力量／裝備要求未達標");a.usable=!a.reasons.length;a.costPreview={hp:0,sta:a.sta,mp:a.mp,san:0};if(a.id==="guard")a.costPreview.sta=-16;
 if(a.damage>0){let base=a.damage;if(m.world==="demon"&&a.id!=="skill:spiritcut"&&a.id!=="skill:sunbreath"&&!(weapon?.tags||[]).includes("日光"))base=Math.floor(base*.55);a.damagePreview=[Math.max(1,base-4),Math.max(1,base+4)]}
+a.sanPreview=(m.world==="alice"||m.world==="deathnote")?(s.loadout.passive.includes("focus")?3:4):0;
+a.bondPreview=a.id==="coordinate"&&m.crew.length>0?1:0;
+if(isFight&&m.enemy.hp>0&&!m.enemy.stunned){
+let guard=a.id==="guard"?18:a.id==="skill:guard"?18:a.id==="skill:veil"?26:a.id==="skill:sidestep"?16:0;
+let minDamage=Math.max(0,(w.dmg||12)-guard-(item(s.loadout.armor)?.def||0)-6);
+let maxDamage=Math.max(0,(w.dmg||12)+5-guard-(item(s.loadout.armor)?.def||0)-1);
+if(s.profile.bloodline==="wolf"){minDamage=Math.max(0,minDamage-4);maxDamage=Math.max(0,maxDamage-4)}
+a.hpRisk=[minDamage,maxDamage];
+}
 }
 return {w,t,m,actions,isFight,enemyIntent,selectedSkill:selected}}
 function changeSkill(s,index){const n=s.loadout.active.length;if(!s.mission||!n)return;s.mission.chosenSkill=((index%n)+n)%n}
