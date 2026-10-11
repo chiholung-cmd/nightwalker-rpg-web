@@ -58,7 +58,11 @@ function useItem(s,id){const m=s.mission,it=item(id);if(!m)return "不在任務�
 m.bag[id]--;const before={hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san};s.profile.hp=clamp(s.profile.hp+(it.heal||0),0,100);s.profile.sta=clamp(s.profile.sta+(it.restoreSta||0),0,100);s.profile.mp=clamp(s.profile.mp+(it.restoreMp||0),0,60);s.profile.san=clamp(s.profile.san+(it.restoreSan||0),0,100);
 if(it.stun)m.enemy.stunned=1;if(id==="recorder"){m.progress++;m.flags.push("recorded");m.evidence.push("記錄器保存了現場聲音")}if(id==="badge"){m.flags.push("identity");m.progress++}
 const result=item(id).name+"已使用：HP "+(s.profile.hp-before.hp)+"、STA "+(s.profile.sta-before.sta)+"、MP "+(s.profile.mp-before.mp)+"、SAN "+(s.profile.san-before.san);
-m.log.push(result);m.roundEvents=[result];return null}
+m.log.push(result);m.roundEvents=[result];
+m.turn++;m.phase++;
+if(m.world==="demon"||m.mode==="versus"||(m.world==="busan"&&m.phase>=3)){if(m.enemy.hp>0&&m.enemy.stunned===0){let harm=Math.max(0,Math.round(world(m.world).dmg*.55)-(item(s.loadout.armor)?.def||0));s.profile.hp=clamp(s.profile.hp-harm,0,100);if(harm>0){m.log.push("使用物品期間受到敵人反擊，HP −"+harm);m.roundEvents.push("敵人反擊造成 "+harm+" 點生命損失。")}}}
+if(m.phase>=6||s.profile.hp<=0)end(s);
+return null}
 function act(s,index,random=Math.random){const m=s.mission;if(!m||m.finished)return {error:"沒有進行中的任務"};const q=derived(s),a=q.actions[index];if(!a)return {error:"行動無效"};if(!a.usable)return {error:a.reasons.join("、")};
 let events=[],foe=m.enemy,sk=a.skill?skill(a.skill):null,guard=0,stun=0,before={hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san,enemy:foe.hp,progress:m.progress};
 s.profile.sta=clamp(s.profile.sta-a.sta,0,100);s.profile.mp=clamp(s.profile.mp-a.mp,0,60);
@@ -81,12 +85,14 @@ if(power>0){
 let multiplier=(m.world==="demon"&&sk?.effect!=="spirit"&&sk?.effect!=="sun"&&!(weapon?.tags||[]).includes("日光"))?.52:1;
 if(m.world==="demon"&&(sk?.effect==="sun"||(weapon?.tags||[]).includes("日光")))multiplier=1.55;
 if(sk?.effect==="spirit")multiplier=1.2;
-damage=Math.max(1,Math.round((power+Math.floor(s.profile.attrs.str/2)+m.status.bonus)*multiplier));
+damage=Math.max(1,Math.round((power+Math.floor(s.profile.attrs.str/2)+m.status.bonus)*multiplier*(m.weaponCondition<=0?.5:1)));
 foe.hp=Math.max(0,foe.hp-damage);m.status.bonus=0;
 events.push("你對"+foe.name+"發動攻擊，造成 "+damage+" 點傷害。");if(m.world==="demon"&&multiplier<1)events.push("普通武器的傷口正逐漸再生，必須利用日光、靈力或環境。");
 }}
 if((m.flags.includes("intel")||m.flags.includes("weakness"))&&a.id==="attack"){m.progress+=1;events.push("你利用此前發現的情報打開了前進路線。")}
-if(m.world==="demon"&&foe.hp>0&&a.id==="attack")m.progress+=1;
+if(m.world==="demon"&&foe.hp>0&&(a.id==="attack"||a.damage>0))m.progress+=1;
+if((a.id==="attack"||a.damage>0)&&m.weaponCondition>0){m.weaponCondition=Math.max(0,m.weaponCondition-2);if(m.weaponCondition===0)events.push("武器耐久耗盡，下一次攻擊將大幅減弱。")}
+if(m.progress>=2&&m.flags.includes("intel")&&!m.hidden){m.hidden=true;events.push("【主神隱藏任務】"+q.t.hidden+"，已被你發現。")}
 if(a.id.startsWith("skill:")&&sk?.effect==="reveal")m.flags.push("weakness");
 m.turn++;
 for(const id in m.cooldowns)m.cooldowns[id]=Math.max(0,m.cooldowns[id]-1);
@@ -100,7 +106,8 @@ else if(p.style==="mage"&&foe.hp>0){foe.hp=Math.max(0,foe.hp-8);events.push(p.na
 else{m.progress=Math.min(m.required+2,m.progress+1);events.push(p.name+"協助探查，任務進度增加。")}}
 }
 if(m.rival&&m.turn%2===0){m.rival.progress++;events.push("敵對輪迴者「"+m.rival.name+"」推進了自己的任務目標。")}
-if(m.world==="alice"||m.world==="deathnote"){const drain=a.id==="guard"?1:4;s.profile.san=clamp(s.profile.san-drain,0,100);events.push("心理壓力造成 SAN −"+drain+"。")}
+if(s.loadout.passive.includes("channel")&&m.turn===1){s.profile.mp=clamp(s.profile.mp+8,0,60);events.push("靈力導流：回復8點靈力。")}
+if(m.world==="alice"||m.world==="deathnote"){const drain=Math.max(0,(a.id==="guard"?1:4)-(s.loadout.passive.includes("focus")?1:0)-(item(s.loadout.accessory)?.ward?1:0));s.profile.san=clamp(s.profile.san-drain,0,100);events.push("心理壓力造成 SAN −"+drain+"。")}
 if(s.profile.san<=15){s.profile.hp=Math.max(0,s.profile.hp-4);events.push("精神接近崩潰，產生額外生命損耗。")}
 if(s.profile.hp<=0&&s.loadout.accessory==="watch"&&!m.flags.includes("watchsaved")){s.profile.hp=1;m.flags.push("watchsaved");events.push("逆位懷錶逆轉了瀕死結局，生命保留1點。")}
 m.phase++;m.enemy.intent++;let report={action:a.name,events,delta:{hp:s.profile.hp-before.hp,sta:s.profile.sta-before.sta,mp:s.profile.mp-before.mp,san:s.profile.san-before.san,enemy:foe.hp-before.enemy,progress:m.progress-before.progress}};m.history.push(report);m.log.push(...events);m.roundEvents=events;
@@ -110,12 +117,16 @@ function freeAction(s,text,random=Math.random){let n=(text||"").trim();if(n.leng
 const q=derived(s);if(!q)return {error:"尚未進入任務"};let matched=/格擋|防守|休息|調息|恢復體力|閃避/.test(n)?1:/技能|法術|靈刃|影步|術式|治療術/.test(n)?2:/調查|觀察|線索|推理|交換|交談|說服|保護|合作/.test(n)?q.isFight?2:0:/攻擊|擊打|斬|砍|武器|戰鬥|衝/.test(n)?0:-1;
 if(matched<0)return {error:"自由行動尚未接入生成式 AI。可以描述觀察、交涉、防守、攻擊或已裝備的技能。"};let r=act(s,matched,random);if(!r.error&&s.mission){s.mission.history.at(-1).freeText=n;s.mission.log.push("自由行動描述："+n)}return r}
 function end(s){let m=s.mission;if(!m||m.finished)return;let success=m.progress>=m.required,defeat=s.profile.hp<=0,rivalWin=m.rival&&m.progress<=m.rival.progress;let foeDown=m.enemy.hp<=0;let result=defeat?"D":(m.world==="demon"?(foeDown||m.progress>=3?"A":m.enemy.hp<=75?"B":"D"):rivalWin?"D":success?"A":m.progress>=2?"B":"D");
-m.finished=true;m.result=result;m.reward={A:{credits:370,xp:220},B:{credits:190,xp:110},D:{credits:40,xp:35}}[result];m.log.push(result==="A"?"主神確認：任務主要目標已完成。":result==="B"?"主神確認：部分完成，仍有遺漏。":"主神確認：任務失敗。");m.phase=Math.min(m.phase,6)}
+m.finished=true;m.result=result;m.reward=copy({A:{credits:370,xp:220},B:{credits:190,xp:110},D:{credits:40,xp:35}}[result]);
+if(m.hidden&&result!=="D"){m.reward.credits+=80;m.log.push("隱藏任務完成獎勵：+80 主神積分。")}
+m.loot=result==="A"?{demon:"sunsteel",busan:"flare",alice:"badge",deathnote:"recorder"}[m.world]:result==="B"?"medkit":null;
+if(m.loot)m.log.push("獲得戰利品："+item(m.loot).name);m.log.push(result==="A"?"主神確認：任務主要目標已完成。":result==="B"?"主神確認：部分完成，仍有遺漏。":"主神確認：任務失敗。");m.phase=Math.min(m.phase,6)}
 function finish(s){const m=s.mission;if(!m||!m.finished)return "任務仍未結束";if(m.claimed)return "結算已經領取";m.claimed=true;
 s.profile.credits+=m.reward.credits;s.profile.xp+=m.reward.xp;while(s.profile.xp>=220){s.profile.xp-=220;s.profile.level++}
 s.profile.missions++;if(!s.discovered.includes(m.world))s.discovered.push(m.world);
 for(const id in m.bag)s.warehouse[id]=(s.warehouse[id]||0)+m.bag[id];
-const summary={date:new Date().toISOString(),task:m.task,world:m.world,mode:m.mode,result:m.result,choices:m.history.map(x=>x.action),events:m.log.slice(-12),points:m.reward.credits,crew:m.crew.map(x=>x.name),rival:m.rival?.name||null};s.records.unshift(summary);s.records=s.records.slice(0,100);
+if(m.loot)s.warehouse[m.loot]=(s.warehouse[m.loot]||0)+1;
+const summary={date:new Date().toISOString(),task:m.task,world:m.world,mode:m.mode,result:m.result,loot:m.loot,hidden:m.hidden,choices:m.history.map(x=>x.action),events:m.log.slice(-12),points:m.reward.credits,crew:m.crew.map(x=>x.name),rival:m.rival?.name||null};s.records.unshift(summary);s.records=s.records.slice(0,100);
 s.memory.unshift({world:m.world,text:"在《"+m.worldName+"》完成「"+m.title+"」，評價 "+m.result+"；"+(m.evidence.at(-1)||m.log.at(-2)||"未留下特殊線索"),tag:m.result,at:Date.now()});s.memory=s.memory.slice(0,80);
 s.profile.hp=Math.max(s.profile.hp,20);s.profile.sta=clamp(s.profile.sta+20,0,100);s.profile.mp=clamp(s.profile.mp+10,0,60);s.profile.san=clamp(s.profile.san+10,0,100);
 s.lastReward=summary;s.mission=null;s.assignment=null;s.screen="hub";return null}
