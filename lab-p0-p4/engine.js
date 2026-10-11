@@ -6,7 +6,7 @@ const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const copy=x=>JSON.parse(JSON.stringify(x));
 const defaultState=()=>({
 version:1,screen:"hub",tab:"overview",
-profile:{name:"夜行者",level:3,xp:128,credits:420,attrs:{str:7,agi:7,con:8,per:9,wil:7},hp:100,sta:100,mp:45,san:100,title:"記憶殘缺的歸還者",missions:0,bloodline:null},
+profile:{name:"夜行者",level:3,xp:128,credits:420,attrs:{str:7,agi:7,con:8,per:9,wil:7},hp:100,sta:100,mp:60,san:100,title:"記憶殘缺的歸還者",missions:0,bloodline:null},
 warehouse:{ironrod:1,shortblade:1,jacket:1,charm:1,medkit:3,energy:2,ether:1,sanity:2,flare:1,recorder:1},
 learned:["strike","guard","observe","focus"],
 loadout:{weapon:"ironrod",armor:"jacket",accessory:"charm",offhand:null,backpack:["medkit","medkit","energy","sanity","recorder"],active:["strike","guard","observe"],passive:["focus"]},
@@ -17,6 +17,10 @@ function load(storage){const st=storage||global.localStorage;let raw;try{raw=st.
 try{const old=JSON.parse(st.getItem(OLD)||"null");if(old){s.profile.credits=Math.max(0,Number(old.credits??420));s.profile.level=Math.max(1,Number(old.lv??3));s.profile.xp=Number(old.xp??128);s.profile.missions=Math.max(0,Number(old.worldRuns??1)-1);s.profile.hp=clamp(Number(old.health??100),1,100);s.profile.mp=clamp(Number(old.sp??45),0,60);s.profile.attrs={str:old.attrs?.strength??7,agi:old.attrs?.agility??7,con:old.attrs?.body??8,per:old.attrs?.sense??9,wil:old.attrs?.will??7};s.profile.sta=100;s.profile.san=clamp(100-(old.fear??0),25,100);for(const a of old.visited||[]){const map={busan:"busan",alice:"alice",deathnote:"deathnote",demonslayer:"demon"};if(map[a]&&!s.discovered.includes(map[a]))s.discovered.push(map[a])}}}catch(_){}
 return s}
 function save(s,storage){try{(storage||global.localStorage).setItem(KEY,JSON.stringify(s))}catch(_){}}
+function restoreAllResources(s){
+if(!s||!s.profile)return;
+for(const stat of D.stats)if(["hp","sta","mp","san"].includes(stat.id))s.profile[stat.id]=stat.max;
+}
 const item=id=>by(D.items,id),skill=id=>by(D.skills,id),world=id=>by(D.worlds,id),task=id=>by(D.tasks,id);
 function tierOK(s,thing){const req=thing.requires||{};let reasons=[];for(let k in req)if((s.profile.attrs[k]||0)<req[k])reasons.push(D.attributes.find(x=>x[0]===k)?.[1]+"至少 "+req[k]);if(thing.tier&&s.profile.level<thing.tier)reasons.push("等級至少 Lv."+thing.tier);if(thing.unlock&&s.profile.level<thing.unlock)reasons.push("裝備要求 Lv."+thing.unlock);return reasons}
 function weight(s){return s.loadout.backpack.reduce((n,id)=>n+(item(id)?.weight||0),0)+["weapon","offhand","armor","accessory"].reduce((n,id)=>n+(item(s.loadout[id])?.weight||0),0)}
@@ -41,11 +45,12 @@ for(const k in b.requires)if((s.profile.attrs[k]||0)<b.requires[k])return "基�
 if(s.profile.credits<b.cost)return "主神積分不足";
 s.profile.credits-=b.cost;s.profile.bloodline=id;return null}
 function boost(s,attr){if(s.mission)return "輪迴途中不可強化";if(!Object.keys(s.profile.attrs).includes(attr))return "無效屬性";const price=80+(s.profile.attrs[attr]-6)*30;if(s.profile.credits<price)return "積分不足";s.profile.credits-=price;s.profile.attrs[attr]++;return null}
-function mainGodAssign(s,random=Math.random){if(s.mission)return "現有世界尚未結算";if(s.assignment)return "主神已封存本次指派，不允許免費重抽";let pool=D.tasks.filter(t=>!s.records.length||t.world!==s.records.at(-1).world);if(!pool.length)pool=D.tasks;let r=clamp(Number(random())||0,0,.999999999),selected=pool[Math.floor(r*pool.length)];s.assignment={task:selected.id,world:selected.world,mode:selected.mode,seed:Math.floor(r*1e8),assignedAt:Date.now(),targeted:false};return null}
+function mainGodAssign(s,random=Math.random){if(s.mission)return "現有世界尚未結算";restoreAllResources(s);if(s.assignment)return "主神已封存本次指派，不允許免費重抽";let pool=D.tasks.filter(t=>!s.records.length||t.world!==s.records.at(-1).world);if(!pool.length)pool=D.tasks;let r=clamp(Number(random())||0,0,.999999999),selected=pool[Math.floor(r*pool.length)];s.assignment={task:selected.id,world:selected.world,mode:selected.mode,seed:Math.floor(r*1e8),assignedAt:Date.now(),targeted:false};return null}
 function assignReturn(s,worldId){if(s.mission)return "輪迴途中不可定向";if(s.assignment)return "已有主神指派，無法更改";if(!s.discovered.includes(worldId))return "必須先到訪此世界";const w=world(worldId);if(!w)return "無效世界";const cost={busan:220,demon:650,alice:550,deathnote:380}[worldId],fee={busan:60,demon:160,alice:150,deathnote:100}[worldId],level={busan:4,demon:6,alice:6,deathnote:5}[worldId];if(s.profile.level<level)return "需要 Lv."+level;if(!s.coord[worldId]){if(s.profile.credits<cost)return "座標解鎖需要 "+cost+" 積分";s.profile.credits-=cost;s.coord[worldId]=true;return "座標已解鎖，請再次確認指定傳送"}if(s.profile.credits<fee)return "定向費需要 "+fee+" 積分";s.profile.credits-=fee;const tasks=D.tasks.filter(t=>t.world===worldId);const t=tasks[0];s.assignment={task:t.id,world:worldId,mode:t.mode,seed:Date.now()%999999,assignedAt:Date.now(),targeted:true};return null}
 function validateLoadout(s){let errors=[];if(!s.loadout.weapon)errors.push("必須裝備主武器");if(weight(s)>capacity(s))errors.push("負重超過限制");let needs=[...s.loadout.active,...s.loadout.passive].filter(x=>!s.learned.includes(x)||tierOK(s,skill(x)).length);if(needs.length)errors.push("有技能未學習或無法使用");let ids=["weapon","offhand","armor","accessory"];for(let k of ids){let id=s.loadout[k];if(id&&tierOK(s,item(id)).length)errors.push(item(id).name+"未符合裝備要求")}return errors}
 function launch(s){if(!s.assignment)return "尚未獲得主神任務";if(s.mission)return "任務已在進行";let errors=validateLoadout(s);if(errors.length)return errors.join("、");let bag={};for(const id of s.loadout.backpack){bag[id]=(bag[id]||0)+1}for(const id in bag)if((s.warehouse[id]||0)<bag[id])return "倉庫物資不足："+item(id)?.name;
 for(const id in bag)s.warehouse[id]-=bag[id];
+restoreAllResources(s);
 const taskObj=task(s.assignment.task),w=world(s.assignment.world);
 if(s.profile.bloodline==="wolf")s.profile.sta=clamp(s.profile.sta+15,0,100);
 if(s.profile.bloodline==="blank")s.profile.san=clamp(s.profile.san-10,0,100);let seed=s.assignment.seed;
@@ -152,8 +157,8 @@ for(const id in m.bag)s.warehouse[id]=(s.warehouse[id]||0)+m.bag[id];
 if(m.loot)s.warehouse[m.loot]=(s.warehouse[m.loot]||0)+1;
 const summary={date:new Date().toISOString(),task:m.task,world:m.world,mode:m.mode,result:m.result,loot:m.loot,hidden:m.hidden,choices:m.history.map(x=>x.action),events:m.log.slice(-12),points:m.reward.credits,crew:m.crew.map(x=>x.name),rival:m.rival?.name||null};s.records.unshift(summary);s.records=s.records.slice(0,100);
 s.memory.unshift({world:m.world,text:"在《"+m.worldName+"》完成「"+m.title+"」，評價 "+m.result+"；"+(m.evidence.at(-1)||m.log.at(-2)||"未留下特殊線索"),tag:m.result,at:Date.now()});s.memory=s.memory.slice(0,80);
-s.profile.hp=Math.max(s.profile.hp,20);s.profile.sta=clamp(s.profile.sta+20,0,100);s.profile.mp=clamp(s.profile.mp+10,0,60);s.profile.san=clamp(s.profile.san+10,0,100);
+restoreAllResources(s);
 s.lastReward=summary;s.mission=null;s.assignment=null;s.screen="hub";return null}
-function rest(s){if(s.mission)return "世界途中無法免費恢復";const cost=40;if(s.profile.credits<cost)return "治療積分不足";s.profile.credits-=cost;s.profile.hp=100;s.profile.sta=100;s.profile.mp=60;s.profile.san=100;return null}
-global.NW_ENGINE={KEY,defaultState,load,save,item,skill,world,task,weight,capacity,maxBag,bagReserved,canPack,addBag,removeBag,setEquipment,toggleSkill,buy,learn,buyBloodline,boost,tierOK,mainGodAssign,assignReturn,validateLoadout,launch,availability,derived,changeSkill,useItem,act,freeAction,end,finish,rest};
+function rest(s){if(s.mission)return "輪迴途中不可使用主神的免費恢復";restoreAllResources(s);return null}
+global.NW_ENGINE={KEY,defaultState,load,save,restoreAllResources,item,skill,world,task,weight,capacity,maxBag,bagReserved,canPack,addBag,removeBag,setEquipment,toggleSkill,buy,learn,buyBloodline,boost,tierOK,mainGodAssign,assignReturn,validateLoadout,launch,availability,derived,changeSkill,useItem,act,freeAction,end,finish,rest};
 })(window);
