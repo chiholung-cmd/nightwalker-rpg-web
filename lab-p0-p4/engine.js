@@ -13,9 +13,9 @@ loadout:{weapon:"ironrod",armor:"jacket",accessory:"charm",offhand:null,backpack
 assignment:null,mission:null,records:[],memory:[],bonds:{linwu:0,shenyuan:0,chuling:0,weixun:0},discovered:[],coord:{},perk:[],ui:{selectedSkill:2,filter:"all",category:"weapon",alert:"",page:0},
 settings:{reducedMotion:false,novelSize:"normal"},lastReward:null
 });
-function load(storage){const st=storage||global.localStorage;let raw;try{raw=st.getItem(KEY)}catch(_){}if(raw){try{let a=JSON.parse(raw);if(a&&a.version===1&&a.profile&&a.loadout)return a}catch(_){}}let s=defaultState();
+function load(storage){const st=storage||global.localStorage;let raw;try{raw=st.getItem(KEY)}catch(_){}if(raw){try{let a=JSON.parse(raw);if(a&&a.version===1&&a.profile&&a.loadout){if(!a.mission)restoreAllResources(a);return a}}catch(_){}}let s=defaultState();
 try{const old=JSON.parse(st.getItem(OLD)||"null");if(old){s.profile.credits=Math.max(0,Number(old.credits??420));s.profile.level=Math.max(1,Number(old.lv??3));s.profile.xp=Number(old.xp??128);s.profile.missions=Math.max(0,Number(old.worldRuns??1)-1);s.profile.hp=clamp(Number(old.health??100),1,100);s.profile.mp=clamp(Number(old.sp??45),0,60);s.profile.attrs={str:old.attrs?.strength??7,agi:old.attrs?.agility??7,con:old.attrs?.body??8,per:old.attrs?.sense??9,wil:old.attrs?.will??7};s.profile.sta=100;s.profile.san=clamp(100-(old.fear??0),25,100);for(const a of old.visited||[]){const map={busan:"busan",alice:"alice",deathnote:"deathnote",demonslayer:"demon"};if(map[a]&&!s.discovered.includes(map[a]))s.discovered.push(map[a])}}}catch(_){}
-return s}
+if(!s.mission)restoreAllResources(s);return s}
 function save(s,storage){try{(storage||global.localStorage).setItem(KEY,JSON.stringify(s))}catch(_){}}
 function restoreAllResources(s){
 if(!s||!s.profile)return;
