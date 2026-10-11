@@ -6,7 +6,7 @@ const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const copy=x=>JSON.parse(JSON.stringify(x));
 const defaultState=()=>({
 version:1,screen:"hub",tab:"overview",
-profile:{name:"夜行者",level:3,xp:128,credits:420,attrs:{str:7,agi:7,con:8,per:9,wil:7},hp:100,sta:100,mp:45,san:100,title:"記憶殘缺的歸還者",missions:0},
+profile:{name:"夜行者",level:3,xp:128,credits:420,attrs:{str:7,agi:7,con:8,per:9,wil:7},hp:100,sta:100,mp:45,san:100,title:"記憶殘缺的歸還者",missions:0,bloodline:null},
 warehouse:{ironrod:1,shortblade:1,jacket:1,charm:1,medkit:3,energy:2,ether:1,sanity:2,flare:1,recorder:1},
 learned:["strike","guard","observe","focus"],
 loadout:{weapon:"ironrod",armor:"jacket",accessory:"charm",offhand:null,backpack:["medkit","medkit","energy","sanity","recorder"],active:["strike","guard","observe"],passive:["focus"]},
@@ -30,13 +30,25 @@ function setEquipment(s,slot,id){if(s.mission)return "輪迴途中無法從主�
 function toggleSkill(s,id,passive){if(s.mission)return "輪迴途中無法改變技能配置";let sk=skill(id);if(!sk||!s.learned.includes(id))return "尚未習得此技能";if(passive===sk.active)return "技能類型不符合";let list=passive?s.loadout.passive:s.loadout.active,limit=passive?3:6,pos=list.indexOf(id);if(pos>=0){list.splice(pos,1);return null}if(list.length>=limit)return "技能欄已滿";let gate=tierOK(s,sk);if(gate.length)return gate.join("、");list.push(id);return null}
 function buy(s,id){if(s.mission)return "輪迴途中不能前往主神商店";const row=D.shop.find(x=>x[0]===id);if(!row)return "主神商店沒有這項物品";const it=item(id);if(s.profile.credits<row[1])return "主神積分不足";const gate=tierOK(s,it);if(gate.length)return gate.join("、");s.profile.credits-=row[1];s.warehouse[id]=(s.warehouse[id]||0)+1;return null}
 function learn(s,id){if(s.mission)return "輪迴途中不可進行主神強化";if(s.learned.includes(id))return "已經學會";let sk=skill(id),price=D.skillPrices[id];if(!sk||!price)return "此技能不可兌換";let gate=tierOK(s,sk);if(gate.length)return gate.join("、");if(s.profile.credits<price)return "積分不足";s.profile.credits-=price;s.learned.push(id);return null}
+function buyBloodline(s,id){
+if(s.mission)return "輪迴途中不能覺醒血脈";
+const b=D.bloodlines.find(x=>x.id===id);
+if(!b)return "主神未收錄此血脈";
+if(s.profile.bloodline)return "目前已有血脈；更換血脈需要後續轉化系統";
+if(s.profile.level<b.tier)return "需要 Lv."+b.tier;
+if(s.profile.missions<b.missions)return "需要完成 "+b.missions+" 次輪迴";
+for(const k in b.requires)if((s.profile.attrs[k]||0)<b.requires[k])return "基礎屬性未達要求："+k+" ≥ "+b.requires[k];
+if(s.profile.credits<b.cost)return "主神積分不足";
+s.profile.credits-=b.cost;s.profile.bloodline=id;return null}
 function boost(s,attr){if(s.mission)return "輪迴途中不可強化";if(!Object.keys(s.profile.attrs).includes(attr))return "無效屬性";const price=80+(s.profile.attrs[attr]-6)*30;if(s.profile.credits<price)return "積分不足";s.profile.credits-=price;s.profile.attrs[attr]++;return null}
 function mainGodAssign(s,random=Math.random){if(s.mission)return "現有世界尚未結算";if(s.assignment)return "主神已封存本次指派，不允許免費重抽";let pool=D.tasks.filter(t=>!s.records.length||t.world!==s.records.at(-1).world);if(!pool.length)pool=D.tasks;let r=clamp(Number(random())||0,0,.999999999),selected=pool[Math.floor(r*pool.length)];s.assignment={task:selected.id,world:selected.world,mode:selected.mode,seed:Math.floor(r*1e8),assignedAt:Date.now(),targeted:false};return null}
 function assignReturn(s,worldId){if(s.mission)return "輪迴途中不可定向";if(s.assignment)return "已有主神指派，無法更改";if(!s.discovered.includes(worldId))return "必須先到訪此世界";const w=world(worldId);if(!w)return "無效世界";const cost={busan:220,demon:650,alice:550,deathnote:380}[worldId],fee={busan:60,demon:160,alice:150,deathnote:100}[worldId],level={busan:4,demon:6,alice:6,deathnote:5}[worldId];if(s.profile.level<level)return "需要 Lv."+level;if(!s.coord[worldId]){if(s.profile.credits<cost)return "座標解鎖需要 "+cost+" 積分";s.profile.credits-=cost;s.coord[worldId]=true;return "座標已解鎖，請再次確認指定傳送"}if(s.profile.credits<fee)return "定向費需要 "+fee+" 積分";s.profile.credits-=fee;const tasks=D.tasks.filter(t=>t.world===worldId);const t=tasks[0];s.assignment={task:t.id,world:worldId,mode:t.mode,seed:Date.now()%999999,assignedAt:Date.now(),targeted:true};return null}
 function validateLoadout(s){let errors=[];if(!s.loadout.weapon)errors.push("必須裝備主武器");if(weight(s)>capacity(s))errors.push("負重超過限制");let needs=[...s.loadout.active,...s.loadout.passive].filter(x=>!s.learned.includes(x)||tierOK(s,skill(x)).length);if(needs.length)errors.push("有技能未學習或無法使用");let ids=["weapon","offhand","armor","accessory"];for(let k of ids){let id=s.loadout[k];if(id&&tierOK(s,item(id)).length)errors.push(item(id).name+"未符合裝備要求")}return errors}
 function launch(s){if(!s.assignment)return "尚未獲得主神任務";if(s.mission)return "任務已在進行";let errors=validateLoadout(s);if(errors.length)return errors.join("、");let bag={};for(const id of s.loadout.backpack){bag[id]=(bag[id]||0)+1}for(const id in bag)if((s.warehouse[id]||0)<bag[id])return "倉庫物資不足："+item(id)?.name;
 for(const id in bag)s.warehouse[id]-=bag[id];
-const taskObj=task(s.assignment.task),w=world(s.assignment.world);let seed=s.assignment.seed;
+const taskObj=task(s.assignment.task),w=world(s.assignment.world);
+if(s.profile.bloodline==="wolf")s.profile.sta=clamp(s.profile.sta+15,0,100);
+if(s.profile.bloodline==="blank")s.profile.san=clamp(s.profile.san-10,0,100);let seed=s.assignment.seed;
 let actors=taskObj.mode==="team"?[D.companions[seed%4],D.companions[(seed+1)%4]]:taskObj.mode==="versus"?[D.companions[(seed+1)%4]]:[],opponent=taskObj.mode==="versus"?D.rivals[seed%3]:null;
 s.mission={...copy(s.assignment),title:taskObj.name,phase:0,turn:0,progress:0,required:taskObj.required,flags:[],evidence:[],outcomes:[],log:[],history:[],bag,crew:actors.map(x=>({...x,bond:s.bonds[x.id]||0})),rival:opponent?{...opponent,progress:0}:null,enemy:{name:taskObj.mode==="versus"?opponent.name:w.enemy,hp:taskObj.mode==="versus"?opponent.hp:w.foeHp,max:taskObj.mode==="versus"?opponent.hp:w.foeHp,intent:0,bleed:0,stunned:0},status:{guard:0,barrier:0,bonus:0,poison:0},cooldowns:{},chosenSkill:0,weaponCondition:100,hidden:false,finished:false,roundEvents:[],mode:taskObj.mode,objective:taskObj.goal,worldName:w.name};
 s.assignment=null;s.screen="mission";return null}
@@ -68,7 +80,7 @@ let events=[],foe=m.enemy,sk=a.skill?skill(a.skill):null,guard=0,stun=0,before={
 s.profile.sta=clamp(s.profile.sta-a.sta,0,100);s.profile.mp=clamp(s.profile.mp-a.mp,0,60);
 const weapon=item(s.loadout.weapon);
 if(a.id==="guard"){guard=14+Math.floor(s.profile.attrs.con/2);s.profile.san=clamp(s.profile.san+4,0,100);events.push("你收緊呼吸，架起防禦姿態，為下一次行動保存體力。")}
-else if(a.id==="investigate"){m.progress+=1;m.evidence.push("第"+(m.phase+1)+"階段關鍵觀察");m.flags.push("intel");events.push("你仔細對照環境細節，從不起眼的痕跡中找到新的突破口。")}
+else if(a.id==="investigate"){m.progress+=1;if(s.profile.bloodline==="sight"&&!m.flags.includes("bloodsight")){m.progress++;m.flags.push("bloodsight");events.push("靈視血脈額外發現一條隱藏線索。")}m.evidence.push("第"+(m.phase+1)+"階段關鍵觀察");m.flags.push("intel");events.push("你仔細對照環境細節，從不起眼的痕跡中找到新的突破口。")}
 else if(a.id==="coordinate"){m.progress+=1;if(m.crew.length){const p=m.crew[(m.turn)%m.crew.length];p.bond++;s.bonds[p.id]=(s.bonds[p.id]||0)+1;events.push(p.name+"理解了你的判斷，開始與你配合。")}else if(m.mode==="versus"){m.rival.progress=Math.max(0,m.rival.progress-1);events.push("你成功干擾敵對輪迴者的步調，讓對方暫時失去優勢。")}else{events.push("你降低動作幅度，穩定呼吸，避免因恐懼而犯錯。");s.profile.san=clamp(s.profile.san+5,0,100)}}
 let damage=0;if(a.id==="attack"||a.id.startsWith("skill:")){
 let power=a.damage||0;
@@ -84,11 +96,13 @@ if(sk.cooldown)m.cooldowns[sk.id]=sk.cooldown+1;
 if(power>0){
 let multiplier=(m.world==="demon"&&sk?.effect!=="spirit"&&sk?.effect!=="sun"&&!(weapon?.tags||[]).includes("日光"))?.52:1;
 if(m.world==="demon"&&(sk?.effect==="sun"||(weapon?.tags||[]).includes("日光")))multiplier=1.55;
+if(s.profile.bloodline==="ember"&&m.world==="demon")power+=8;
 if(sk?.effect==="spirit")multiplier=1.2;
 damage=Math.max(1,Math.round((power+Math.floor(s.profile.attrs.str/2)+m.status.bonus)*multiplier*(m.weaponCondition<=0?.5:1)));
 foe.hp=Math.max(0,foe.hp-damage);m.status.bonus=0;
 events.push("你對"+foe.name+"發動攻擊，造成 "+damage+" 點傷害。");if(m.world==="demon"&&multiplier<1)events.push("普通武器的傷口正逐漸再生，必須利用日光、靈力或環境。");
 }}
+if(s.profile.bloodline==="ember"&&q.isFight){s.profile.sta=Math.max(0,s.profile.sta-4);events.push("灰燼血脈額外消耗4點體力。")}
 if((m.flags.includes("intel")||m.flags.includes("weakness"))&&a.id==="attack"){m.progress+=1;events.push("你利用此前發現的情報打開了前進路線。")}
 if(m.world==="demon"&&foe.hp>0&&(a.id==="attack"||a.damage>0))m.progress+=1;
 if((a.id==="attack"||a.damage>0)&&m.weaponCondition>0){m.weaponCondition=Math.max(0,m.weaponCondition-2);if(m.weaponCondition===0)events.push("武器耐久耗盡，下一次攻擊將大幅減弱。")}
@@ -98,7 +112,9 @@ m.turn++;
 for(const id in m.cooldowns)m.cooldowns[id]=Math.max(0,m.cooldowns[id]-1);
 const isBattle=q.isFight;let enemyDmg=0;
 if(isBattle&&foe.hp>0){let intent=q.enemyIntent;let base=(q.w.dmg||12)+((m.turn%3===0)?5:0);if(m.mode==="versus")base+=3;if(foe.stunned>0){foe.stunned--;events.push("敵人受到控制，本回合失去攻擊機會。")}
-else{enemyDmg=Math.max(0,base-guard-(item(s.loadout.armor)?.def||0)-Math.floor(s.profile.attrs.con/5));if(s.profile.hp<40&&s.loadout.passive.includes("endure"))enemyDmg=Math.floor(enemyDmg*.65);s.profile.hp=clamp(s.profile.hp-enemyDmg,0,100);events.push("敵人使出「"+intent+"」，你受到 "+enemyDmg+" 點傷害。")}}
+else{enemyDmg=Math.max(0,base-guard-(item(s.loadout.armor)?.def||0)-Math.floor(s.profile.attrs.con/5));if(s.profile.hp<40&&s.loadout.passive.includes("endure"))enemyDmg=Math.floor(enemyDmg*.65);s.profile.hp=clamp(s.profile.hp-enemyDmg,0,100);if(s.profile.bloodline==="wolf")enemyDmg=Math.max(0,enemyDmg-4);
+s.profile.hp=clamp(s.profile.hp+Math.max(0,base-guard-(item(s.loadout.armor)?.def||0)-Math.floor(s.profile.attrs.con/5))-enemyDmg,0,100);
+events.push("敵人使出「"+intent+"」，你受到 "+enemyDmg+" 點傷害。")}}
 if(m.world==="demon"&&foe.hp>0&&!m.flags.includes("sunsealed")){let regen=(weapon?.tags||[]).includes("日光")?1:5;foe.hp=Math.min(foe.max,foe.hp+regen);events.push("食人鬼再生回復 "+regen+" 點生命。")}
 if(m.crew.length){for(let p of m.crew){if(p.style==="healer"&&s.profile.hp<75){s.profile.hp=clamp(s.profile.hp+10,0,100);events.push(p.name+"施展急救，恢復你10點生命。")}
 else if(p.style==="fighter"&&foe.hp>0){foe.hp=Math.max(0,foe.hp-9);events.push(p.name+"掩護攻擊，令敵人受傷。")}
@@ -107,7 +123,7 @@ else{m.progress=Math.min(m.required+2,m.progress+1);events.push(p.name+"協助�
 }
 if(m.rival&&m.turn%2===0){m.rival.progress++;events.push("敵對輪迴者「"+m.rival.name+"」推進了自己的任務目標。")}
 if(s.loadout.passive.includes("channel")&&m.turn===1){s.profile.mp=clamp(s.profile.mp+8,0,60);events.push("靈力導流：回復8點靈力。")}
-if(m.world==="alice"||m.world==="deathnote"){const drain=Math.max(0,(a.id==="guard"?1:4)-(s.loadout.passive.includes("focus")?1:0)-(item(s.loadout.accessory)?.ward?1:0));s.profile.san=clamp(s.profile.san-drain,0,100);events.push("心理壓力造成 SAN −"+drain+"。")}
+if(m.world==="alice"||m.world==="deathnote"){const drain=Math.max(0,(a.id==="guard"?1:4)-(s.loadout.passive.includes("focus")?1:0)-(item(s.loadout.accessory)?.ward?1:0)+(s.profile.bloodline==="sight"?1:0)-(s.profile.bloodline==="blank"?2:0));s.profile.san=clamp(s.profile.san-drain,0,100);events.push("心理壓力造成 SAN −"+drain+"。")}
 if(s.profile.san<=15){s.profile.hp=Math.max(0,s.profile.hp-4);events.push("精神接近崩潰，產生額外生命損耗。")}
 if(s.profile.hp<=0&&s.loadout.accessory==="watch"&&!m.flags.includes("watchsaved")){s.profile.hp=1;m.flags.push("watchsaved");events.push("逆位懷錶逆轉了瀕死結局，生命保留1點。")}
 m.phase++;m.enemy.intent++;let report={action:a.name,events,delta:{hp:s.profile.hp-before.hp,sta:s.profile.sta-before.sta,mp:s.profile.mp-before.mp,san:s.profile.san-before.san,enemy:foe.hp-before.enemy,progress:m.progress-before.progress}};m.history.push(report);m.log.push(...events);m.roundEvents=events;
@@ -131,5 +147,5 @@ s.memory.unshift({world:m.world,text:"在《"+m.worldName+"》完成「"+m.title
 s.profile.hp=Math.max(s.profile.hp,20);s.profile.sta=clamp(s.profile.sta+20,0,100);s.profile.mp=clamp(s.profile.mp+10,0,60);s.profile.san=clamp(s.profile.san+10,0,100);
 s.lastReward=summary;s.mission=null;s.assignment=null;s.screen="hub";return null}
 function rest(s){if(s.mission)return "世界途中無法免費恢復";const cost=40;if(s.profile.credits<cost)return "治療積分不足";s.profile.credits-=cost;s.profile.hp=100;s.profile.sta=100;s.profile.mp=60;s.profile.san=100;return null}
-global.NW_ENGINE={KEY,defaultState,load,save,item,skill,world,task,weight,capacity,maxBag,bagReserved,canPack,addBag,removeBag,setEquipment,toggleSkill,buy,learn,boost,tierOK,mainGodAssign,assignReturn,validateLoadout,launch,availability,derived,changeSkill,useItem,act,freeAction,end,finish,rest};
+global.NW_ENGINE={KEY,defaultState,load,save,item,skill,world,task,weight,capacity,maxBag,bagReserved,canPack,addBag,removeBag,setEquipment,toggleSkill,buy,learn,buyBloodline,boost,tierOK,mainGodAssign,assignReturn,validateLoadout,launch,availability,derived,changeSkill,useItem,act,freeAction,end,finish,rest};
 })(window);
