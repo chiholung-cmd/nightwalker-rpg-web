@@ -112,8 +112,7 @@ m.turn++;
 for(const id in m.cooldowns)m.cooldowns[id]=Math.max(0,m.cooldowns[id]-1);
 const isBattle=q.isFight;let enemyDmg=0;
 if(isBattle&&foe.hp>0){let intent=q.enemyIntent;let base=(q.w.dmg||12)+((m.turn%3===0)?5:0);if(m.mode==="versus")base+=3;if(foe.stunned>0){foe.stunned--;events.push("敵人受到控制，本回合失去攻擊機會。")}
-else{enemyDmg=Math.max(0,base-guard-(item(s.loadout.armor)?.def||0)-Math.floor(s.profile.attrs.con/5));if(s.profile.hp<40&&s.loadout.passive.includes("endure"))enemyDmg=Math.floor(enemyDmg*.65);s.profile.hp=clamp(s.profile.hp-enemyDmg,0,100);if(s.profile.bloodline==="wolf")enemyDmg=Math.max(0,enemyDmg-4);
-s.profile.hp=clamp(s.profile.hp+Math.max(0,base-guard-(item(s.loadout.armor)?.def||0)-Math.floor(s.profile.attrs.con/5))-enemyDmg,0,100);
+else{enemyDmg=Math.max(0,base-guard-(item(s.loadout.armor)?.def||0)-Math.floor(s.profile.attrs.con/5));if(s.profile.hp<40&&s.loadout.passive.includes("endure"))enemyDmg=Math.floor(enemyDmg*.65);if(s.profile.bloodline==="wolf")enemyDmg=Math.max(0,enemyDmg-4);s.profile.hp=clamp(s.profile.hp-enemyDmg,0,100);
 events.push("敵人使出「"+intent+"」，你受到 "+enemyDmg+" 點傷害。")}}
 if(m.world==="demon"&&foe.hp>0&&!m.flags.includes("sunsealed")){let regen=(weapon?.tags||[]).includes("日光")?1:5;foe.hp=Math.min(foe.max,foe.hp+regen);events.push("食人鬼再生回復 "+regen+" 點生命。")}
 if(m.crew.length){for(let p of m.crew){if(p.style==="healer"&&s.profile.hp<75){s.profile.hp=clamp(s.profile.hp+10,0,100);events.push(p.name+"施展急救，恢復你10點生命。")}
