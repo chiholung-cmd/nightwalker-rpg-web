@@ -3,11 +3,11 @@
 // Long-lived world simulator: deterministic game consequences are not delegated to AI.
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
 const simple=x=>String(x||"").slice(0,180);
-function key(m){return (m.worldKind||"catalog")+":"+(m.worldName||m.world)}
+function key(m){return (m.worldKind==="original"?"original":"adaptation")+":"+(m.worldName||m.world)}
 function record(s){s.worldLibrary ||= {};return s.worldLibrary[key(s.mission)]||null}
 function enter(s){
  const m=s.mission;if(!m)return;
- const old=record(s);m.npcMemory={...(old?.npcs||{}),...(m.npcMemory||{})};
+ const old=record(s)||s.worldLibrary?.["catalog:"+(m.worldName||m.world)]||null;m.npcMemory={...(old?.npcs||{}),...(m.npcMemory||{})};
  m.storyFacts=Array.from(new Set([...(old?.facts||[]),...(m.storyFacts||[])])).slice(-80);
  m.quests||=[];m.agencyEvents||=[];m.branchConsequences||=[];
  m.returnVisit=!!(old?.visits>0);
@@ -57,6 +57,8 @@ function onAction(s,action,report){
    }
  }
  m.branchConsequences=m.branchConsequences.slice(-35);
+for(const [name,npc] of Object.entries(m.npcMemory||{}).slice(0,8)){if(!npc.goal||npc.lastSeen===phase)continue;const evt={phase,name,event:"正依照自己的目的繼續採取行動："+simple(npc.goal).slice(0,75),intent:simple(npc.goal)};if(!(m.agencyEvents||[]).some(e=>e.phase===phase&&e.name===name)){m.agencyEvents||=[];m.agencyEvents.push(evt)}}
+m.agencyEvents=m.agencyEvents.slice(-30);
 }
 function ability(s,action,events){
  const m=s.mission,p=s.profile;if(!m)return;
@@ -80,6 +82,7 @@ function ability(s,action,events){
 function skillUse(s,skillId){
  s.mastery||={};s.mastery[skillId]=Math.min(999,(s.mastery[skillId]||0)+1);
  const level=Math.min(4,Math.floor(s.mastery[skillId]/8));
+ if(s.mission&&level){s.profile.sta=Math.min(100,s.profile.sta+Math.min(6,2*level));if(skillId==="observe"||skillId==="negotiation")s.mission.progress+=1}
  if(s.mission){s.mission.masteryLog ||= [];s.mission.masteryLog.push({skillId,uses:s.mastery[skillId],level,phase:s.mission.phase})}
  return {uses:s.mastery[skillId],level};
 }
