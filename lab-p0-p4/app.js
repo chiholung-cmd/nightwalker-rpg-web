@@ -214,7 +214,14 @@ a("領取獎勵並返回主神空間　›","claim","block main")+
 }
 function memory(){const mode=temporary.memoryTab, tabs=[["timeline","輪迴記錄"],["worlds","世界情報"],["relations","隊友關係"],["system","主神備忘"]];let body="";
 if(mode==="timeline")body=s.records.length?s.records.map(r=>card("《"+esc(r.worldName||world(r.world)?.name||r.world)+"》 · "+r.result,esc(task(r.task)?.name||r.task)+" · "+({solo:"單人",team:"團隊",versus:"對抗"}[r.mode])+'<div class="rule"></div>'+r.choices.map(x=>'<p class="record-choice">'+esc(x)+'</p>').join("")+'<div class="minor-meta">'+new Date(r.date).toLocaleString("zh-HK")+'</div>')).join(""):card("尚未有輪迴記錄","正式完成第一個世界後，所有重大選擇會留在這裡。");
-if(mode==="worlds")body=s.discovered.length?s.discovered.map(id=>card(esc(world(id)?.name),esc(world(id)?.intro||""))).join(""):card("未知世界","主神尚未允許你查看其他世界的完整資料。");
+if(mode==="worlds"){
+const library=Object.values(s.worldLibrary||{});
+body=library.length?library.map(r=>card(esc(r.name),
+'<p class="minor-meta">已訪問 '+(r.visits||0)+' 次 · 已發現 '+(r.facts||[]).length+' 條線索</p>'+
+(r.source?.url?'<p class="minor-meta"><a href="'+esc(r.source.url)+'" target="_blank" rel="noopener noreferrer">原作公開資料：'+esc(r.source.title)+' ↗</a></p>':"")+
+(r.facts||[]).slice(-8).map(x=>'<p>◈ '+esc(x)+'</p>').join("")+
+Object.entries(r.npcs||{}).slice(0,10).map(([name,v])=>'<p><b>'+esc(name)+'</b> · 信任 '+(v.trust||0)+' · '+esc(v.memory||"")+'</p>').join(""))).join(""):card("未知世界","輪迴後會永久收錄原作、人物、線索同你作出嘅選擇。")
+}
 if(mode==="relations")body=D.companions.map(c=>card(esc(c.name)+" · "+esc(c.role),esc(c.bio)+'<div class="minor-meta">關係值 '+(s.bonds[c.id]||0)+'</div>')).join("");
 if(mode==="system")body=card("主神規則說明","世界與任務由主神決定；定向返回需要先到訪，再支付座標解鎖及定向傳送代價。") +card("劇情記憶","歷史抉擇、線索、戰利品、隊友關係在本裝置持久保存。") +card("真人多人連線","目前團隊與對抗採用 AI 輪迴者的確定性規則模擬；尚未啟用伺服器同步、真人配對及即時 PvP。");
 return section("MAIN GOD ARCHIVE","輪迴記錄","主神會保存重大抉擇與線索；世界居民亦應根據合理身份和記憶作出反應。")+'<div class="tabbar">'+tabs.map(x=>'<button class="'+(mode===x[0]?"on":"")+'" data-do="tab:memory:'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="scroll-content column-gap">'+body+'</div>'}
