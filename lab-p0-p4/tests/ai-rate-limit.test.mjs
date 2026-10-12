@@ -8,11 +8,11 @@ process.env.GROQ_API_KEY="mock-test-only-not-a-real-key";
 const sample={
  title:"夜車入口",mood:"suspense",
  blocks:[
-  {type:"narration",text:"最後一班列車停在異常漆黑的站台。"},
-  {type:"narration",text:"所有乘客同時轉身，將目光投向你的方向。"},
+  {type:"narration",text:"最後一班列車停在異常漆黑的站台。車窗外的燈光一盞接一盞熄滅，月台盡頭似乎有個人影始終沒有移動。"},
+  {type:"narration",text:"所有乘客同時轉身，將目光投向你的方向。剛才還在哭鬧的孩子突然安靜下來，連原本嘈雜的廣播也停止了。"},
   {type:"dialogue",speaker:"站長",text:"「千萬不要打開第三道門。」"},
-  {type:"narration",text:"門外有一隻手，正在沿著玻璃向下滑動。"},
-  {type:"narration",text:"你注意到地上的腳印，全都朝著列車內部。"}
+  {type:"narration",text:"門外有一隻手，正在沿著玻璃向下滑動。指尖留下的印記不是水痕，而是暗紅色的血線，慢慢匯成某種文字。"},
+  {type:"narration",text:"你注意到地上的腳印，全都朝著列車內部。林燁低頭看了片刻，終於意識到所有痕跡都沒有回頭的方向。"}
  ],
  options:[
   {label:"先詢問站長有關第三道門的秘密",hint:"爭取信任",kind:"talk",cost:0,progress:1},
