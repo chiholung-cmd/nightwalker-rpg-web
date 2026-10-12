@@ -139,6 +139,7 @@ if(o.id==="coordinate"&&m.crew.length){const crew=m.crew[m.phase%m.crew.length];
 if(o.kind==="talk"&&m.mode==="team"&&m.crew.length&&["share","leadexit","all","protect"].includes(o.id)){const c=m.crew[0];s.bonds[c.id]=(s.bonds[c.id]||0)+1;}
 if(o.kind==="conceal")st.exposure=Math.max(0,st.exposure-1);
 if(o.id==="rush"||o.id==="challenge")st.tension++;
+global.NW_WORLD?.ability?.(s,o,events);
 if(o.flag){if(!m.flags.includes(o.flag))m.flags.push(o.flag);st.flags.push(o.flag)}
 m.progress+=o.progress||0;
 if(o.kind==="observe"&&s.profile.bloodline==="sight"&&!m.flags.includes("bloodsight")){m.progress++;m.flags.push("bloodsight");events.push("靈視血脈讓你察覺了普通人忽略的細節。")}
@@ -162,7 +163,7 @@ for(const id in m.cooldowns)m.cooldowns[id]=Math.max(0,m.cooldowns[id]-1);
 m.turn++;m.phase++;
 m.roundEvents=[st.lastReply,...events.slice(-2)];m.log.push(st.lastReply,...events);
 const report={action:original||o.label,events:[st.lastReply,...events],delta:{hp:p.hp-before.hp,sta:p.sta-before.sta,mp:p.mp-before.mp,san:p.san-before.san,progress:m.progress-before.progress},kind:o.kind};
-m.history.push(report);
+m.history.push(report);global.NW_WORLD?.onAction?.(s,o,report);
 const director=!!m.director;
 if(p.hp<=0)E.end(s);
 else if(!director&&m.phase>=6)E.end(s);
@@ -196,7 +197,7 @@ return apply(s,{id:"free-"+kind,label:val,hint:"自訂行動",kind,cost,progress
 function skills(s){const m=s.mission;if(!m)return [];let list=s.loadout.active;return list.map(id=>{let sk=E.skill(id),avail=E.availability(s,id);return {id,name:sk?.name||id,sta:sk?.sta||0,mp:sk?.mp||0,desc:sk?.desc||"",ok:avail.ok,reasons:avail.reasons}})}
 function useSkill(s,id){if((s.mission?.world==="custom"||s.mission?.director)&&!s.mission.aiOptions?.[s.mission.phase]?.length)return {error:"AI 世界仍未載入，不可跳過劇情"};const sk=E.skill(id),check=E.availability(s,id);if(!check.ok)return {error:check.reasons.join("、")};let kind=sk?.power?"fight":sk?.effect==="reveal"?"observe":sk?.effect==="persuade"?"talk":sk?.effect==="heal"?"rest":"physical";
 const r=apply(s,{id:"skill-"+id,label:"施展「"+sk.name+"」",kind,cost:sk.sta||0,progress:sk.effect==="reveal"?2:sk.effect==="persuade"?2:sk.power?1:0,flag:"skill-"+id,reasons:[]}, "施展「"+sk.name+"」");
-if(!r.error){s.profile.mp=Math.max(0,s.profile.mp-(sk.mp||0));if(sk.effect==="heal")s.profile.hp=Math.min(100,s.profile.hp+22);if(sk.effect==="shield"){s.profile.san=Math.min(100,s.profile.san+8);if(s.mission)s.mission.storyState.shield=14}if(sk.effect==="evade"&&s.mission)s.mission.storyState.shield=10;if(sk.cooldown&&s.mission&&!s.mission.finished)s.mission.cooldowns[id]=sk.cooldown+1;
+if(!r.error){global.NW_WORLD?.skillUse?.(s,id);s.profile.mp=Math.max(0,s.profile.mp-(sk.mp||0));if(sk.effect==="heal")s.profile.hp=Math.min(100,s.profile.hp+22);if(sk.effect==="shield"){s.profile.san=Math.min(100,s.profile.san+8);if(s.mission)s.mission.storyState.shield=14}if(sk.effect==="evade"&&s.mission)s.mission.storyState.shield=10;if(sk.cooldown&&s.mission&&!s.mission.finished)s.mission.cooldowns[id]=sk.cooldown+1;
 if(sk.power&&s.mission&&!s.mission.finished){const extra=Math.round(sk.power*.65);s.mission.enemy.hp=Math.max(0,s.mission.enemy.hp-extra);r.report.events.push("招式額外造成 "+extra+" 點傷害。");}}
 return r;
 }

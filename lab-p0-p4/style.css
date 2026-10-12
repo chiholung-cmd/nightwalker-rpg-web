@@ -366,3 +366,15 @@ animation:none!important;transition:none!important;
 .world-premise-input::placeholder{color:#9aabb9}
 .world-premise-input:focus,.world-form .custom-world-input:focus{outline:1px solid #d1b27b;border-color:#d1b27b}
 @media(max-width:360px){.world-kind-tabs button{font-size:12px;min-height:63px}.world-mediums button{font-size:10px;padding:6px 8px}}
+
+
+/* E+ v3 - selective sentence-level emphasis; disabled for reduced motion. */
+.novel-first-stage .scene-prose.fx-strong .novel-beat.fx-alert:not(.fx-death){border-left:2px solid #f29a82;background:linear-gradient(90deg,#a4473920,transparent);padding-left:10px;animation:fxWarningArrival .9s both;animation-delay:calc(var(--beat,0) * .17s)}
+.novel-first-stage .scene-prose.fx-strong .novel-beat.fx-death{color:#bdc7d0;filter:grayscale(.5);animation:fxSilence 1.9s ease both;animation-delay:calc(var(--beat,0) * .19s)}
+.novel-first-stage .scene-prose.fx-strong .novel-beat.fx-reveal{border-left:2px solid #cbb17c;padding-left:10px;background:linear-gradient(90deg,#cbb17c18,transparent);animation:fxRevealFocus 1.2s ease both;animation-delay:calc(var(--beat,0) * .19s)}
+@keyframes fxWarningArrival{0%{opacity:0;filter:blur(3px);transform:translateX(11px)}35%{opacity:1;filter:none;transform:translateX(-2px)}58%{transform:translateX(1px)}100%{opacity:1;transform:none}}
+@keyframes fxSilence{0%{opacity:0;filter:blur(9px) grayscale(1)}65%{opacity:.7;filter:blur(1px) grayscale(.8)}100%{opacity:1;filter:none}}
+@keyframes fxRevealFocus{0%{opacity:0;letter-spacing:2px;filter:blur(6px)}60%{opacity:1;filter:blur(.5px);letter-spacing:.3px}100%{opacity:1;filter:none;letter-spacing:normal}}
+@media(prefers-reduced-motion:reduce){.novel-first-stage .scene-prose .novel-beat.fx-alert,.novel-first-stage .scene-prose .novel-beat.fx-death,.novel-first-stage .scene-prose .novel-beat.fx-reveal{animation:none!important;filter:none!important}}
+.story-stage .story-choice-panel{overscroll-behavior:contain}
+@media(max-width:480px){.story-top{padding-inline:12px}.story-toolbar{gap:7px}.story-choice-panel{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}}
