@@ -2,7 +2,7 @@
 "use strict";
 const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElementById("app");
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
-let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
+let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,worldInput:"",worldType:"adaptation",worldMedia:"電影",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const q=v=>"'"+esc(v)+"'";
 const num=n=>Number(n||0).toLocaleString("en-US");
@@ -17,7 +17,7 @@ function aiSceneKey(m){return m?.seed+"-"+m?.world+"-"+m?.phase}
 function aiStatusText(){
  if(temporary.aiChecking)return "正在檢查";
  if(!temporary.aiChecked)return "等待檢查";
- if(temporary.aiConfigured)return "已連接";
+ if(temporary.aiConfigured)return "API 已認證";
  return temporary.aiStatus==="provider_rate_limit"?"Groq 免費額度暫時限速，可稍後重試":temporary.aiStatus==="network_or_timeout"?"網絡逾時，可重新檢查":temporary.aiStatus==="unauthorized"?"API Key 驗證失敗":temporary.aiStatus==="model_not_found"?"AI 模型不可用":"暫未連接，可重新檢查";
 }
 async function checkAiStatus(force=false){
@@ -46,17 +46,20 @@ async function checkAiStatus(force=false){
 async function generateAiScene(force){
 const m=s.mission;if(!m||m.finished||!temporary.aiConfigured)return;
 const phase=m.phase,key=aiSceneKey(m);
+if(temporary.aiRetryKey!==key){clearTimeout(temporary.aiRetryTimer);temporary.aiRetryTimer=0;temporary.aiRetryKey=key;temporary.aiAutoAttempts=0;temporary.aiDelayUntil=0}
+if(temporary.aiDelayUntil>Date.now())return;
 if(!force&&m.aiScenes?.[phase])return;
 if(temporary.aiPending)return;
 if(!force&&temporary.aiFailedKey===key)return;
 temporary.aiPending=true;temporary.aiKey=key;temporary.aiError="";render();
 const known=window.NW_NOVEL?.scene(s);
-const scene=N.get(s);const body={directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-7),branchConsequences:(m.branchConsequences||[]).slice(-7),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?2100:1300)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-8).map(x=>x.action),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-3).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,260)}))),base:(known?.blocks||[]).slice(0,4).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,310)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
+const scene=N.get(s);const body={sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,90)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
 try{
  const res=await fetch("/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
- const obj=await res.json();if(!res.ok)throw Error(obj.message||obj.error||"AI 劇情暫時無法載入");
+ const obj=await res.json();if(!res.ok){const error=new Error(obj.message||obj.error||"AI 劇情暫時無法載入");error.code=obj.error||"";error.httpStatus=res.status;error.retryAfter=Number(obj.retryAfter)||0;throw error}
  if(!Array.isArray(obj.blocks)||obj.blocks.length<4)throw Error("AI 劇情格式不完整");
  if(s.mission===m&&m.phase===phase&&!m.finished){
+ temporary.aiDelayUntil=0;clearTimeout(temporary.aiRetryTimer);temporary.aiRetryTimer=0;temporary.aiUsage={model:obj.model||"",...(obj.usage||{}),remainingTokens:obj.quota?.remainingTokens??null};s.aiLastUsage={...temporary.aiUsage,at:Date.now()};
  m.aiScenes ||= {};m.aiOptions ||= {};
  m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:m.mode,resolution:obj.resolution||{readyToConclude:false}};if(Array.isArray(obj.options)&&obj.options.length===3)m.aiOptions[phase]=obj.options;if(Array.isArray(obj.missionArc)&&obj.missionArc.length>=3)m.missionArc||=obj.missionArc.slice(0,4);
 window.NW_WORLD?.ingest?.(s,obj,phase);
@@ -75,7 +78,25 @@ if(m.canon)saved.source=m.canon;
 s.worldLibrary[wkey]=saved;
  temporary.aiError="";temporary.aiFailedKey="";persist();
  }
-}catch(e){if(s.mission===m&&m.phase===phase){temporary.aiError=String(e.message||e).slice(0,150);temporary.aiFailedKey=key}}
+}catch(e){if(s.mission===m&&m.phase===phase){
+ const limited=e.httpStatus===429||e.code==="GROQ_RATE_LIMIT";
+ const delay=limited?Math.max(3,Math.ceil(e.retryAfter||30)):e.code==="AI_TIMEOUT"?6:0;
+ temporary.aiDelayUntil=delay?Date.now()+delay*1000:0;
+ temporary.aiError=String(e.message||e).slice(0,135)+(delay?"（"+delay+"秒後可再試）":"");
+ temporary.aiFailedKey=key;
+ if(delay&&delay<=120&&temporary.aiAutoAttempts<2){
+  temporary.aiAutoAttempts++;
+  clearTimeout(temporary.aiRetryTimer);
+  temporary.aiRetryTimer=setTimeout(()=>{
+   temporary.aiRetryTimer=0;
+   if(s.mission===m&&m.phase===phase&&!m.finished&&!m.aiScenes?.[phase]){
+    temporary.aiFailedKey="";
+    temporary.aiDelayUntil=0;
+    generateAiScene(true);
+   }
+  },delay*1000+800);
+ }
+}}
 finally{temporary.aiPending=false;temporary.aiKey="";render()}
 }
 function scheduleAiScene(){
@@ -257,7 +278,13 @@ if(mode==="system")body=card("主神規則說明","世界與任務由主神決�
 return section("MAIN GOD ARCHIVE","輪迴記錄","主神會保存重大抉擇與線索；世界居民亦應根據合理身份和記憶作出反應。")+'<div class="tabbar">'+tabs.map(x=>'<button class="'+(mode===x[0]?"on":"")+'" data-do="tab:memory:'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="scroll-content column-gap">'+body+'</div>'}
 function settings(){
  const mode=eplusMode(),cloud=window.NW_CLOUD?.status?.()||{enabled:false,key:"",revision:0};
- const groqCard=card("AI 劇情健康檢查",'<p class="minor-meta">以一個非常短嘅真實 Groq 請求檢查模型、權限同免費額度。檢查結果會暫存三分鐘，唔會重複消耗額度。</p>'+a("測試 AI 真實連線","groqProbe","block main")+(temporary.groqStatus?'<p class="minor-meta">'+esc(temporary.groqStatus)+'</p>':""));
+ const lastUsage=s.aiLastUsage;
+ const groqCard=card("AI 劇情健康檢查",'<p class="minor-meta">檢查 API 金鑰與可用模型，不會生成小說或浪費文字 Token。每幕真正剩餘額度取決於 Groq 實時回應。</p>'+a("檢查 Groq API 與模型","groqProbe","block main")+(temporary.groqStatus?'<p class="minor-meta">'+esc(temporary.groqStatus)+'</p>':""));
+ const usageCard=card("AI Token 用量",lastUsage?
+ piece("最近使用模型",esc(lastUsage.model||"未確認"))+
+ piece("本幕實際 Token",num(lastUsage.totalTokens)+"（輸入 "+num(lastUsage.promptTokens)+" ／ 輸出 "+num(lastUsage.completionTokens)+"）")+
+ piece("模型最近剩餘 TPM",lastUsage.remainingTokens===null?"供應商未提供":num(lastUsage.remainingTokens)+" Token"): 
+ '<p class="minor-meta">尚未生成 AI 劇情。此數值來自上一幕 Groq API 回報，並非全帳戶即時餘額。</p>') ;
  const cloudCard=card("Nightwalker · 雲端存檔",'<p class="minor-meta">本機存檔永遠保留。你可以建立私密恢復代碼，日後喺其他裝置取回存檔。啟用後會喺劇情更新時自動備份；如果雲端有衝突，唔會覆蓋較新版本。</p>'+a(cloud.enabled?"立即雲端備份":"建立恢復代碼並啟用備份","cloudBackup","block main")+
  (cloud.key?'<p class="minor-meta">雲端已關聯 · 版本 '+cloud.revision+'</p>'+a("顯示／隱藏恢復代碼","cloudShow","block ghost"):"")+
  (temporary.cloudShow&&cloud.key?'<div class="cloud-recovery-key">'+esc(cloud.key)+'</div><p class="minor-meta">請將代碼保存喺安全地方；知道代碼的人可以讀取及取代雲端存檔。</p>':"")+
@@ -266,7 +293,7 @@ function settings(){
  (temporary.cloudError?'<p class="negative-note">'+esc(temporary.cloudError)+'</p>':""));
  return section("TERMINAL SETTINGS","系統設定","閱讀效果及本機、雲端輪迴存檔。")+'<div class="scroll-content column-gap">'+
  card("閱讀",piece("E+ 文字演出強度",mode==="strong"?"強烈（逐字對白＋情緒場景）":mode==="standard"?"標準（輕量演出）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small")))+
- groqCard+cloudCard+card("本機存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+'</div>'
+ groqCard+usageCard+cloudCard+card("本機存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+'</div>'
 }
 function screen(){return s.screen==="hub"?hub():s.screen==="profile"?profile():s.screen==="warehouse"?warehouse():s.screen==="loadout"?loadout():s.screen==="upgrade"?upgrade():s.screen==="portal"?missionBoard():s.screen==="mission"?missionUI():s.screen==="memory"?memory():settings()}
 function render(){
@@ -305,7 +332,12 @@ if(cmd.startsWith("upsub:")){temporary.upgradeSub=cmd.slice(6);render();return}
 if(cmd==="upback:root"){temporary.upgradeCategory="";temporary.upgradeSub="";render();return}
 if(cmd.startsWith("blood:")){let err=E.buyBloodline(s,cmd.slice(6));if(err)return notice(err);notice("血脈覺醒成功，能力和副作用已生效。");return}
 if(cmd.startsWith("boost:")){let err=E.boost(s,cmd.slice(6));if(err)return notice(err);render();return}
-if(cmd==="aiRetry"){temporary.aiFailedKey="";if(!temporary.aiConfigured){checkAiStatus(true).then(ok=>{if(ok)generateAiScene(true);else notice(aiStatusText()+"，本幕進度不會丟失")});return}generateAiScene(true);return}
+if(cmd==="aiRetry"){
+ if(temporary.aiDelayUntil>Date.now())return notice("AI 模型冷卻中，約 "+Math.ceil((temporary.aiDelayUntil-Date.now())/1000)+" 秒後再試；不會扣積分");
+ clearTimeout(temporary.aiRetryTimer);temporary.aiRetryTimer=0;temporary.aiFailedKey="";
+ if(!temporary.aiConfigured){checkAiStatus(true).then(ok=>{if(ok)generateAiScene(true);else notice(aiStatusText()+"，本幕進度不會丟失")});return}
+ generateAiScene(true);return
+}
 if(cmd==="cancelCustom"){let err=E.cancelCustomWorld(s);if(err)return notice(err);temporary.aiError="";go("hub");return}
 if(cmd.startsWith("worldType:")){temporary.worldType=cmd.slice("worldType:".length)==="original"?"original":"adaptation";render();return}
 if(cmd.startsWith("worldMedia:")){temporary.worldMedia=cmd.slice("worldMedia:".length);render();return}
@@ -320,7 +352,16 @@ if(cmd==="customWorld"){
 }
 if(cmd==="assign"){let err=E.mainGodAssign(s);if(err)return notice(err);render();return}
 if(cmd.startsWith("coord:")){let err=E.assignReturn(s,cmd.slice(6));if(err)return notice(err);render();return}
-if(cmd==="launch"){let err=E.launch(s);if(err)return notice(err);if(temporary.aiConfigured)s.mission.director=true;temporary.showItems=false;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
+if(cmd==="launch"){
+ const startNovel=()=>{
+  if(!temporary.aiConfigured)return notice("目前 AI 未連線。為避免誤入六幕短篇，請先在設定頁檢查 AI 連線。");
+  const err=E.launch(s);if(err)return notice(err);
+  s.mission.director=true;
+  temporary.showItems=false;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render()
+ };
+ if(!temporary.aiConfigured){checkAiStatus(true).then(startNovel);return}
+ startNovel();return
+}
 if(cmd==="cycleSkill"){E.changeSkill(s,(s.mission?.chosenSkill||0)+1);render();return}
 if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);render();return}
 if(cmd==="free"){let v=R.querySelector("#free-action")?.value||"";let out=N.free(s,v);if(out.error)return notice(out.error);render();return}
