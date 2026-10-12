@@ -85,7 +85,7 @@ if(!aiReady)return "AI 劇情暫不可用，不能進入未收錄的世界；並
 const cost=customWorldCost(title);
 if(s.profile.credits<cost)return "需要 "+cost+" 主神積分";
 s.profile.credits-=cost;
-s.assignment={task:"custom_generated",world:"custom",worldTitle:title,worldKind:kind,mediaType:kind==="adaptation"?mediaType:null,premise:kind==="original"?premise:"",mode:"solo",paidCost:cost,targeted:true,customRequested:title,seed:Date.now()%100000000,assignedAt:Date.now()};
+s.assignment={task:"custom_generated",world:"custom",worldTitle:title,worldKind:kind,mediaType:kind==="adaptation"?mediaType:null,verifiedSource:kind==="adaptation"?String(details.verifiedSource||"").slice(0,350):"",verifiedSourceTitle:kind==="adaptation"?String(details.verifiedSourceTitle||"").slice(0,120):"",premise:kind==="original"?premise:"",mode:"solo",paidCost:cost,targeted:true,customRequested:title,seed:Date.now()%100000000,assignedAt:Date.now()};
 return null
 }
 function cancelCustomWorld(s){
