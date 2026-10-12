@@ -95,8 +95,31 @@ function missionUI(){
  '<div class="free-row"><input id="free-action" maxlength="180" placeholder="或者，自己決定下一步……" aria-label="自訂行動">'+a("執行","free","tiny main")+'</div></div>'+
  '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"獨自輪迴":m.mode==="team"?"隊伍任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
 }
-function resultUI(){let m=s.mission,g=m.result,report=m.reward;
-return '<div class="mission-result"><div class="eyebrow">MAIN GOD / WORLD EVALUATION</div><div class="rank">'+g+'</div><h1>'+ (g==="A"?"主神任務完成":g==="B"?"存活，部分目標達成":"任務失敗")+'</h1><p>《'+esc(m.worldName)+'》· '+esc(m.title)+'</p><div class="result-panel">'+piece("任務類型",({solo:"單人",team:"團隊合作",versus:"對抗"}[m.mode]))+piece("主線進度",m.progress+" / "+m.required)+piece("主神積分","+"+report.credits)+piece("角色經驗","+"+report.xp)+piece("最終生命",s.profile.hp+" / 100")+(m.loot?piece("世界戰利品",esc(objId(m.loot)?.name||m.loot)):"")+(m.hidden?piece("隱藏任務","已發現 · 額外獎勵"):"")+'</div><div class="result-quote">'+esc(m.log.slice(-3).join("　"))+'</div>'+card("主神恢復協議","完成結算並返回主神空間後，生命 HP、體力 STA、靈力 MP、精神 SAN 均自動恢復至最大值，不消耗主神積分。") + a("領取獎勵並回滿所有資源","claim","block main")+'</div>'}
+function resultUI(){
+const m=s.mission,g=m.result,report=m.reward;
+const ranking=g==="A"?"主神任務完成":g==="B"?"存活，部分目標達成":"任務失敗";
+const rows=piece("任務類型",({solo:"單人",team:"團隊合作",versus:"對抗"}[m.mode]))+
+piece("主線進度",m.progress+" / "+m.required)+
+piece("主神積分","+"+report.credits)+
+piece("角色經驗","+"+report.xp)+
+piece("最終生命",s.profile.hp+" / 100")+
+(m.loot?piece("世界戰利品",esc(objId(m.loot)?.name||m.loot)):"")+
+(m.hidden?piece("隱藏任務","已發現 · 額外獎勵"):"");
+return '<div class="mission-result-screen">'+
+'<div class="mission-result-scroll" role="region" aria-label="任務結算詳情" tabindex="0">'+
+'<div class="mission-result-content">'+
+'<div class="eyebrow">MAIN GOD / WORLD EVALUATION</div>'+
+'<div class="rank">'+g+'</div><h1>'+ranking+'</h1>'+
+'<p>《'+esc(m.worldName)+'》· '+esc(m.title)+'</p>'+
+'<div class="result-panel">'+rows+'</div>'+
+'<div class="result-quote">'+esc(m.log.slice(-3).join("　"))+'</div>'+
+card("主神恢復協議","返回主神空間後，生命 HP、體力 STA、靈力 MP、精神 SAN 均自動回滿，不消耗主神積分。")+
+'</div></div>'+
+'<div class="mission-result-actions">'+
+'<p>獎勵已計算 · 確認後保存輪迴紀錄</p>'+
+a("領取獎勵並返回主神空間　›","claim","block main")+
+'</div></div>'
+}
 function memory(){const mode=temporary.memoryTab, tabs=[["timeline","輪迴記錄"],["worlds","世界情報"],["relations","隊友關係"],["system","主神備忘"]];let body="";
 if(mode==="timeline")body=s.records.length?s.records.map(r=>card("《"+esc(world(r.world)?.name)+"》 · "+r.result,esc(task(r.task)?.name||r.task)+" · "+({solo:"單人",team:"團隊",versus:"對抗"}[r.mode])+'<div class="rule"></div>'+r.choices.map(x=>'<p class="record-choice">'+esc(x)+'</p>').join("")+'<div class="minor-meta">'+new Date(r.date).toLocaleString("zh-HK")+'</div>')).join(""):card("尚未有輪迴記錄","正式完成第一個世界後，所有重大選擇會留在這裡。");
 if(mode==="worlds")body=s.discovered.length?s.discovered.map(id=>card(esc(world(id)?.name),esc(world(id)?.intro||""))).join(""):card("未知世界","主神尚未允許你查看其他世界的完整資料。");
