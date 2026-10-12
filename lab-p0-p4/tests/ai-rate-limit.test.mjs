@@ -23,10 +23,10 @@ const sample={
  npcUpdates:[],facts:[],npcEvents:[],sideQuests:[],
  resolution:{readyToConclude:false}
 };
-const base=()=>new Request("https://nightwalker.test/api/story",{
+const base=(premise="一個不斷重複午夜的荒廢車站，乘客不能對鏡子說話。",sessionKey="test-session")=>new Request("https://nightwalker.test/api/story",{
  method:"POST",headers:{"Content-Type":"application/json"},
  body:JSON.stringify({world:"零號月台",task:"尋找活著的乘客",mode:"custom",
- worldKind:"original",premise:"一個不斷重複午夜的荒廢車站，乘客不能對鏡子說話。",phase:1})
+ worldKind:"original",premise,sessionKey,phase:1})
 });
 const json=(value,status=200,headers={})=>new Response(JSON.stringify(value),{
  status,headers:{"Content-Type":"application/json",...headers}
@@ -40,6 +40,7 @@ async function sandbox(statusMap={}){
   const body=JSON.parse(options.body);
   calls.push({model:body.model,prompt:body.messages[0].content});
   const status=statusMap[body.model]||200;
+  if(status==="daily")return json({error:{message:"RPD exhausted"}},429,{"x-ratelimit-remaining-requests":"0","x-ratelimit-reset-requests":"20h5m"});
   if(status===429)return json({error:{message:"TPM exhausted"}},429,{
     "retry-after":"18","x-ratelimit-remaining-tokens":"0","x-ratelimit-reset-tokens":"18s"});
   return json({choices:[{message:{content:JSON.stringify(sample)}}],usage:{
@@ -97,6 +98,26 @@ test("duplicate scene served from cache without a second text completion",async(
  assert.equal(two.status,200);
  assert.equal((await two.json()).cached,true);
  assert.equal(calls.length,1);
+});
+
+test("different original premises and mission IDs do not share a cached scene",async()=>{
+ const {api,calls}=await sandbox();
+ assert.equal((await api.fetch(base())).status,200);
+ assert.equal((await api.fetch(base("地鐵世界中的乘客只會回答反問題，其他記憶全都失效。","another-session"))).status,200);
+ assert.equal(calls.length,2);
+});
+
+test("RPD exhaustion respects provider daily reset and avoids request hammering",async()=>{
+ const {api,calls}=await sandbox(Object.fromEntries(models.map(m=>[m,"daily"])));
+ const res=await api.fetch(base());
+ const error=await res.json();
+ assert.equal(res.status,429);
+ assert.equal(error.limitType,"daily");
+ assert.ok(error.retryAfter>=3600);
+ assert.equal(calls.length,3);
+ const second=await api.fetch(base());
+ assert.equal(second.status,429);
+ assert.equal(calls.length,3);
 });
 
 test.after(()=>{
