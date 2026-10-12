@@ -16,7 +16,7 @@ function updateGate(model,response){
  const gate={...old,remaining:Number.isFinite(remaining)&&h.get("x-ratelimit-remaining-tokens")!==null?remaining:null,reset};
  if(response.status===429)gate.until=now+1000*Math.max(2,retry||reset||30);
  else if(response.status===404)gate.until=now+600000;
- else if(response.ok){gate.until=gate.remaining!==null&&gate.remaining<1600?now+1000*Math.max(3,reset||20):0;}
+ else if(response.ok){gate.until=gate.remaining!==null&&gate.remaining<3400?now+1000*Math.max(3,reset||20):0;}
  modelGates.set(model,gate);
  return gate;
 }
