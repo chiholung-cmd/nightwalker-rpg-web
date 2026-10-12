@@ -127,9 +127,86 @@ function skillUse(s,skillId){
  if(s.mission){s.mission.masteryLog ||= [];s.mission.masteryLog.push({skillId,uses:s.mastery[skillId],level,phase:s.mission.phase})}
  return {uses:s.mastery[skillId],level};
 }
+
+// Long-form story spine: a bounded, evidence-backed journal rather than a fake fixed sequence.
+// The existing save object owns this state; there is no migration or save-key reset.
+const STORY_ACTS=[
+ {id:"opening",name:"異常與代價",from:0,to:4,goal:"以具體事件立起核心疑問、危險和主角的即時目標，避免過早解決",minimum:"場面與謎團必須形成可供回訪的線索"},
+ {id:"relations",name:"人心與盟約",from:5,to:9,goal:"讓角色憑自身目的採取行動，令之前的選擇引出合作、衝突或背叛",minimum:"至少一段關係因先前決定而實際改變"},
+ {id:"reversal",name:"代價與反轉",from:10,to:15,goal:"以前面已有的人物動機與可核對的線索帶出反轉，禁止空降幕後黑手",minimum:"轉折須有此前埋下的證據"},
+ {id:"consequences",name:"困局與抉擇",from:16,to:22,goal:"回收早期疑問；讓錯誤、幫助與背叛造成無法輕易抹除的現實後果",minimum:"最少一個舊選擇在當前場景造成具體變化"},
+ {id:"resolution",name:"高潮與餘韻",from:23,to:27,goal:"收束主線與主要伏筆、交代主要角色去向，按真實行動安排得失；第28章必須寫完完整結局",minimum:"不能以一行成功或任務評分取代小說結局"}
+];
+function actFor(phase){return STORY_ACTS.find(x=>phase>=x.from&&phase<=x.to)||STORY_ACTS.at(-1)}
+function ensureDirector(s){
+ const m=s?.mission;if(!m)return null;
+ if(!m.directorPlan||m.directorPlan.version!==1)m.directorPlan={version:1,chapters:[],threads:[],decisions:[],finale:null};
+ const p=m.directorPlan;
+ p.chapters||=[];p.threads||=[];p.decisions||=[];
+ return p;
+}
+function directorContext(s){
+ const m=s?.mission;if(!m)return null;
+ const p=ensureDirector(s),act=actFor(m.phase),remaining=28-m.phase;
+ const threads=p.threads.filter(t=>t.status==="open").slice(-3).map(t=>({id:t.id,setup:simple(t.setup).slice(0,90),chapter:t.chapter+1}));
+ const callbacks=p.threads.filter(t=>t.status==="paid").slice(-2).map(t=>({id:t.id,payoff:simple(t.payoff).slice(0,70)}));
+ return {chapter:m.phase+1,maxChapters:28,act:act.id,actName:act.name,actObjective:act.goal,
+  sceneObligation:act.minimum,chaptersRemaining:remaining,mustClose:m.phase>=27,
+  openThreads:threads,previousPayoffs:callbacks,
+  decisions:p.decisions.slice(-3).map(x=>({chapter:x.phase+1,action:simple(x.action).slice(0,95),kind:x.kind,consequence:simple(x.consequence).slice(0,110)})),
+  previousChapter:p.chapters.at(-1)?{title:p.chapters.at(-1).title,summary:p.chapters.at(-1).summary}:null};
+}
+function recordChapter(s,scene,phase){
+ const m=s?.mission;if(!m||m.phase!==phase||!scene)return;
+ const p=ensureDirector(s);
+ // Only record real prose: never invent an incident or an NPC reaction.
+ const blocks=Array.isArray(scene.blocks)?scene.blocks:[];
+ const prose=blocks.filter(b=>b?.type==="narration").map(b=>simple(b.text).trim()).filter(Boolean);
+ const summary=simple(prose.join(" ")).slice(0,150);
+ const title=simple(scene.title||"").slice(0,45);
+ if(!summary)return;
+ const row={phase,title,summary,act:actFor(phase).id};
+ const existing=p.chapters.findIndex(x=>x.phase===phase);
+ if(existing>=0)p.chapters[existing]=row;else p.chapters.push(row);
+ p.chapters=p.chapters.slice(-28);
+ if(!p.threads.some(t=>t.chapter===phase)&&[0,5,10,16].includes(phase)){
+  const candidate=(Array.isArray(scene.facts)?scene.facts:[]).find(x=>typeof x==="string"&&x.length>=10)||
+   (Array.isArray(scene.sideQuests)?scene.sideQuests:[]).find(q=>q?.objective?.length>=10)?.objective;
+  if(candidate&&p.threads.length<5)p.threads.push({id:"thread-"+phase,chapter:phase,setup:simple(candidate).slice(0,115),status:"open",payoff:""});
+ }
+ // A claimed payoff is accepted only if earlier thread, objective and result are visible in this chapter's prose.
+ for(const c of (Array.isArray(scene.callbacks)?scene.callbacks:[]).slice(0,2)){
+  const t=p.threads.find(x=>x.id===c?.threadId&&x.status==="open"&&x.chapter<phase);
+  const outcome=simple(c?.outcome).trim();
+  const sameNarrative=outcome.length>=8&&prose.join(" ").includes(outcome.slice(0,6));
+  if(t&&sameNarrative){t.status="paid";t.payoff=outcome.slice(0,115);t.paidAt=phase}
+ }
+ if(phase===27)p.finale={chapter:28,title,prose:summary,declaredResolved:!!scene.resolution?.readyToConclude};
+}
+function recordDirectorAction(s,action,report){
+ const m=s?.mission;if(!m||!m.director||!report)return;
+ const p=ensureDirector(s);
+ const phase=Math.max(0,m.phase-1);
+ const entry={phase,action:simple(report.action||action.label).slice(0,130),kind:action.kind,
+  consequence:simple((report.events||[]).find(x=>typeof x==="string"&&x&&!/^\s*STA/.test(x))||"").slice(0,150)};
+ const pos=p.decisions.findIndex(x=>x.phase===phase);
+ if(pos>=0)p.decisions[pos]=entry;else p.decisions.push(entry);
+ p.decisions=p.decisions.slice(-28);
+}
+function allowDirectorEnding(s){
+ const m=s?.mission;if(!m?.director)return false;
+ if(m.phase>=28)return true;
+ if(m.phase<23)return false;
+ const current=m.aiScenes?.[m.phase-1]?.resolution;
+ if(!current?.readyToConclude)return false;
+ // Do not stop at the first requested ending while meaningful unresolved setup remains.
+ const p=ensureDirector(s),pending=p.threads.filter(t=>t.status==="open").length;
+ return pending===0||m.phase>=27;
+}
+
 function snapshot(s){
  const m=s.mission;if(!m)return null;
  return {quests:m.quests||[],agencyEvents:(m.agencyEvents||[]).slice(-8),branchConsequences:(m.branchConsequences||[]).slice(-8),returnVisit:m.returnVisit||false,mastery:s.mastery||{}};
 }
-global.NW_WORLD={enter,ingest,onAction,ability,skillUse,snapshot,key};
+global.NW_WORLD={enter,ingest,onAction,ability,skillUse,snapshot,key,ensureDirector,directorContext,recordChapter,recordDirectorAction,allowDirectorEnding};
 })(window);
