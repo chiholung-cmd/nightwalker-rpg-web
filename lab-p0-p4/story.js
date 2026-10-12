@@ -163,14 +163,14 @@ for(const id in m.cooldowns)m.cooldowns[id]=Math.max(0,m.cooldowns[id]-1);
 m.turn++;m.phase++;
 m.roundEvents=[st.lastReply,...events.slice(-2)];m.log.push(st.lastReply,...events);
 const report={action:original||o.label,events:[st.lastReply,...events],delta:{hp:p.hp-before.hp,sta:p.sta-before.sta,mp:p.mp-before.mp,san:p.san-before.san,progress:m.progress-before.progress},kind:o.kind};
-m.history.push(report);global.NW_WORLD?.onAction?.(s,o,report);
+m.history.push(report);global.NW_WORLD?.onAction?.(s,o,report);global.NW_WORLD?.recordDirectorAction?.(s,o,report);
 const director=!!m.director;
 if(p.hp<=0)E.end(s);
 else if(!director&&m.phase>=6)E.end(s);
 else if(director){
- const minTurns=18,maxTurns=28;
- const resolved=!!m.aiScenes?.[m.phase-1]?.resolution?.readyToConclude;
- if((m.phase>=minTurns&&resolved&&m.progress>=m.required)||m.phase>=maxTurns)E.end(s);
+ const maxTurns=28;
+ const coherentEnding=!!global.NW_WORLD?.allowDirectorEnding?.(s);
+ if((m.phase>=23&&coherentEnding&&m.progress>=m.required)||m.phase>=maxTurns)E.end(s);
 }
 
 return {error:null,report,finished:!!m.finished}
