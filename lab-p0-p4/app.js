@@ -147,7 +147,7 @@ function missionUI(){
  }).join("");
  const notice=scene.exertion?'<span class="narrative-condition">持續'+(scene.exertion==="run"?"奔跑":"潛行")+'中</span>':"";
  const bar='<div class="story-top"><span>'+esc(w.name)+' <small>· '+esc(m.title)+'</small></span><button data-do="status">狀態 ◈</button></div>';
- const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+' / 6 幕　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+'</div></div>';
+ const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+' / 6 幕　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(s.settings.reducedMotion?"E+關":"E+開","toggleMotion","tiny ghost")+'</div></div>';
  const popups=[];
  if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只有發生體力消耗、施展術式或受到傷害時，才需要特別注意數值。</p>'+a("關閉","status","small ghost")+'</div>');
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
