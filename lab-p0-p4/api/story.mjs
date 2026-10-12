@@ -94,7 +94,7 @@ async function lookupCanon(name,medium){
 
 function thirdPerson(text,protagonist){
  const name=clean(protagonist,30)||"夜行者";
- return String(text??"").split(/(「[^」]*」|“[^”]*”)/g).map((part,i)=>i%2?part:part.replace(/你們的/g,name+"一行人的").replace(/你們/g,name+"一行人").replace(/你的/g,name+"的").replace(/你/g,name)).join("");
+ return String(text??"").split(/(「[^」]*」|“[^”]*”|《[^》]*》|『[^』]*』)/g).map((part,i)=>i%2?part:part.replace(/你們的/g,name+"一行人的").replace(/你們/g,name+"一行人").replace(/你的/g,name+"的").replace(/你/g,name)).join("");
 }
 function collectStoryBlocks(scene,protagonist){
  const source=Array.isArray(scene?.blocks)?scene.blocks:[];
