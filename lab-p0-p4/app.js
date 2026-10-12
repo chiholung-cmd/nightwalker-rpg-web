@@ -61,7 +61,7 @@ try{
  if(s.mission===m&&m.phase===phase&&!m.finished){
  temporary.aiDelayUntil=0;clearTimeout(temporary.aiRetryTimer);temporary.aiRetryTimer=0;temporary.aiUsage={model:obj.model||"",...(obj.usage||{}),remainingTokens:obj.quota?.remainingTokens??null};s.aiLastUsage={...temporary.aiUsage,at:Date.now()};
  m.aiScenes ||= {};m.aiOptions ||= {};
- m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:m.mode,resolution:obj.resolution||{readyToConclude:false}};if(Array.isArray(obj.options)&&obj.options.length===3)m.aiOptions[phase]=obj.options;if(Array.isArray(obj.missionArc)&&obj.missionArc.length>=3)m.missionArc||=obj.missionArc.slice(0,4);
+ m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[m.mode]||"輪迴篇"),resolution:obj.resolution||{readyToConclude:false}};if(Array.isArray(obj.options)&&obj.options.length===3)m.aiOptions[phase]=obj.options;if(Array.isArray(obj.missionArc)&&obj.missionArc.length>=3)m.missionArc||=obj.missionArc.slice(0,4);
 window.NW_WORLD?.ingest?.(s,obj,phase);
 m.npcMemory ||= {};
 for(const upd of obj.npcUpdates||[]){if(!upd.name||!upd.memory)continue;
@@ -206,7 +206,7 @@ return mode==="standard"||mode==="off"||mode==="strong"?mode:"strong"
 // Render archived AI scenes and authored offline scenes with the same third-person voice.
 function literaryProse(value){
  const name=String(s.profile?.name||"夜行者").trim().slice(0,30)||"夜行者";
- return String(value||"").split(/(「[^」]*」|“[^”]*”)/g)
+ return String(value||"").split(/(「[^」]*」|“[^”]*”|《[^》]*》|『[^』]*』)/g)
   .map((part,i)=>i%2?part:part.replace(/你們的/g,name+"一行人的").replace(/你們/g,name+"一行人").replace(/你的/g,name+"的").replace(/你/g,name)).join("");
 }
 function prettyEffects(action){const parts=N.preview(action);return parts.length?'<div class="story-costs">'+parts.map(x=>'<span>'+esc(x)+'</span>').join("")+'</div>':""}
@@ -226,7 +226,7 @@ function missionUI(){
  }).join("");
  const notice=scene.exertion?'<span class="narrative-condition">持續'+(scene.exertion==="run"?"奔跑":"潛行")+'中</span>':"";
  const bar='<div class="story-top"><span>'+esc(w.name)+' <small>· '+esc(m.title)+'</small></span><button data-do="status">狀態 ◈</button></div>';
- const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+(m.director?' 幕 · 長篇輪迴':' / 6 幕')+'　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(eplusMode()==="strong"?"E+強":eplusMode()==="standard"?"E+標":"E+關","toggleMotion","tiny ghost")+'</div></div>';
+ const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+(m.director?' 章 · 輪迴長篇':' / 6 章 · 離線篇')+'　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(eplusMode()==="strong"?"E+強":eplusMode()==="standard"?"E+標":"E+關","toggleMotion","tiny ghost")+'</div></div>';
  const popups=[];
  if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只有發生體力消耗、施展術式或受到傷害時，才需要特別注意數值。</p>'+a("關閉","status","small ghost")+'</div>');
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
@@ -239,7 +239,7 @@ function missionUI(){
 (m.canon?.url?'<p class="popup-note">公開原作資料：<a href="'+esc(m.canon.url)+'" target="_blank" rel="noopener noreferrer">'+esc(m.canon.title)+' ↗</a></p>':"")+
 (m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
  return '<div class="mission-stage narrative-stage novel-first-stage">'+bar+
- '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+(novel?.mode||"主神任務")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+a("檢查 AI","nav:settings","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
+ '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[novel?.mode]||novel?.mode||"輪迴篇")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+a("檢查 AI","nav:settings","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
  toolbox+'<div class="fixed-choices story-choice-panel">'+notice+choices+
  '<div class="free-row"><input id="free-action" maxlength="180" placeholder="亦可自行決定下一步情節……" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("執行","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
  '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"單人輪迴":m.mode==="team"?"協同任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
