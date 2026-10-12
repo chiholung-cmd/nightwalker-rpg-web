@@ -147,9 +147,37 @@ function plotContext(v){
   decisions:take(v.decisions,3).map(d=>({chapter:Number(d?.chapter)||1,action:clean(d?.action,95),kind:clean(d?.kind,20),consequence:clean(d?.consequence,105)})),
   previousChapter:v.previousChapter?{title:clean(v.previousChapter.title,50),summary:clean(v.previousChapter.summary,150)}:null};
 }
+// Wikipedia extract order is evidence order, not verified chronology.
+function canonEvidence(canon){
+ if(!canon||!["exact","partial"].includes(canon.confidence)||!canon.url)return [];
+ const raw=String(canon.extract||"");
+ const marker=raw.search(/(?:^|\n)\s*(?:劇情|剧情|故事簡介|剧情简介|Plot|Synopsis)\s*(?:\n|：|:)/i);
+ if(marker<0)return [];
+ const part=raw.slice(marker).split(/\n\s*(?:演員|演员|Cast|製作|制作|評價|评价|References|參考資料)\s*\n/i)[0].slice(0,2400);
+ return part.split(/[。！？\n]+/).map(x=>x.trim()).filter(x=>x.length>=24&&x.length<=175).slice(0,6)
+  .map((text,i)=>({order:i+1,text:clean(text,130),source:"Wikipedia",chronologyVerified:false}));
+}
+function bibleContext(v){
+ if(!v||typeof v!=="object")return null;
+ const list=(a,n)=>Array.isArray(a)?a.slice(-n):[];
+ return {location:clean(v.location,50),
+  worldRules:list(v.worldRules,6).map(x=>clean(x,110)).filter(Boolean),
+  characters:list(v.characters,6).map(x=>({name:clean(x?.name,35),goal:clean(x?.goal,85),memory:clean(x?.memory,85),
+   injury:clean(x?.injury,60),location:clean(x?.location,50),condition:clean(x?.condition,60),
+   trust:Math.max(-10,Math.min(10,Number(x?.trust)||0))})),
+  priorChapters:list(v.priorChapters,5).map(x=>({chapter:Number(x?.chapter)||0,title:clean(x?.title,45),
+   summary:clean(x?.summary,115),lastPlayerAction:clean(x?.lastPlayerAction,75)})),
+  previousFates:list(v.previousFates,5).map(x=>({name:clean(x?.name,35),outcome:clean(x?.outcome,95)}))
+ };
+}
+function finaleCheck(v){
+ if(!v||typeof v!=="object")return null;
+ const list=(a,n)=>Array.isArray(a)?a.slice(0,n).map(x=>clean(x,95)).filter(Boolean):[];
+ return {openThreads:list(v.openThreads,4),unclearCharacters:list(v.unclearCharacters,6)};
+}
 function context(v){
 let limited=(a,n=8)=>Array.isArray(a)?a.slice(-n):[];
-return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),protagonist:clean(v?.protagonist,30)||"夜行者",world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),directorBrief:plotContext(v?.directorBrief),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history,5).map(x=>clean(x,105)),previousScenes:limited(v?.previousScenes,3).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,270)})),base:limited(v?.base,4).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,310)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,8).map(([name,x])=>({name:clean(name,40),trust:x?.trust||0,attitude:clean(x?.attitude,65),memory:clean(x?.memory,120)})):[],worldFacts:limited(v?.worldFacts,8).map(x=>clean(x,95)),worldHistory:limited(v?.worldHistory,3).map(x=>clean(x,100)),priorArc:limited(v?.priorArc,4).map(x=>clean(x,75)),sideQuests:limited(v?.sideQuests,5).map(q=>({title:clean(q?.title,60),objective:clean(q?.objective,90),status:clean(q?.status,18),progress:Number(q?.progress)||0})),npcAgency:limited(v?.npcAgency,4).map(x=>({name:clean(x?.name,38),event:clean(x?.event,130),intent:clean(x?.intent,100)})),branchConsequences:limited(v?.branchConsequences,4).map(x=>({npc:clean(x?.npc,35),kind:clean(x?.kind,20),action:clean(x?.action,95),change:Number(x?.change)||0,trust:Number(x?.trust)||0})),state:v?.state||{}};
+return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),protagonist:clean(v?.protagonist,30)||"夜行者",world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),storyBible:bibleContext(v?.storyBible),endingAudit:finaleCheck(v?.endingAudit),directorBrief:plotContext(v?.directorBrief),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history,5).map(x=>clean(x,105)),previousScenes:limited(v?.previousScenes,3).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,270)})),base:limited(v?.base,4).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,310)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,8).map(([name,x])=>({name:clean(name,40),trust:x?.trust||0,attitude:clean(x?.attitude,65),memory:clean(x?.memory,120)})):[],worldFacts:limited(v?.worldFacts,8).map(x=>clean(x,95)),worldHistory:limited(v?.worldHistory,3).map(x=>clean(x,100)),priorArc:limited(v?.priorArc,4).map(x=>clean(x,75)),sideQuests:limited(v?.sideQuests,5).map(q=>({title:clean(q?.title,60),objective:clean(q?.objective,90),status:clean(q?.status,18),progress:Number(q?.progress)||0})),npcAgency:limited(v?.npcAgency,4).map(x=>({name:clean(x?.name,38),event:clean(x?.event,130),intent:clean(x?.intent,100)})),branchConsequences:limited(v?.branchConsequences,4).map(x=>({npc:clean(x?.npc,35),kind:clean(x?.kind,20),action:clean(x?.action,95),change:Number(x?.change)||0,trust:Number(x?.trust)||0})),state:v?.state||{}};
 }
 export default {
 async fetch(request){
@@ -197,6 +225,9 @@ const hit=recentResponses.get(cacheId);if(hit&&Date.now()-hit.when<120000)return
 const longStoryRules=[
 "延續history、previousScenes、npcMemory、worldFacts、priorArc、sideQuests、npcAgency及branchConsequences的實際變化，禁止重置、矛盾、通用重複場景。NPC 關係變動必須由指定人物及具體行動引起；支線任務亦須有真正的目標證據，嚴禁重複泛用交談／調查就完成任務。",
 "由 directorBrief 決定小說幕次、五幕敘事結構、當前必須達成的敘事目標。上一章的直接後果優先；只延續已知人物、場景、線索，不可每章憑空加入新的幕後組織或清除前事。",
+"storyBible 是目前已發生的角色、傷勢、地點及世界規則。角色不能無交代瞬移、突然痊癒、改變目標；如有轉變必須在正文發生原因與代價。continuity:{location,rules,characters:[{name,location,condition,injury}],characterFates:[{name,outcome}]} 可省略，但只回報小說正文實際寫出的內容。",
+"canonTimeline 只係百科來源段落原文順序，chronologyVerified=false，絕非已核實事件時間線。唔可以憑來源段落順序推斷時間、亦唔可以自行聲稱未核實事件屬原作正史。引用 canon.extract 以外的推斷時，清楚寫作衍生分歧。",
+"finale 前必須回應 endingAudit.openThreads；為 endingAudit.unclearCharacters 中重要人物交代可見結局（生死、去向或仍未解決原因），不要再新增新的巨大懸念。phase>=27應完整寫出高潮後續及後日談。",
 "directorBrief.openThreads 列明尚未回收的真實伏筆。每兩至三章應實質回訪相關線索，讓回收與角色選擇發生可見關係；如確實在正文解釋某伏筆，可返回 callbacks:[{threadId,outcome}]，其中 outcome 必須可在小說正文原文找到，絕對不要虛構已解決狀態。",
 "directorBrief.decisions 列明主角已做選擇；必須在情節中呈現相應後果，不得以『主神提示』代替人物反應。第三人稱網文敘事。",
 "phase 0如適用須鋪陳長線伏筆；每幕推進真實事件，人物自發事件及支線符合動機。",
@@ -207,6 +238,7 @@ const longStoryRules=[
 ].join("\n");
 if(canon?.extract)canon.extract=clean(canon.extract,input.phase===0?1250:650);
 input.canon=canon;
+input.canonTimeline=canonEvidence(canon);
 const ctl=new AbortController();const timeout=setTimeout(()=>ctl.abort(),23500);
 let result=null,usedModel=MODEL;
 const endpoint="https://api.groq.com/openai/v1/chat/completions";
@@ -268,13 +300,18 @@ const opts=normalizeStoryOptions(scene,input);
 const quota=modelGates.get(usedModel)||{};
 const payload={quota:{remainingTokens:quota.remaining,resetSeconds:quota.reset},usage:{promptTokens:Number(data?.usage?.prompt_tokens)||0,completionTokens:Number(data?.usage?.completion_tokens)||0,totalTokens:Number(data?.usage?.total_tokens)||0},title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:usedModel,
 canon:canon&&{title:canon.title,url:canon.url,source:canon.source,confidence:canon.confidence,extract:canon.extract},
+canonTimeline:input.canonTimeline,
 missionArc:(Array.isArray(scene.missionArc)?scene.missionArc:[]).slice(0,4).map(x=>clean(x,85)).filter(Boolean),
 npcUpdates:(Array.isArray(scene.npcUpdates)?scene.npcUpdates:[]).slice(0,3).map(x=>({name:clean(x.name,40),attitude:clean(x.attitude,65),memory:clean(x.memory,170),trustChange:Math.max(-2,Math.min(2,Number(x.trustChange)||0))})).filter(x=>x.name&&x.memory),
 facts:(Array.isArray(scene.facts)?scene.facts:[]).slice(0,4).map(x=>clean(x,130)).filter(Boolean),
 resolution:{readyToConclude:input.phase>=23&&!!scene.resolution?.readyToConclude,reason:clean(scene.resolution?.reason,110)},
 callbacks:(Array.isArray(scene.callbacks)?scene.callbacks:[]).slice(0,2).map(x=>({threadId:clean(x?.threadId,35),outcome:clean(x?.outcome,115)})).filter(x=>x.threadId&&x.outcome),
 npcEvents:(Array.isArray(scene.npcEvents)?scene.npcEvents:[]).slice(0,2).map(x=>({name:clean(x.name,45),event:clean(x.event,180),intent:clean(x.intent,120)})).filter(x=>x.name&&x.event),
-sideQuests:(Array.isArray(scene.sideQuests)?scene.sideQuests:[]).slice(0,2).map(x=>({title:clean(x.title,65),objective:clean(x.objective,120),trigger:clean(x.trigger,24)})).filter(x=>x.title&&x.objective)
+sideQuests:(Array.isArray(scene.sideQuests)?scene.sideQuests:[]).slice(0,2).map(x=>({title:clean(x.title,65),objective:clean(x.objective,120),trigger:clean(x.trigger,24)})).filter(x=>x.title&&x.objective),
+continuity:{location:clean(scene.continuity?.location,55),
+rules:(Array.isArray(scene.continuity?.rules)?scene.continuity.rules:[]).slice(0,3).map(x=>clean(x,135)),
+characters:(Array.isArray(scene.continuity?.characters)?scene.continuity.characters:[]).slice(0,5).map(x=>({name:clean(x?.name,40),location:clean(x?.location,55),condition:clean(x?.condition,90),injury:clean(x?.injury,75)})),
+characterFates:(Array.isArray(scene.continuity?.characterFates)?scene.continuity.characterFates:[]).slice(0,6).map(x=>({name:clean(x?.name,40),outcome:clean(x?.outcome,120)}))}
 };
 recentResponses.set(cacheId,{when:Date.now(),data:payload});if(recentResponses.size>24)recentResponses.delete(recentResponses.keys().next().value);
 return reply(200,payload);
