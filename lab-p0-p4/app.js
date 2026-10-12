@@ -352,7 +352,16 @@ if(cmd==="customWorld"){
 }
 if(cmd==="assign"){let err=E.mainGodAssign(s);if(err)return notice(err);render();return}
 if(cmd.startsWith("coord:")){let err=E.assignReturn(s,cmd.slice(6));if(err)return notice(err);render();return}
-if(cmd==="launch"){let err=E.launch(s);if(err)return notice(err);if(temporary.aiConfigured)s.mission.director=true;temporary.showItems=false;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
+if(cmd==="launch"){
+ const startNovel=()=>{
+  if(!temporary.aiConfigured)return notice("目前 AI 未連線。為避免誤入六幕短篇，請先在設定頁檢查 AI 連線。");
+  const err=E.launch(s);if(err)return notice(err);
+  s.mission.director=true;
+  temporary.showItems=false;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render()
+ };
+ if(!temporary.aiConfigured){checkAiStatus(true).then(startNovel);return}
+ startNovel();return
+}
 if(cmd==="cycleSkill"){E.changeSkill(s,(s.mission?.chosenSkill||0)+1);render();return}
 if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);render();return}
 if(cmd==="free"){let v=R.querySelector("#free-action")?.value||"";let out=N.free(s,v);if(out.error)return notice(out.error);render();return}
