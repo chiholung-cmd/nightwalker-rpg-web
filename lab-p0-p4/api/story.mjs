@@ -12,11 +12,14 @@ function updateGate(model,response){
  const remaining=Number(h.get("x-ratelimit-remaining-tokens"));
  const reset=seconds(h.get("x-ratelimit-reset-tokens"));
  const retry=seconds(h.get("retry-after"));
+ const requests=Number(h.get("x-ratelimit-remaining-requests"));
+ const requestsLeft=h.get("x-ratelimit-remaining-requests")!==null&&Number.isFinite(requests)?requests:null;
+ const requestReset=seconds(h.get("x-ratelimit-reset-requests"));
  const old=modelGates.get(model)||{};
- const gate={...old,remaining:Number.isFinite(remaining)&&h.get("x-ratelimit-remaining-tokens")!==null?remaining:null,reset};
- if(response.status===429)gate.until=now+1000*Math.max(2,retry||reset||30);
+ const gate={...old,remaining:Number.isFinite(remaining)&&h.get("x-ratelimit-remaining-tokens")!==null?remaining:null,reset,requestsLeft};
+ if(response.status===429)gate.until=now+1000*Math.max(2,retry||(requestsLeft===0?requestReset:reset)||30);
  else if(response.status===404)gate.until=now+600000;
- else if(response.ok){gate.until=gate.remaining!==null&&gate.remaining<3400?now+1000*Math.max(3,reset||20):0;}
+ else if(response.ok){gate.until=requestsLeft===0?now+1000*Math.max(60,requestReset||3600):gate.remaining!==null&&gate.remaining<3400?now+1000*Math.max(3,reset||20):0;}
  modelGates.set(model,gate);
  return gate;
 }
