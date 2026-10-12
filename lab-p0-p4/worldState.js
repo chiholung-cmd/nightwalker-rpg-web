@@ -204,9 +204,27 @@ function allowDirectorEnding(s){
  return pending===0||m.phase>=27;
 }
 
+// NPC AI deltas are patches, never replacements for established character goals or injuries.
+function mergeNpcUpdates(s,updates,phase){
+ const m=s?.mission;if(!m||m.finished||m.phase!==phase)return 0;
+ m.npcMemory ||= {};
+ let count=0;
+ for(const x of (Array.isArray(updates)?updates:[]).slice(0,3)){
+  const name=simple(x?.name).trim().slice(0,40);
+  if(!name||!simple(x?.memory).trim())continue;
+  const prev=m.npcMemory[name]||{trust:0,attitude:"未知",memory:""};
+  const trustChange=clamp(x.trustChange,-2,2);
+  const prevTrust=Number(prev.trust)||0;
+  m.npcMemory[name]={...prev,trust:clamp(prevTrust+trustChange,-10,10),
+   attitude:simple(x.attitude).trim()||prev.attitude||"未知",
+   memory:simple(x.memory).trim(),updated:phase};
+  count++;
+ }
+ return count;
+}
 function snapshot(s){
  const m=s.mission;if(!m)return null;
  return {quests:m.quests||[],agencyEvents:(m.agencyEvents||[]).slice(-8),branchConsequences:(m.branchConsequences||[]).slice(-8),returnVisit:m.returnVisit||false,mastery:s.mastery||{}};
 }
-global.NW_WORLD={enter,ingest,onAction,ability,skillUse,snapshot,key,ensureDirector,directorContext,recordChapter,recordDirectorAction,allowDirectorEnding};
+global.NW_WORLD={enter,ingest,onAction,ability,skillUse,snapshot,mergeNpcUpdates,key,ensureDirector,directorContext,recordChapter,recordDirectorAction,allowDirectorEnding};
 })(window);
