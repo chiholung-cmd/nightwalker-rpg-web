@@ -378,3 +378,9 @@ animation:none!important;transition:none!important;
 @media(prefers-reduced-motion:reduce){.novel-first-stage .scene-prose .novel-beat.fx-alert,.novel-first-stage .scene-prose .novel-beat.fx-death,.novel-first-stage .scene-prose .novel-beat.fx-reveal{animation:none!important;filter:none!important}}
 .story-stage .story-choice-panel{overscroll-behavior:contain}
 @media(max-width:480px){.story-top{padding-inline:12px}.story-toolbar{gap:7px}.story-choice-panel{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}}
+
+/* Free text is a novel action, never an irreversible one-click RPG command. */
+.free-confirm-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.free-confirm-actions .btn{flex:1 1 130px;min-height:38px}
+.mission-popup[aria-label="確認自由文字行動"]{border-color:#d0b989}
+.mission-popup[aria-label="確認自由文字行動"] .popup-note{line-height:1.7;overflow-wrap:anywhere}
