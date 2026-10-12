@@ -61,7 +61,7 @@ const key=aiSceneKey(m);
 if(temporary.aiPending||temporary.aiFailedKey===key)return;
 Promise.resolve().then(()=>generateAiScene(false))
 }
-function persist(){E.save(s)}
+function persist(){E.save(s);window.NW_CLOUD?.schedule?.(()=>s)}
 function notice(text){temporary.notice=text;render();clearTimeout(temporary.noticeTimer);temporary.noticeTimer=setTimeout(()=>{temporary.notice="";render()},3300)}
 function go(screen){s.screen=screen;temporary.panel="";temporary.showItems=false;persist();render()}
 function bar(label,value,max,color){let pct=Math.max(0,Math.min(100,100*(value||0)/max));return '<div class="gauge"><div class="gauge-meta"><span>'+label+'</span><b>'+Math.round(value||0)+'<em> / '+max+'</em></b></div><div class="gauge-track"><span style="width:'+pct+'%;background:'+color+'"></span></div></div>'}
@@ -218,7 +218,18 @@ if(mode==="worlds")body=s.discovered.length?s.discovered.map(id=>card(esc(world(
 if(mode==="relations")body=D.companions.map(c=>card(esc(c.name)+" · "+esc(c.role),esc(c.bio)+'<div class="minor-meta">關係值 '+(s.bonds[c.id]||0)+'</div>')).join("");
 if(mode==="system")body=card("主神規則說明","世界與任務由主神決定；定向返回需要先到訪，再支付座標解鎖及定向傳送代價。") +card("劇情記憶","歷史抉擇、線索、戰利品、隊友關係在本裝置持久保存。") +card("真人多人連線","目前團隊與對抗採用 AI 輪迴者的確定性規則模擬；尚未啟用伺服器同步、真人配對及即時 PvP。");
 return section("MAIN GOD ARCHIVE","輪迴記錄","主神會保存重大抉擇與線索；世界居民亦應根據合理身份和記憶作出反應。")+'<div class="tabbar">'+tabs.map(x=>'<button class="'+(mode===x[0]?"on":"")+'" data-do="tab:memory:'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="scroll-content column-gap">'+body+'</div>'}
-function settings(){return section("TERMINAL SETTINGS","系統設定","本機測試資料與閱讀介面。")+'<div class="scroll-content column-gap">'+card("閱讀",piece("E+ 文字演出強度",eplusMode()==="strong"?"強烈（逐字對白＋情緒場景）":eplusMode()==="standard"?"標準（輕量演出）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small")))+card("存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+card("開發版本","P0–P4 整合測試 · 已接通本地規則引擎、主神任務與 AI 隊伍。即時 AI 對話與真人多人未連接。")+'</div>'}
+function settings(){
+ const mode=eplusMode(),cloud=window.NW_CLOUD?.status?.()||{enabled:false,key:"",revision:0};
+ const cloudCard=card("Nightwalker · 雲端存檔",'<p class="minor-meta">本機存檔永遠保留。你可以建立私密恢復代碼，日後喺其他裝置取回存檔。啟用後會喺劇情更新時自動備份；如果雲端有衝突，唔會覆蓋較新版本。</p>'+a(cloud.enabled?"立即雲端備份":"建立恢復代碼並啟用備份","cloudBackup","block main")+
+ (cloud.key?'<p class="minor-meta">雲端已關聯 · 版本 '+cloud.revision+'</p>'+a("顯示／隱藏恢復代碼","cloudShow","block ghost"):"")+
+ (temporary.cloudShow&&cloud.key?'<div class="cloud-recovery-key">'+esc(cloud.key)+'</div><p class="minor-meta">請將代碼保存喺安全地方；知道代碼的人可以讀取及取代雲端存檔。</p>':"")+
+ '<label class="world-input-label" for="cloud-recovery">在其他裝置輸入恢復代碼</label><textarea id="cloud-recovery" class="world-premise-input" rows="2" maxlength="64" placeholder="64 位私密恢復代碼" aria-label="恢復代碼"></textarea>'+
+ a("從雲端恢復（取代當前遊戲）","cloudRestore","block ghost")+
+ (temporary.cloudError?'<p class="negative-note">'+esc(temporary.cloudError)+'</p>':""));
+ return section("TERMINAL SETTINGS","系統設定","閱讀效果及本機、雲端輪迴存檔。")+'<div class="scroll-content column-gap">'+
+ card("閱讀",piece("E+ 文字演出強度",mode==="strong"?"強烈（逐字對白＋情緒場景）":mode==="standard"?"標準（輕量演出）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small")))+
+ cloudCard+card("本機存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+'</div>'
+}
 function screen(){return s.screen==="hub"?hub():s.screen==="profile"?profile():s.screen==="warehouse"?warehouse():s.screen==="loadout"?loadout():s.screen==="upgrade"?upgrade():s.screen==="portal"?missionBoard():s.screen==="mission"?missionUI():s.screen==="memory"?memory():settings()}
 function render(){
  const inGame=!!(s.mission&&s.screen==="mission");
@@ -282,6 +293,21 @@ if(cmd.startsWith("cast:")){const out=N.useSkill(s,cmd.slice(5));if(out.error)re
 if(cmd.startsWith("use:")){let err=N.useItem(s,cmd.slice(4));if(err)return notice(err);temporary.showItems=false;notice("道具已使用，效果已套用。");return}
 if(cmd==="claim"){let err=E.finish(s);if(err)return notice(err);go("hub");return}
 if(cmd==="rest"){let err=E.rest(s);if(err)return notice(err);notice("主神治療完成。");return}
+if(cmd==="cloudShow"){temporary.cloudShow=!temporary.cloudShow;render();return}
+if(cmd==="cloudBackup"){
+ if(!window.NW_CLOUD)return notice("雲端存檔模組未載入");
+ window.NW_CLOUD.backup(s).then(()=>{temporary.cloudError="";temporary.cloudShow=true;render();notice("雲端備份成功。請安全保存恢復代碼。")}).catch(e=>{temporary.cloudError=String(e.message||e);render()});return
+}
+if(cmd==="cloudRestore"){
+ const code=R.querySelector("#cloud-recovery")?.value||"";
+ if(!window.NW_CLOUD)return notice("雲端存檔模組未載入");
+ window.NW_CLOUD.load(code).then(r=>{
+ try{localStorage.setItem("nightwalker_pre_cloud_restore_backup",JSON.stringify(s))}catch(_){}
+ window.NW_CLOUD.accept(r.key,r.revision);
+ s=r.state;s.screen="hub";E.save(s);temporary.cloudError="";temporary.cloudShow=false;render();
+ notice("已恢復雲端輪迴進度。原本本機存檔已另存備份。")
+ }).catch(e=>{temporary.cloudError=String(e.message||e);render()});return
+}
 if(cmd==="toggleMotion"){const next=eplusMode()==="strong"?"standard":eplusMode()==="standard"?"off":"strong";s.settings.eplusMode=next;s.settings.reducedMotion=next==="off";temporary.fxSeen="";temporary.fxSkippedFor="";render();return}
 if(cmd==="skipFx"){temporary.fxSkippedFor=temporary.fxSceneKey;window.NW_EFFECTS?.skip?.();const pane=R.querySelector?.(".scene-prose");pane?.classList?.add("fx-static");pane?.classList?.remove("fx-strong","fx-standard");const skip=R.querySelector?.(".eplus-skip");if(skip)skip.hidden=true;return}
 if(cmd==="export"){try{const blob=new Blob([JSON.stringify(s,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nightwalker-save.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}catch(_){notice("此瀏覽器暫不支援匯出。")}return}
