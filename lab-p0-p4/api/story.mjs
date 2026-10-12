@@ -2,6 +2,7 @@ const MODEL=process.env.GROQ_MODEL||"openai/gpt-oss-20b";
 const reply=(status,data)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
 const clean=(s,n=150)=>String(s??"").trim().slice(0,n);
 const kinds=new Set(["talk","observe","conceal","sneak","run","hide","physical","risk","fight","rest"]);
+const attempts=new Map(); // best-effort per-instance abuse guard; not global authentication
 const system=[
 "你是高水平無限流網文作者、互動小說劇情導演。全文繁體中文，使用內地網文書面語，絕不使用廣東話。",
 "寫350至550中文字的一幕小說，要像真正可玩的內地無限流網文：事件、具體細節、人物動作、懸念、自然穿插人物對白。",
@@ -22,6 +23,12 @@ async fetch(request){
 if(request.method==="GET")return reply(200,{service:"Nightwalker AI",configured:!!process.env.GROQ_API_KEY,model:MODEL});
 if(request.method!=="POST")return reply(405,{error:"METHOD_NOT_ALLOWED"});
 if(!process.env.GROQ_API_KEY)return reply(503,{error:"AI_NOT_CONFIGURED",message:"請在 Vercel Nightwalker 專案設定 GROQ_API_KEY。未扣任何點數。"});
+try{const origin=request.headers.get("origin");if(origin&&new URL(origin).host!==new URL(request.url).host)return reply(403,{error:"CROSS_ORIGIN_BLOCKED"})}catch(e){return reply(403,{error:"BAD_ORIGIN"})}
+const client=String(request.headers.get("x-forwarded-for")||"unknown").split(",")[0].slice(0,80);
+const bucket=Math.floor(Date.now()/60000),id=client+":"+bucket,count=attempts.get(id)||0;
+if(count>=8)return reply(429,{error:"LOCAL_RATE_LIMIT",message:"請稍後再試，避免耗盡免費 AI 額度"});
+attempts.set(id,count+1);if(attempts.size>750){for(const k of attempts.keys()){attempts.delete(k);if(attempts.size<350)break}}
+
 if(Number(request.headers.get("content-length")||0)>14000)return reply(413,{error:"INPUT_TOO_LARGE"});
 let body;try{body=await request.json()}catch(e){return reply(400,{error:"INVALID_JSON"})}
 const input=context(body);if(input.world.length<2||input.task.length<2)return reply(400,{error:"MISSING_CONTEXT"});
