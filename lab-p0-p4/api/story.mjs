@@ -20,11 +20,13 @@ function rateWikiPage(page,title,medium){
  if(!titleScore)return -100;
  const kind=wikiMedia[medium]||wikiMedia["其他作品"];
  const intro=String(page.title||"")+" "+String(page.extract||"").slice(0,220);
- const positive=kind.yes?kind.yes.test(intro):true;
- const negative=kind.no?kind.no.test(intro):false;
+ const positiveAt=kind.yes?intro.search(kind.yes):0;
+ const negativeAt=kind.no?intro.search(kind.no):-1;
+ const matchesMedium=positiveAt>=0&&(negativeAt<0||positiveAt<=negativeAt);
+ const mismatchesMedium=negativeAt>=0&&(positiveAt<0||negativeAt<positiveAt);
  const expectedYear=String(title).match(/(?:19|20)\d{2}/)?.[0];
  const yearScore=expectedYear?(intro.includes(expectedYear)?9:-4):0;
- return titleScore+(positive?23:0)+(negative?(positive?-6:-32):0)+yearScore;
+ return titleScore+(matchesMedium?23:0)-(mismatchesMedium?36:0)+yearScore;
 }
 async function lookupCanon(name,medium){
  const title=clean(name,65),key=title+"::"+medium;
