@@ -96,7 +96,23 @@ const longStoryRules=[
 input.canon=canon;
 const ctl=new AbortController();const timeout=setTimeout(()=>ctl.abort(),26000);
 let result;
-try{result=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",signal:ctl.signal,headers:{"Authorization":"Bearer "+process.env.GROQ_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,temperature:0.7,max_completion_tokens:1800,reasoning_effort:"low",include_reasoning:false,response_format:{type:"json_object"},stream:false,messages:[{role:"system",content:system+"\n"+longStoryRules},{role:"user",content:JSON.stringify(input)}]})});}catch(e){return reply(504,{error:"AI_TIMEOUT",message:"AI 暫時未能生成，請稍後重試"})}finally{clearTimeout(timeout)}
+const endpoint="https://api.groq.com/openai/v1/chat/completions";
+const basePayload={model:MODEL,temperature:0.65,max_completion_tokens:1800,response_format:{type:"json_object"},stream:false,messages:[{role:"system",content:system+"\n"+longStoryRules},{role:"user",content:JSON.stringify(input)}]};
+async function invoke(payload){return fetch(endpoint,{method:"POST",signal:ctl.signal,headers:{"Authorization":"Bearer "+process.env.GROQ_API_KEY,"Content-Type":"application/json"},body:JSON.stringify(payload)})}
+try{
+ const gptOss=MODEL.startsWith("openai/gpt-oss");
+ result=await invoke(gptOss?{...basePayload,reasoning_effort:"low",include_reasoning:false}:basePayload);
+ if(result.status===400){
+    // Retry one time without optional params, for Groq model/version incompatibilities.
+    const simpler={...basePayload};
+    const err=await result.clone().json().catch(()=>({}));
+    const reason=String(err?.error?.message||"").toLowerCase();
+    if(/unsupported|reasoning|parameter|json|temperature|not support|response_format/i.test(reason)){
+      delete simpler.response_format;delete simpler.temperature;
+      result=await invoke(simpler);
+    }
+ }
+}catch(e){return reply(504,{error:"AI_TIMEOUT",message:"AI 請求逾時或網絡失敗，請在當前一幕重試，不會額外扣分"})}finally{clearTimeout(timeout)}
 if(!result.ok){
  const status=result.status;
  let reason="";try{reason=String((await result.json())?.error?.message||"").slice(0,200)}catch(_){}
