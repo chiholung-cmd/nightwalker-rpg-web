@@ -7,7 +7,7 @@ const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const copy=x=>JSON.parse(JSON.stringify(x));
 const defaultState=()=>({
 version:1,screen:"hub",tab:"overview",
-profile:{name:"夜行者",level:1,xp:0,credits:1000,attrs:{str:7,agi:7,con:8,per:9,wil:7},hp:100,sta:100,mp:60,san:100,title:"記憶殘缺的歸還者",missions:0,bloodline:null},
+profile:{name:"",nameCustomized:false,level:1,xp:0,credits:1000,attrs:{str:7,agi:7,con:8,per:9,wil:7},hp:100,sta:100,mp:60,san:100,title:"記憶殘缺的歸還者",missions:0,bloodline:null},
 warehouse:{ironrod:1,shortblade:1,jacket:1,charm:1,medkit:3,energy:2,ether:1,sanity:2,flare:1,recorder:1},
 learned:["strike","guard","observe","focus"],
 loadout:{weapon:"ironrod",armor:"jacket",accessory:"charm",offhand:null,backpack:["medkit","medkit","energy","sanity","recorder"],active:["strike","guard","observe"],passive:["focus"]},
@@ -20,7 +20,7 @@ try{if(st.getItem(RESET_MARK)!=="1"){
   ["nightwalker_p0p4_integrated_v1",OLD,"nightwalker_p0p4_fresh_v2_20261012"].forEach(k=>{if(st.removeItem)st.removeItem(k)});
   st.setItem(RESET_MARK,"1");
 }}catch(_){}
-let raw;try{raw=st.getItem(KEY)}catch(_){}if(raw){try{let a=JSON.parse(raw);if(a&&a.version===1&&a.profile&&a.loadout){if(!a.mission)restoreAllResources(a);return a}}catch(_){}}let s=defaultState();
+let raw;try{raw=st.getItem(KEY)}catch(_){}if(raw){try{let a=JSON.parse(raw);if(a&&a.version===1&&a.profile&&a.loadout){if(!a.profile.nameCustomized&&a.profile.name==="夜行者")a.profile.name="";if(!a.mission)restoreAllResources(a);return a}}catch(_){}}let s=defaultState();
 if(!s.mission)restoreAllResources(s);return s}
 function save(s,storage){try{(storage||global.localStorage).setItem(KEY,JSON.stringify(s))}catch(_){}}
 function restoreAllResources(s){
@@ -59,12 +59,15 @@ function assignCustomWorld(s,name,aiReady,details={}){
 if(s.mission)return "請先完成目前輪迴";
 if(s.assignment)return "已有主神指派，請先完成該次傳送";
 const title=String(name||"").trim();
+if(!s.profile?.nameCustomized||!String(s.profile.name||"").trim())return "請先為主角設定姓名；Nightwalker 只是作品名稱，不是人物姓名";
 if(title.length<2||title.length>50)return "世界名稱需要 2 至 50 字";
 const kind=details.kind==="original"?"original":"adaptation";
 const types=["電影","劇集","動畫","小說","遊戲","其他作品"];
 const mediaType=types.includes(details.mediaType)?details.mediaType:"電影";
 const premise=String(details.premise||"").trim();
 if(kind==="original"&&(premise.length<12||premise.length>450))return "自創世界請提供 12 至 450 字的背景、規則或故事構思";
+if(kind==="adaptation"&&(!details.verifiedTitle||title!==details.verifiedTitle||!details.verifiedSource))
+ return "作品世界必須先核對並確認原作名稱與媒介版本，不會自動創作不存在的作品";
 if(kind==="adaptation"){
  const known=D.worlds.find(w=>w.name===title||w.id===title);
  if(known){
