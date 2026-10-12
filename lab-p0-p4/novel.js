@@ -263,10 +263,60 @@ archive:"你藏起原件，留下足以供將來追查的副本。有些真相�
 release:"你選擇了可信的第三方，將證據交付保存。這並非最輕鬆的辦法，卻能讓更多人有機會知道真相。"
 }};
 
+
+const FREE_LINES={
+alice:{
+talk:"你選擇先開口，而不是跟著其他人一起喊叫。夏帆聽完你的問題，短暫地沉默了一下：「我也不敢確定，但如果我們願意交換情報，總比各自猜測要好。」",
+observe:"你暫時不加入爭執，將注意力放回提示紙和門框。那些看似不起眼的痕跡，比旁人的爭吵更有可能接近答案。",
+conceal:"你沒有把全部想法說出來。那名西裝男人瞥了你一眼，沒有再追問。可越是沉默，越能感覺到房間裡的猜疑正在蔓延。",
+run:"你抓緊剩下的時間，快步移到另一個位置。鞋底擦過地面，身後有幾道目光跟著轉了過來。",
+sneak:"你沿牆邊悄悄移動，避開了大部分人的視線。越靠近門框，越能聽見裡面細微的機械運作聲。",
+rest:"你逼自己停下來，重新整理腦中的線索。倒數還在繼續，但慌亂只會讓人忽略最關鍵的地方。",
+physical:"你動手調整了現場的東西，幾名參加者不約而同向你望來。這個改變雖不一定是答案，卻令僵持的局面向前推了一步。",
+fight:"你猛地出手，房間裡頓時亂作一團。爭執一旦變成衝突，想要重新建立合作，恐怕就沒有那麼容易了。",
+hide:"你退到不起眼的角落，暫時避開了眾人的目光。那些人壓低聲音交換的話，反倒聽得更加清楚。"
+},
+busan:{
+talk:"你壓低聲音與身旁的乘客交談。世娜先是愣了愣，隨後指向連接車廂：「我知道的也不多，但那裡應該還有另一條路。」",
+observe:"你強迫自己忽略四周的尖叫，盯住最不尋常的動靜。那些東西每次轉頭的時機似乎都有跡可循。",
+conceal:"你沒有將猜測全部說出來。眼下人群已經接近失控，若是處理不好，一句話就可能引起新的恐慌。",
+run:"你向前衝了幾步，身後的撞擊聲越來越遠。可是車廂裡的人實在太多，奔跑並不像想像中容易。",
+sneak:"你沿座椅之間的空隙慢慢移動，盡可能不碰倒東西。車廂另一頭有感染者正四處搜尋，任何聲響都可能引來注意。",
+rest:"你靠住座椅扶手，趁空隙調整呼吸。列車仍在搖晃，遠處的撞擊聲也沒有停下。",
+physical:"你動手處理眼前的障礙，終於替自己和周圍的人爭取到一點空間。但玻璃門後的危險還在逼近。",
+fight:"你不得不舉起武器阻止逼近的感染者。鐵器撞上血肉的觸感令人發寒，可你知道，僅靠一擊根本解決不了這場災難。",
+hide:"你暫時退到不容易被注意到的位置。外面的動靜慢慢遠去，世娜終於敢輕輕喘上一口氣。"
+},
+demon:{
+talk:"你向村民問起山中的事。老人沉默了片刻，才指著樹林深處說：「那東西不是每晚都來，但只要來了，就一定有人失蹤。」",
+observe:"你蹲下身，仔細檢查眼前的痕跡。越是看得清楚，越發現這頭鬼並非只會憑本能行動。",
+conceal:"你收斂自己的氣息，沒有把心裡的盤算說出來。食人鬼還在暗處，過早暴露意圖絕不是好事。",
+run:"你沿著濕滑的山道快步移動，腳底幾次險些打滑。身後的林間傳來動靜，不知道那東西是否已經跟了上來。",
+sneak:"你貼著杉樹陰影慢慢前進，連踩到枯葉都會讓心跳快上一拍。鬼的感官遠超常人，任何輕敵都可能付出代價。",
+rest:"你靠住冰冷的石壁，強迫自己把呼吸壓穩。山風帶著血腥味吹來，夜色依然沒有散去。",
+physical:"你利用周圍的石塊和樹木改變了位置。這未必能殺死鬼，卻可能讓接下來的局勢朝有利方向發展。",
+fight:"武器擊中鬼的瞬間，你聽見骨骼碎裂的聲音。可那東西臉上卻浮現詭異的笑容，傷口竟又慢慢合攏。",
+hide:"你暫時躲進陰影。鬼的腳步聲從不遠處掠過，直到它離開，你才敢慢慢鬆開攥緊的拳頭。"
+},
+deathnote:{
+talk:"你斟酌著措辭，試探對方願意透露多少。電話那頭沉默了幾秒，才回覆：「我們都不該輕易說出自己的真實姓名。」",
+observe:"你重新核對那些姓名與死亡時間。每一次細微的吻合，都讓你更加確信這不是一場普通的惡作劇。",
+conceal:"你將可能暴露身份的資料收好，沒有讓任何人看見。這個世界裡，一時坦率也許會換來無法挽回的代價。",
+run:"你加快腳步離開現場，雨水打濕了衣袖。拐過街角時，仍忍不住回頭看了一眼。",
+sneak:"你沿著街邊的陰影保持距離，留意每一面玻璃窗上的倒影。那個可疑的人似乎還沒有發現你。",
+rest:"你找了一個暫時安全的位置，慢慢整理情報。冷靜下來後，幾處先前忽略的細節重新浮現在腦中。",
+physical:"你調整了手邊的資料與道具，替自己留下一條可以撤退的路。對方是否已經察覺，現在還無從判斷。",
+fight:"你突然採取強硬手段，局面頓時緊張起來。可你知道，在這個世界，真正可怕的對手未必站在眼前。",
+hide:"你藏進一處不容易被看見的角落。雨聲掩蓋了大部分腳步聲，也讓你難以確認追蹤者究竟去了哪裡。"
+}};
+
 function fmt(s){
  const m=s.mission;if(!m)return null;const st=m.storyState||{},world=m.world,arr=SCENES[world];if(!arr)return null;
  const idx=Math.max(0,Math.min(5,m.phase)),scene=arr[idx];
  const blocks=scene.blocks.map(a=>a[0]==="d"?{type:"dialogue",speaker:a[1],text:a[2]}:{type:"narration",text:a[1]});
+if(idx===0){
+blocks.splice(1,0,{type:"system",text:"【主神任務："+m.title+"】\n【主線目標："+m.objective+"】"});
+}
  // Choices are remembered as lived events, not generic "you chose" notifications.
  if(idx>0&&st.lastReply){blocks.unshift({type:"narration",text:st.lastReply,consequence:true})}
  if(st.exertion==="run"){blocks.splice(Math.min(2,blocks.length),0,{type:"narration",text:"你還在奔跑。急促的呼吸撞在胸腔裡，腿部的肌肉漸漸發酸。再這樣下去，體力遲早會被消耗殆盡。"})}
@@ -287,5 +337,5 @@ function fmt(s){
  if(extras.length)blocks.splice(Math.max(1,blocks.length-2),0,...extras);
  return {title:scene.title,mood:scene.mood,blocks,mode:titles[m.mode]||"輪迴任務",index:idx,total:6};
 }
-global.NW_NOVEL={scene:fmt,reaction:(world,id)=>OUTCOMES[world]?.[id],worlds:Object.keys(SCENES),count:Object.values(SCENES).reduce((a,b)=>a+b.length,0)};
+global.NW_NOVEL={scene:fmt,reaction:(world,id,kind)=>OUTCOMES[world]?.[id]||FREE_LINES[world]?.[kind],worlds:Object.keys(SCENES),count:Object.values(SCENES).reduce((a,b)=>a+b.length,0)};
 })(window);
