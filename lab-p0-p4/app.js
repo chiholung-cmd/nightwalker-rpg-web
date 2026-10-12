@@ -2,7 +2,7 @@
 "use strict";
 const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElementById("app");
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
-let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiPending:false,aiError:"",worldInput:""};
+let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiPending:false,aiError:"",worldInput:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const q=v=>"'"+esc(v)+"'";
 const num=n=>Number(n||0).toLocaleString("en-US");
@@ -132,6 +132,11 @@ return section("MAIN GOD / WORLD TRANSFER","輪迴傳送終端","主神發佈任
 function mood(i,worldId){if(worldId==="deathnote"&&i===5)return "grief";if(worldId==="alice"&&i===2)return "anger";if(worldId==="demon"&&i===0)return "system";return ["calm","suspense","eerie","dialogue","shock","resolve"][i%6]}
 
 function missionStory(){return N.excerpt(s)}
+function eplusMode(){
+if(s.settings.reducedMotion)return "off";
+const mode=s.settings.eplusMode;
+return mode==="standard"||mode==="off"||mode==="strong"?mode:"strong"
+}
 function prettyEffects(action){const parts=N.preview(action);return parts.length?'<div class="story-costs">'+parts.map(x=>'<span>'+esc(x)+'</span>').join("")+'</div>':""}
 
 function missionUI(){
@@ -147,7 +152,7 @@ function missionUI(){
  }).join("");
  const notice=scene.exertion?'<span class="narrative-condition">持續'+(scene.exertion==="run"?"奔跑":"潛行")+'中</span>':"";
  const bar='<div class="story-top"><span>'+esc(w.name)+' <small>· '+esc(m.title)+'</small></span><button data-do="status">狀態 ◈</button></div>';
- const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+' / 6 幕　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(s.settings.reducedMotion?"E+關":"E+開","toggleMotion","tiny ghost")+'</div></div>';
+ const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+' / 6 幕　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(eplusMode()==="strong"?"E+強":eplusMode()==="standard"?"E+標":"E+關","toggleMotion","tiny ghost")+'</div></div>';
  const popups=[];
  if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只有發生體力消耗、施展術式或受到傷害時，才需要特別注意數值。</p>'+a("關閉","status","small ghost")+'</div>');
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
@@ -155,7 +160,7 @@ function missionUI(){
  if(temporary.showLog)popups.push('<div class="mission-popup"><div class="card-heading">輪迴經歷</div><div class="log-lines">'+m.log.slice(-12).map(x=>'<p>'+esc(x)+'</p>').join("")+'</div>'+a("關閉","logs","small ghost")+'</div>');
  if(temporary.showTask)popups.push('<div class="mission-popup"><div class="card-heading">主神任務</div><p class="popup-note">'+esc(m.title)+' · '+esc(m.worldName)+'</p><p class="popup-note">'+esc(m.objective)+'</p><p class="popup-note">當前進度：'+m.progress+' / '+m.required+'</p>'+(m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
  return '<div class="mission-stage narrative-stage novel-first-stage">'+bar+
- '<div class="scene-prose '+(s.settings.reducedMotion?"motion-off":"")+'" data-mood="'+(novel?.mood||"calm")+'"><div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+(novel?.mode||"主神任務")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
+ '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+(novel?.mode||"主神任務")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
  toolbox+'<div class="fixed-choices story-choice-panel">'+notice+choices+
  '<div class="free-row"><input id="free-action" maxlength="180" placeholder="或者，由你來決定……" aria-label="自訂行動" '+(m.world==="custom"&&!scene.actions.length?"disabled":"")+'>'+a("執行","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
  '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"單人輪迴":m.mode==="team"?"協同任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
@@ -191,9 +196,26 @@ if(mode==="worlds")body=s.discovered.length?s.discovered.map(id=>card(esc(world(
 if(mode==="relations")body=D.companions.map(c=>card(esc(c.name)+" · "+esc(c.role),esc(c.bio)+'<div class="minor-meta">關係值 '+(s.bonds[c.id]||0)+'</div>')).join("");
 if(mode==="system")body=card("主神規則說明","世界與任務由主神決定；定向返回需要先到訪，再支付座標解鎖及定向傳送代價。") +card("劇情記憶","歷史抉擇、線索、戰利品、隊友關係在本裝置持久保存。") +card("真人多人連線","目前團隊與對抗採用 AI 輪迴者的確定性規則模擬；尚未啟用伺服器同步、真人配對及即時 PvP。");
 return section("MAIN GOD ARCHIVE","輪迴記錄","主神會保存重大抉擇與線索；世界居民亦應根據合理身份和記憶作出反應。")+'<div class="tabbar">'+tabs.map(x=>'<button class="'+(mode===x[0]?"on":"")+'" data-do="tab:memory:'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="scroll-content column-gap">'+body+'</div>'}
-function settings(){return section("TERMINAL SETTINGS","系統設定","本機測試資料與閱讀介面。")+'<div class="scroll-content column-gap">'+card("閱讀",piece("減少情緒演出動畫",s.settings.reducedMotion?"已開啟":"已關閉",a("切換","toggleMotion","small")))+card("存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+card("開發版本","P0–P4 整合測試 · 已接通本地規則引擎、主神任務與 AI 隊伍。即時 AI 對話與真人多人未連接。")+'</div>'}
+function settings(){return section("TERMINAL SETTINGS","系統設定","本機測試資料與閱讀介面。")+'<div class="scroll-content column-gap">'+card("閱讀",piece("E+ 文字演出強度",eplusMode()==="strong"?"強烈（逐字對白＋情緒場景）":eplusMode()==="standard"?"標準（輕量演出）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small")))+card("存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+card("開發版本","P0–P4 整合測試 · 已接通本地規則引擎、主神任務與 AI 隊伍。即時 AI 對話與真人多人未連接。")+'</div>'}
 function screen(){return s.screen==="hub"?hub():s.screen==="profile"?profile():s.screen==="warehouse"?warehouse():s.screen==="loadout"?loadout():s.screen==="upgrade"?upgrade():s.screen==="portal"?missionBoard():s.screen==="mission"?missionUI():s.screen==="memory"?memory():settings()}
-function render(){const inGame=!!(s.mission&&s.screen==="mission");R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+'</div>';persist();if(inGame)scheduleAiScene()}
+function render(){
+ const inGame=!!(s.mission&&s.screen==="mission");
+ const m=inGame?s.mission:null;
+ const fxKey=m&&!m.finished?[m.seed||0,m.world,m.phase,m.aiScenes?.[m.phase]?"ai":"authored"].join(":"):"";
+ const mode=eplusMode();
+ const reduced=window.NW_EFFECTS?.reducedMotion?.()===true;
+ const same=!!fxKey&&fxKey===temporary.fxSceneKey;
+ const scroller=R.querySelector?.(".scene-prose");
+ const oldY=same&&typeof scroller?.scrollTop==="number"?scroller.scrollTop:0;
+ const fresh=!!fxKey&&fxKey!==temporary.fxSeen&&temporary.fxSkippedFor!==fxKey&&mode!=="off"&&!reduced;
+ temporary.fxSceneKey=fxKey;
+ temporary.fxPerform=fresh?mode:"static";
+ R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+'</div>';
+ if(same&&oldY>0){const pane=R.querySelector?.(".scene-prose");if(pane)pane.scrollTop=oldY}
+ window.NW_EFFECTS?.cancel?.();
+ if(fresh){temporary.fxSeen=fxKey;window.NW_EFFECTS?.play?.(R,{mode})}
+ persist();if(inGame)scheduleAiScene()
+}
 function handle(cmd){if(!cmd)return;
 if(cmd.startsWith("nav:")){let dest=cmd.slice(4);go(dest==="portal"&&s.mission?"mission":dest);return}
 if(cmd.startsWith("tab:profile:")){temporary.profileTab=cmd.slice(12);render();return}
@@ -230,7 +252,8 @@ if(cmd.startsWith("cast:")){const out=N.useSkill(s,cmd.slice(5));if(out.error)re
 if(cmd.startsWith("use:")){let err=N.useItem(s,cmd.slice(4));if(err)return notice(err);temporary.showItems=false;notice("道具已使用，效果已套用。");return}
 if(cmd==="claim"){let err=E.finish(s);if(err)return notice(err);go("hub");return}
 if(cmd==="rest"){let err=E.rest(s);if(err)return notice(err);notice("主神治療完成。");return}
-if(cmd==="toggleMotion"){s.settings.reducedMotion=!s.settings.reducedMotion;render();return}
+if(cmd==="toggleMotion"){const next=eplusMode()==="strong"?"standard":eplusMode()==="standard"?"off":"strong";s.settings.eplusMode=next;s.settings.reducedMotion=next==="off";temporary.fxSeen="";render();return}
+if(cmd==="skipFx"){temporary.fxSkippedFor=temporary.fxSceneKey;window.NW_EFFECTS?.skip?.();const pane=R.querySelector?.(".scene-prose");pane?.classList?.add("fx-static");pane?.classList?.remove("fx-strong","fx-standard");const skip=R.querySelector?.(".eplus-skip");if(skip)skip.hidden=true;return}
 if(cmd==="export"){try{const blob=new Blob([JSON.stringify(s,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nightwalker-save.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}catch(_){notice("此瀏覽器暫不支援匯出。")}return}
 }
 R.addEventListener("click",ev=>{let t=ev.target.closest("[data-do]");if(!t||t.disabled)return;handle(t.dataset.do)});
