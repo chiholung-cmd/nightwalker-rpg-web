@@ -55,18 +55,34 @@ function mainGodAssign(s,random=Math.random){if(s.mission)return "現有世界�
 function assignReturn(s,worldId){if(s.mission)return "輪迴途中不可定向";if(s.assignment)return "已有主神指派，無法更改";if(!s.discovered.includes(worldId))return "必須先到訪此世界";const w=world(worldId);if(!w)return "無效世界";const cost={busan:220,demon:650,alice:550,deathnote:380}[worldId],fee={busan:60,demon:160,alice:150,deathnote:100}[worldId],level={busan:4,demon:6,alice:6,deathnote:5}[worldId];if(s.profile.level<level)return "需要 Lv."+level;if(!s.coord[worldId]){if(s.profile.credits<cost)return "座標解鎖需要 "+cost+" 積分";s.profile.credits-=cost;s.coord[worldId]=true;return "座標已解鎖，請再次確認指定傳送"}if(s.profile.credits<fee)return "定向費需要 "+fee+" 積分";s.profile.credits-=fee;const tasks=D.tasks.filter(t=>t.world===worldId);const t=tasks[0];s.assignment={task:t.id,world:worldId,mode:t.mode,seed:Date.now()%999999,assignedAt:Date.now(),targeted:true};return null}
 
 function customWorldCost(name){return 300+Math.max(0,String(name||"").trim().length-8)*10}
-function assignCustomWorld(s,name,aiReady){
+function assignCustomWorld(s,name,aiReady,details={}){
 if(s.mission)return "請先完成目前輪迴";
 if(s.assignment)return "已有主神指派，請先完成該次傳送";
 const title=String(name||"").trim();
-if(title.length<2||title.length>50)return "世界名稱需要2至50字";
-const known=D.worlds.find(w=>w.name===title||w.id===title);
-if(known){const tasks=D.tasks.filter(t=>t.world===known.id);if(!tasks.length)return "此世界暫未配置任務";const cost=220;if(s.profile.credits<cost)return "需支付 "+cost+" 主神積分";s.profile.credits-=cost;const t=tasks[Math.floor(Math.random()*tasks.length)];s.assignment={task:t.id,world:t.world,mode:t.mode,targeted:true,customRequested:title,seed:Date.now()%100000000,assignedAt:Date.now()};return null}
-if(!aiReady)return "未連線 AI 劇情引擎，暫時無法進入未收錄世界，亦不會扣除積分";
+if(title.length<2||title.length>50)return "世界名稱需要 2 至 50 字";
+const kind=details.kind==="original"?"original":"adaptation";
+const types=["電影","劇集","動畫","小說","遊戲","其他作品"];
+const mediaType=types.includes(details.mediaType)?details.mediaType:"電影";
+const premise=String(details.premise||"").trim();
+if(kind==="original"&&(premise.length<12||premise.length>450))return "自創世界請提供 12 至 450 字的背景、規則或故事構思";
+if(kind==="adaptation"){
+ const known=D.worlds.find(w=>w.name===title||w.id===title);
+ if(known){
+   const tasks=D.tasks.filter(t=>t.world===known.id);
+   if(!tasks.length)return "此世界暫未配置任務";
+   const cost=220;
+   if(s.profile.credits<cost)return "需支付 "+cost+" 主神積分";
+   s.profile.credits-=cost;
+   const t=tasks[Math.floor(Math.random()*tasks.length)];
+   s.assignment={task:t.id,world:t.world,mode:t.mode,targeted:true,customRequested:title,worldKind:kind,mediaType,paidCost:cost,seed:Date.now()%100000000,assignedAt:Date.now()};
+   return null
+ }
+}
+if(!aiReady)return "AI 劇情暫不可用，不能進入未收錄的世界；並未扣除積分";
 const cost=customWorldCost(title);
 if(s.profile.credits<cost)return "需要 "+cost+" 主神積分";
 s.profile.credits-=cost;
-s.assignment={task:"custom_generated",world:"custom",worldTitle:title,mode:"solo",paidCost:cost,targeted:true,customRequested:title,seed:Date.now()%100000000,assignedAt:Date.now()};
+s.assignment={task:"custom_generated",world:"custom",worldTitle:title,worldKind:kind,mediaType:kind==="adaptation"?mediaType:null,premise:kind==="original"?premise:"",mode:"solo",paidCost:cost,targeted:true,customRequested:title,seed:Date.now()%100000000,assignedAt:Date.now()};
 return null
 }
 function cancelCustomWorld(s){
@@ -85,7 +101,7 @@ function validateLoadout(s){let errors=[];if(!s.loadout.weapon)errors.push("必�
 function launch(s){if(!s.assignment)return "尚未獲得主神任務";if(s.mission)return "任務已在進行";let errors=validateLoadout(s);if(errors.length)return errors.join("、");let bag={};for(const id of s.loadout.backpack){bag[id]=(bag[id]||0)+1}for(const id in bag)if((s.warehouse[id]||0)<bag[id])return "倉庫物資不足："+item(id)?.name;
 for(const id in bag)s.warehouse[id]-=bag[id];
 restoreAllResources(s);
-const taskObj=s.assignment.world==="custom"?{id:"custom_generated",name:"自選世界·主神試煉",mode:"solo",goal:"探索「"+s.assignment.worldTitle+"」，完成主神委派的調查與生存目標",required:3,desc:"主神已接受付費自選世界的指令"}:task(s.assignment.task),
+const taskObj=s.assignment.world==="custom"?{id:"custom_generated",name:"自選世界·主神試煉",mode:"solo",goal:"探索「"+s.assignment.worldTitle+"」，完成主神委派的調查與生存目標",required:3,desc:s.assignment.worldKind==="original"?"主神已按照你的設定構築原創世界":"主神已定位指定作品世界"}:task(s.assignment.task),
 w=s.assignment.world==="custom"?{id:"custom",name:s.assignment.worldTitle,enemy:"未知威脅",foeHp:100,dmg:12,intents:["試探","逼近","擾亂"],tone:"未知劇情"}:world(s.assignment.world);
 if(s.profile.bloodline==="wolf")s.profile.sta=clamp(s.profile.sta+15,0,100);
 if(s.profile.bloodline==="blank")s.profile.san=clamp(s.profile.san-10,0,100);let seed=s.assignment.seed;
