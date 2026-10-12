@@ -89,3 +89,16 @@ The previous scene renderer produced disjointed RPG-flavored snippets: one mecha
 - A **skip performance** button immediately reveals the full current scene; it never skips a decision or modifies any character stats.
 - Animations occur **once per new story phase** (including a newly generated AI scene), rather than repeating whenever an inventory/status panel opens. Reading scroll position is preserved when the same scene is re-rendered.
 - All effects are local browser effects without access to gameplay state. The production HTML loads `effects.js` before `app.js`; CSS and application script use an E+ v2 cache key.
+
+## World transfer UX: published works vs self-created worlds
+
+The "自選世界" card now provides two distinct paths:
+
+1. **作品世界 (existing media universe)** — choose medium (電影、劇集、動畫、小說、遊戲、其他作品) and type the title. Existing authored catalog worlds use the unchanged 220-credit directed entry. Other media settings cost 300+ and use AI-generated story. Prompts maintain basic established setting, character traits and genre while allowing new Main God missions; generated scenes are not official canon.
+2. **自創世界 (original world)** — type a unique world title plus 12–450 Chinese characters describing the setting, central rules, mystery or hazards. The submitted rules become the recurring AI context. Even if an original title matches a catalog franchise, it remains a new original world instead of silently loading a catalog mission.
+
+Both modes use the **same original cost formula** for uncataloged AI worlds (300+), and both preserve refundable pre-action cancellation, inventory return, three narrative choices plus free action, and full post-mission resource restoration. Form drafts are preserved when switching tabs or media types. Mission records now preserve world kind, medium and original premise for future replays.
+
+**No save-key migration/reset in this update:** existing Nightwalker browser progress remains unchanged. Authored worlds and E+ animated text are unchanged.
+
+Note: these prompts do not guarantee faithful depiction of every copyrighted franchise or verified canonical detail. The app currently treats media lore as model background rather than querying a dedicated verified canon database. Cloud saves, persistent player world libraries and true unrestricted story branching remain future work.
