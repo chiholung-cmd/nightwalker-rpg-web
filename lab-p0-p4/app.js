@@ -123,7 +123,7 @@ if(cmd.startsWith("blood:")){let err=E.buyBloodline(s,cmd.slice(6));if(err)retur
 if(cmd.startsWith("boost:")){let err=E.boost(s,cmd.slice(6));if(err)return notice(err);render();return}
 if(cmd==="assign"){let err=E.mainGodAssign(s);if(err)return notice(err);render();return}
 if(cmd.startsWith("coord:")){let err=E.assignReturn(s,cmd.slice(6));if(err)return notice(err);render();return}
-if(cmd==="launch"){let err=E.launch(s);if(err)return notice(err);temporary.showItems=false;temporary.showLog=false;render();return}
+if(cmd==="launch"){let err=E.launch(s);if(err)return notice(err);temporary.showItems=false;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
 if(cmd==="cycleSkill"){E.changeSkill(s,(s.mission?.chosenSkill||0)+1);render();return}
 if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);render();return}
 if(cmd==="free"){let v=R.querySelector("#free-action")?.value||"";let out=N.free(s,v);if(out.error)return notice(out.error);render();return}
@@ -132,7 +132,7 @@ if(cmd==="logs"){temporary.showLog=!temporary.showLog;temporary.showItems=false;
 if(cmd==="status"){temporary.showStatus=!temporary.showStatus;temporary.showItems=false;temporary.showSkills=false;temporary.showLog=false;render();return}
 if(cmd==="skills"){temporary.showSkills=!temporary.showSkills;temporary.showItems=false;temporary.showStatus=false;temporary.showLog=false;render();return}
 if(cmd.startsWith("cast:")){const out=N.useSkill(s,cmd.slice(5));if(out.error)return notice(out.error);temporary.showSkills=false;render();return}
-if(cmd.startsWith("use:")){let err=E.useItem(s,cmd.slice(4));if(err)return notice(err);temporary.showItems=false;notice("道具已使用，效果已套用。");return}
+if(cmd.startsWith("use:")){let err=N.useItem(s,cmd.slice(4));if(err)return notice(err);temporary.showItems=false;notice("道具已使用，效果已套用。");return}
 if(cmd==="claim"){let err=E.finish(s);if(err)return notice(err);go("hub");return}
 if(cmd==="rest"){let err=E.rest(s);if(err)return notice(err);notice("主神治療完成。");return}
 if(cmd==="toggleMotion"){s.settings.reducedMotion=!s.settings.reducedMotion;render();return}
