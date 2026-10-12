@@ -59,7 +59,7 @@ const m=s.mission;if(!m||m.finished)return {error:"當前沒有正在進行的�
 if(o.reasons?.length)return {error:o.reasons.join("、")};
 const p=s.profile,weapon=E.item(s.loadout.weapon),before={hp:p.hp,sta:p.sta,mp:p.mp,san:p.san,progress:m.progress};let events=[],visible=o.kind==="run"||o.kind==="sneak"||o.kind==="physical"||o.kind==="risk"||o.kind==="fight";
 if(o.cost>0){p.sta=Math.max(0,p.sta-o.cost);events.push("你為這次行動付出了 "+o.cost+" 點體力。")}
-if(st.exertion&&(o.kind!=="rest"&&o.kind!=="hide")){
+if(st.exertion&&["run","sneak","physical","risk","fight"].includes(o.kind)){
 const rate=st.exertion==="run"?5:3;let drain=Math.min(rate,p.sta);
 p.sta=Math.max(0,p.sta-drain);
 if(drain)events.push((st.exertion==="run"?"持續奔跑":"長時間潛行")+"令體力再下降 "+drain+" 點。");
@@ -131,11 +131,33 @@ if(!r.error){s.profile.mp=Math.max(0,s.profile.mp-(sk.mp||0));if(sk.effect==="he
 if(sk.power&&s.mission&&!s.mission.finished){const extra=Math.round(sk.power*.65);s.mission.enemy.hp=Math.max(0,s.mission.enemy.hp-extra);r.report.events.push("招式額外造成 "+extra+" 點傷害。");}}
 return r;
 }
+function useItem(s,id){
+const m=s.mission,st=m&&ensure(m),it=E.item(id);
+if(!m||m.finished)return "目前不在可使用道具的輪迴場景";
+if(!it||(m.bag[id]||0)<1)return "行囊沒有這件物品";
+if(it.type!=="consumable"&&it.type!=="tool")return "這件物品不能直接使用";
+m.bag[id]--;
+const p=s.profile;const old={hp:p.hp,sta:p.sta,mp:p.mp,san:p.san};
+p.hp=Math.min(100,p.hp+(it.heal||0));
+p.sta=Math.min(100,p.sta+(it.restoreSta||0));
+p.mp=Math.min(60,p.mp+(it.restoreMp||0));
+p.san=Math.min(100,p.san+(it.restoreSan||0));
+if(it.stun&&m.enemy)m.enemy.stunned=Math.max(m.enemy.stunned||0,1);
+if(id==="recorder"){m.progress++;m.evidence.push("錄音證據");m.flags.push("recorded")}
+if(id==="badge"){m.progress++;m.flags.push("identity")}
+if(st.exertion)st.exertion=null;
+const changes=["hp","sta","mp","san"].map(k=>({hp:"HP",sta:"STA",mp:"MP",san:"SAN"}[k])+" "+(p[k]-old[k]>=0?"+":"")+(p[k]-old[k])).filter(x=>!x.endsWith(" +0"));
+let lines=["你從行囊中取出「"+it.name+"」，仔細使用。"+(changes.length?"狀態變化："+changes.join("、"):"已記錄道具效果。")];
+if(st.encounter&&m.enemy.hp>0){let harm=Math.max(0,Math.round((E.world(m.world)?.dmg||12)*.5)-(E.item(s.loadout.armor)?.def||0));p.hp=Math.max(0,p.hp-harm);lines.push("敵人沒有給你充足準備時間，你受到 "+harm+" 點傷害。")}
+m.roundEvents=lines;m.log.push(...lines);
+if(p.hp<=0)E.end(s);
+return null
+}
 function preview(a){const p=[];if(a.cost>0)p.push("STA −"+a.cost);
 if(a.kind==="run")p.push("後續奔跑每幕 STA −5");
 if(a.kind==="sneak")p.push("持續潛行每幕 STA −3");
 if(a.kind==="rest")p.push("STA +18");
 if(a.kind==="fight"||a.kind==="risk")p.push("可能受傷");
 return p}
-global.NW_STORY={get,excerpt,choose,free,skills,useSkill,preview,ensure};
+global.NW_STORY={get,excerpt,choose,free,skills,useSkill,useItem,preview,ensure};
 })(window);
