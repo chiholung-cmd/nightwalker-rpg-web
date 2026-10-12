@@ -147,6 +147,27 @@ async function resolveWorldTitle(title,medium){
  return {status:unique.length?"needs_confirmation":"unverified",requested:raw,matches:unique,
   message:unique.length?"請確認作品及媒介版本；未確認之前絕不生成原作世界或扣除積分":"未能核實作品名稱；請檢查錯字或切換媒介類型，不會當原創世界生成"};
 }
+async function selectedCanon(source,title,medium){
+ try{
+  const u=new URL(String(source||""));
+  if(!["zh.wikipedia.org","en.wikipedia.org"].includes(u.hostname)||!u.pathname.startsWith("/wiki/"))return null;
+  const pageTitle=decodeURIComponent(u.pathname.slice(6)).replace(/_/g," ");
+  if(pageTitle!==String(title||""))return null;
+  const api=new URL("https://"+u.hostname+"/w/api.php");
+  api.search=new URLSearchParams({action:"query",prop:"extracts",titles:pageTitle,redirects:"1",explaintext:"1",exchars:"3700",format:"json",formatversion:"2"}).toString();
+  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),3000);
+  try{
+   const res=await fetch(api.toString(),{signal:ctrl.signal,headers:{"Accept":"application/json"}});
+   if(!res.ok)return null;
+   const info=await res.json(),page=(info.query?.pages||[]).find(x=>x?.extract?.length>40&&!x.missing);
+   if(!page||fuzzyScore(page.title,pageTitle)<.85)return null;
+   const score=rateWikiPage(page,pageTitle,medium);
+   if(score<23)return null;
+   return {title:page.title,url:u.origin+"/wiki/"+encodeURIComponent(page.title.replace(/ /g,"_")),
+    source:"Wikipedia",confidence:"exact",mediaType:medium,extract:clean(page.extract,3700)};
+  }finally{clearTimeout(timer)}
+ }catch(_){return null}
+}
 function thirdPerson(text,protagonist){
  const name=clean(protagonist,30)||"主角";
  return String(text??"").split(/(「[^」]*」|“[^”]*”|《[^》]*》|『[^』]*』)/g).map((part,i)=>i%2?part:part.replace(/你們的/g,name+"一行人的").replace(/你們/g,name+"一行人").replace(/你的/g,name+"的").replace(/你/g,name)).join("");
@@ -280,7 +301,8 @@ const supplied=body?.canonCache;
 const verified=typeof supplied?.url==="string"&&/^https:\/\/(zh|en)\.wikipedia\.org\/wiki\//.test(supplied.url)&&
  typeof supplied?.extract==="string"&&supplied.extract.length>80&&supplied.extract.length<5000&&
  ["exact","partial"].includes(supplied.confidence)&&supplied.mediaType===input.mediaType&&normalizeWikiTitle(supplied.title).includes(normalizeWikiTitle(input.world.replace(/(?:19|20)\d{2}/g,"")));
-const canon=input.worldKind==="adaptation"?(verified?{title:clean(supplied.title,90),url:supplied.url,source:"Wikipedia",confidence:supplied.confidence,extract:clean(supplied.extract,input.phase===0?1250:650)}:await lookupCanon(input.world,input.mediaType)):null;
+const pinnedSource=input.worldKind==="adaptation"&&body?.verifiedSource?await selectedCanon(body.verifiedSource,body.verifiedSourceTitle,input.mediaType):null;
+ const canon=input.worldKind==="adaptation"?(verified?{title:clean(supplied.title,90),url:supplied.url,source:"Wikipedia",confidence:supplied.confidence,extract:clean(supplied.extract,input.phase===0?1250:650)}:pinnedSource||await lookupCanon(input.world,input.mediaType)):null;
  if(input.mode==="custom"&&input.worldKind==="adaptation"&&(!canon||!canon.url||canon.confidence==="unverified"))
   return reply(422,{error:"CANON_UNVERIFIED",message:"無法核實原作設定，為避免虛構人物及故事已暫停生成；請返回作品頁核實名稱、媒介。"});
 // Never reuse another game session or original premise as if it were the current story.
