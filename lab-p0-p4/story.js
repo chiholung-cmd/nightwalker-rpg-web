@@ -128,7 +128,7 @@ if(o.kind==="rest"){p.sta=Math.min(100,p.sta+18);events.push("你借著短暫的
 if(o.kind==="risk"||o.kind==="fight"){
 const danger=(m.world==="demon"?16:m.world==="busan"?10:5);
 const mitigation=(E.item(s.loadout.armor)?.def||0);
-const hurt=Math.max(0,danger-mitigation-(m.flags.includes("pattern")?3:0));
+const hurt=Math.max(0,danger-mitigation-(m.flags.includes("pattern")?3:0)-(st.shield||0));st.shield=0;
 p.hp=Math.max(0,p.hp-hurt);events.push("這個冒險決定讓你承受了 "+hurt+" 點傷害。");
 if(o.kind==="fight"){st.encounter=true;const damage=Math.max(2,(weapon?.dmg||3)+Math.floor(p.attrs.str/2));m.enemy.hp=Math.max(0,m.enemy.hp-damage);events.push("你逼退敵人，造成 "+damage+" 點傷害；但對方尚未失去威脅。")}
 }
@@ -155,9 +155,10 @@ hide:"你躲進較為安全的位置，終於有機會重新思考下一步。",
 rest:"你平緩了急促的呼吸。短暫的停頓並不丟人，很多時候正是活下去的關鍵。"
 }[o.kind]||"這個決定讓周圍的局勢出現了新的變化。";
 st.last=o.id;st.lastReply=REACTIONS[m.world]?.[o.id]||reply;st.notes.push({choice:original||o.label,kind:o.kind,reply,at:m.phase});
+for(const id in m.cooldowns)m.cooldowns[id]=Math.max(0,m.cooldowns[id]-1);
 m.turn++;m.phase++;
-m.roundEvents=[reply,...events.slice(-2)];m.log.push(reply,...events);
-const report={action:original||o.label,events:[reply,...events],delta:{hp:p.hp-before.hp,sta:p.sta-before.sta,mp:p.mp-before.mp,san:p.san-before.san,progress:m.progress-before.progress},kind:o.kind};
+m.roundEvents=[st.lastReply,...events.slice(-2)];m.log.push(st.lastReply,...events);
+const report={action:original||o.label,events:[st.lastReply,...events],delta:{hp:p.hp-before.hp,sta:p.sta-before.sta,mp:p.mp-before.mp,san:p.san-before.san,progress:m.progress-before.progress},kind:o.kind};
 m.history.push(report);
 if(m.phase>=6||p.hp<=0)E.end(s);
 return {error:null,report,finished:!!m.finished}
@@ -184,7 +185,7 @@ return apply(s,{id:"free-"+kind,label:val,hint:"自訂行動",kind,cost,progress
 function skills(s){const m=s.mission;if(!m)return [];let list=s.loadout.active;return list.map(id=>{let sk=E.skill(id),avail=E.availability(s,id);return {id,name:sk?.name||id,sta:sk?.sta||0,mp:sk?.mp||0,desc:sk?.desc||"",ok:avail.ok,reasons:avail.reasons}})}
 function useSkill(s,id){const sk=E.skill(id),check=E.availability(s,id);if(!check.ok)return {error:check.reasons.join("、")};let kind=sk?.power?"fight":sk?.effect==="reveal"?"observe":sk?.effect==="persuade"?"talk":sk?.effect==="heal"?"rest":"physical";
 const r=apply(s,{id:"skill-"+id,label:"施展「"+sk.name+"」",kind,cost:sk.sta||0,progress:sk.effect==="reveal"?2:sk.effect==="persuade"?2:sk.power?1:0,flag:"skill-"+id,reasons:[]}, "施展「"+sk.name+"」");
-if(!r.error){s.profile.mp=Math.max(0,s.profile.mp-(sk.mp||0));if(sk.effect==="heal")s.profile.hp=Math.min(100,s.profile.hp+22);if(sk.effect==="shield")s.profile.san=Math.min(100,s.profile.san+8);if(sk.cooldown&&s.mission&&!s.mission.finished)s.mission.cooldowns[id]=sk.cooldown+1;
+if(!r.error){s.profile.mp=Math.max(0,s.profile.mp-(sk.mp||0));if(sk.effect==="heal")s.profile.hp=Math.min(100,s.profile.hp+22);if(sk.effect==="shield"){s.profile.san=Math.min(100,s.profile.san+8);if(s.mission)s.mission.storyState.shield=14}if(sk.effect==="evade"&&s.mission)s.mission.storyState.shield=10;if(sk.cooldown&&s.mission&&!s.mission.finished)s.mission.cooldowns[id]=sk.cooldown+1;
 if(sk.power&&s.mission&&!s.mission.finished){const extra=Math.round(sk.power*.65);s.mission.enemy.hp=Math.max(0,s.mission.enemy.hp-extra);r.report.events.push("招式額外造成 "+extra+" 點傷害。");}}
 return r;
 }
