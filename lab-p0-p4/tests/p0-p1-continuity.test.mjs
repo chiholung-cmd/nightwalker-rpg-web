@@ -32,7 +32,7 @@ test("NPC patch is ignored if it belongs to a stale scene",()=>{
 });
 test("story bible stores only character states supported by written prose",()=>{
  const {s}=world(),B=bible();
- const scene={title:"錯位",blocks:[{type:"narration",text:"世娜站在醫院的走廊盡頭。她手中的紙條早已被汗水浸透。這次她沒有退後，反而走向那道打開的門，望著門後的男人遲遲不肯出聲。"}],
+ const scene={title:"錯位",blocks:[{type:"narration",text:"世娜站在醫院的走廊盡頭。她手中的紙條早已被汗水浸透。這次她沒有退後，反而走向那道打開的門，望著門後的男人遲遲不肯出聲。遠處的鐘聲敲響了三次，每次都比前一次更近。她記得自己答應過不能在門前說出任何人的真名。"}],
   continuity:{location:"醫院",characters:[{name:"世娜",location:"醫院",condition:"恢復正常",injury:"傷口已痊癒"}],rules:["主角突然獲得不死能力"]}};
  B.ingest(s,scene,2);
  const out=B.context(s);
@@ -45,7 +45,7 @@ test("ending audit checks fate of known characters before finale",()=>{
  const {s}=world(),B=bible();
  assert.deepEqual(Array.from(B.endingAudit(s).unclearCharacters),["世娜"]);
  s.mission.phase=26;
- const text="世娜終於離開車站，回到故鄉。這件事在三天前還是不可能的，她最終選擇將真相告訴僅存的親人，並為自己的選擇承擔所有後果。";
+ const text="世娜終於離開車站，回到故鄉。這件事在三天前還是不可能的，她最終選擇將真相告訴僅存的親人，並為自己的選擇承擔所有後果。長久以來困住她的傷痛沒有憑空消失，但離開這座車站已經是她親手作出的決定，旁人也終於明白了代價。";
  B.ingest(s,{title:"終章",blocks:[{type:"narration",text}],continuity:{characterFates:[{name:"世娜",outcome:"世娜終於離開車站，回到故鄉"}]}},26);
  assert.equal(B.endingAudit(s).unclearCharacters.length,0);
 });
