@@ -41,7 +41,7 @@ function ingest(s,scene,phase){
 }
 // A sidequest is a concrete goal, not a counter for unrelated action kinds.
 const genericPhrases=/主神|任務|支線|目標|完成|成功|獲得|取得|嘗試|設法|努力|需要|必須|想辦法|一個|一名|一些|周圍|附近|的|地|了|把|將|跟|與|對|去|中|在/g;
-const genericMatches=new Set(["行動","事件","現場","人物","世界","時間","這個","事情","進行","知道","線索","一切","情況","選擇","現在","其他","調查","尋找","發現","主角"]);
+const genericMatches=new Set(["行動","事件","現場","人物","世界","時間","這個","事情","進行","知道","線索","一切","情況","選擇","現在","其他","調查","尋找","發現","主角","敵人","所有","任何","隊友"]);
 const normalize=x=>simple(x).replace(/[^\p{Script=Han}a-zA-Z0-9]/gu,"").replace(genericPhrases,"").toLowerCase();
 function questEvidence(objective,choice){
  const target=normalize(objective),action=normalize(choice);
@@ -67,7 +67,7 @@ function onAction(s,action,report){
  const actionText=simple(report.action||action.label||action.hint),source=[actionText,action.hint||""].join(" ");
  for(const q of m.quests){
   if(q.status!=="active")continue;
-  const matched=questEvidence(q.objective+" "+q.title,source);
+  const matched=questEvidence(q.objective||q.title,source);
   // Two-character evidence needs to match the suggested action type; specific names/terms can cross categories.
   if(!matched||(matched.length<3&&q.trigger!==kind))continue;
   q.evidence ||= [];
@@ -84,7 +84,10 @@ function onAction(s,action,report){
  const name=npcTarget(m,action,report);
  if(name){
   const p=m.npcMemory[name],word=actionText+String(action.hint||"");
-  const delta=kind==="talk"?1:kind==="fight"?-2:kind==="risk"&&/救|護|保護|協助|援/ .test(word)?1:kind==="conceal"&&/騙|欺|誤導|陷害/.test(word)?-1:0;
+  const hostile=/騙|欺|威脅|強迫|誤導|陷害|出賣|羞辱/.test(word);
+  const supportive=/告知|分享|說出|坦白|安慰|合作|幫|救|支持|承諾|解釋|道歉|保護|求助|協助/.test(word);
+  const repeated=m.branchConsequences.some(e=>e.npc===name&&e.kind===kind&&e.action===actionText);
+  const delta=repeated?0:kind==="fight"?-2:hostile?-1:(kind==="talk"||kind==="risk")&&supportive?1:0;
   if(delta){
    const old=Number(p.trust)||0;
    p.trust=clamp(old+delta,-10,10);
