@@ -221,6 +221,7 @@ function prettyEffects(action){const parts=N.preview(action);return parts.length
 function missionUI(){
  const m=s.mission;
  if(m.finished)return resultUI();
+ if(temporary.lastChoiceScene!==aiSceneKey(m)){temporary.lastChoiceScene=aiSceneKey(m);temporary.choicesOpen=false;}
  const scene=N.get(s),novel=m.aiScenes?.[m.phase]||(m.director?null:window.NW_NOVEL?.scene(s))||{title:"世界構築中",mood:"system",blocks:[{type:"system",text:"主神正在續寫輪迴世界。本幕尚未生成，請等待或重試……"}]},w=m.world==="custom"?{name:m.worldName}:world(m.world);
  const choices=scene.actions.map((o,i)=>'<button class="narrative-choice" data-do="act:'+i+'" '+(o.usable?"":"disabled")+'><span class="choice-no">0'+(i+1)+'</span><span class="choice-main"><b>'+esc(o.label)+'</b>'+(o.hint?'<small>'+esc(o.hint)+'</small>':"")+prettyEffects(o)+(o.reasons.length?'<small class="blocked">'+esc(o.reasons.join("、"))+'</small>':"")+'</span></button>').join("");
  const blocks=novel?.blocks||[];
@@ -252,11 +253,13 @@ function missionUI(){
   const effects=freeReview.effects?.length?freeReview.effects.join(" · "):"無即時體力消耗";
   popups.push('<div class="mission-popup" role="dialog" aria-label="確認自由文字行動"><div class="card-heading">確認小說情節行動</div><p class="popup-note">主角將會：'+esc(freeReview.value)+'</p><p class="popup-note">判定：'+esc(freeReview.label)+' · '+esc(effects)+'</p><p class="popup-note">確認後，劇情同角色資源才會改變。</p><div class="free-confirm-actions">'+a("確認執行","freeConfirm","small main")+a("修改文字","freeCancel","small ghost")+'</div></div>');
  }
- return '<div class="mission-stage narrative-stage novel-first-stage">'+bar+
- '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[novel?.mode]||novel?.mode||"輪迴篇")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+a("檢查 AI","nav:settings","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
- toolbox+'<div class="fixed-choices story-choice-panel">'+notice+choices+
- '<div class="free-row"><input id="free-action" maxlength="180" placeholder="亦可自行決定下一步情節……" value="'+esc(temporary.freeDraft)+'" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("預覽行動","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
- '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"單人輪迴":m.mode==="team"?"協同任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
+ return '<div class="mission-stage narrative-stage novel-first-stage reading-focused">'+bar+
+ '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[novel?.mode]||novel?.mode||"輪迴篇")+'</div>'+prose+'<div class="read-end"><button data-do="toggleChoices">'+(temporary.choicesOpen?"收起行動，繼續閱讀":"已讀完本章 · 選擇下一步")+'</button></div></div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+a("檢查 AI","nav:settings","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
+ toolbox+
+ (temporary.choicesOpen?'<div class="fixed-choices story-choice-panel expanded">'+notice+choices+
+ '<div class="free-row"><input id="free-action" maxlength="180" placeholder="主角下一步打算點做？" value="'+esc(temporary.freeDraft)+'" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("預覽行動","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>':
+ '<div class="fixed-choices story-choice-panel collapsed"><button class="story-unfold" data-do="toggleChoices">讀完先揀 · 展開本章選擇 ↓</button></div>')+
+  '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"單人輪迴":m.mode==="team"?"協同任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
 }
 function resultUI(){
 const m=s.mission,g=m.result,report=m.reward;
@@ -412,6 +415,7 @@ if(cmd==="launch"){
 }
 if(cmd==="cycleSkill"){E.changeSkill(s,(s.mission?.chosenSkill||0)+1);render();return}
 if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);temporary.freeReview=null;temporary.freeDraft="";render();return}
+if(cmd==="toggleChoices"){temporary.choicesOpen=!temporary.choicesOpen;render();return}
 if(cmd==="free"){
  const value=R.querySelector("#free-action")?.value??temporary.freeDraft;
  temporary.freeDraft=value;
