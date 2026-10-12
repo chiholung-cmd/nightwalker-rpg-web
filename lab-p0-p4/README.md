@@ -57,3 +57,14 @@ The previous scene renderer produced disjointed RPG-flavored snippets: one mecha
 - World clues and party/rival assignment selectively affect passages. Existing saved missions resume from their stored chapter and flags.
 - The underlying engine still has a **six-scene narrative spine** per mission and free-text intent parser. Genuine open-ended AI-authored dialogue and large branching narrative memory will require an external LLM and server-side orchestration; do not imply they are implemented in this static release.
 - Player progression, HP/STA/MP/SAN full recovery at settlement, inventory, equipment/skills, warehouse and Supabase schema remain intact.
+
+## October 12 feature release: reset, upgrades, effects, AI bridge
+
+- A seven-category reinforcement system now drills down into subtypes and purchasable abilities. Skills and bloodlines have independent subfamilies; unequipped or unimplemented abilities are not falsely sold.
+- Paid text-specified world selection: known authored worlds cost 220 points, unknown worlds require enabled AI and cost 300 points plus 10 per character after the eighth. AI generation failures at the start of a custom world support full refunds before any action.
+- On first launch after this release, Nightwalker local state starts afresh at level 1, XP 0, 0 completed missions, with 1000 starting points, basic equipment and supplies. This is a one-time reset, not a reset on every refresh. Only known Nightwalker localStorage keys are cleared. No other project's data is touched.
+- Nightwalker cloud-save tables were empty (0 profiles, 0 game saves, 0 mission records) when checked, and the static game has not yet connected to cloud save sync.
+- Restored E+ text performances for eight emotional moods; a visible in-game E+ switch supports disabling and enabling animations. Motion preference is respected.
+- Added an AI endpoint at api/story.mjs that calls the Groq OpenAI-compatible Chat Completions endpoint, model openai/gpt-oss-20b. It needs a GROQ_API_KEY encrypted server environment variable in the Nightwalker Vercel project, which is not yet configured.
+- The AI must not override combat stats, equipment, skills, XP, mission scores or earned loot. The app retains existing authored story when API generation is not configured.
+- True server-side security, authenticated players, robust provider abuse protections and real multiplayer are still pending. Do not put API secrets in frontend HTML/JS.
