@@ -15,11 +15,11 @@ const wikiMedia={
 const normalizeWikiTitle=s=>String(s||"").normalize("NFKC").replace(/[\s《》『』「」:：—\-()（）·]/g,"").toLowerCase();
 function rateWikiPage(page,title,medium){
  const name=normalizeWikiTitle(page.title),target=normalizeWikiTitle(title);
- const base=normalizeWikiTitle(String(title).replace(/[（(][^）)]*[）)]/g,""));
+ const base=normalizeWikiTitle(String(title).replace(/[（(][^）)]*[）)]/g,"").replace(/(?:19|20)\d{2}/g,""));
  const titleScore=name===target?44:name.includes(target)&&target.length>=2?32:name.includes(base)&&base.length>=2?27:target.includes(name)&&name.length>=3?12:0;
  if(!titleScore)return -100;
  const kind=wikiMedia[medium]||wikiMedia["其他作品"];
- const intro=String(page.title||"")+" "+String(page.extract||"").slice(0,420);
+ const intro=String(page.title||"")+" "+String(page.extract||"").slice(0,220);
  const positive=kind.yes?kind.yes.test(intro):true;
  const negative=kind.no?kind.no.test(intro):false;
  const expectedYear=String(title).match(/(?:19|20)\d{2}/)?.[0];
