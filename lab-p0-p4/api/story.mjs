@@ -91,11 +91,45 @@ async function lookupCanon(name,medium){
  const unknown={title,url:"",source:"unverified",confidence:"unverified",mediaType:medium,extract:""};
  canonCache.set(key,unknown);return unknown;
 }
+
+function thirdPerson(text,protagonist){
+ const name=clean(protagonist,30)||"夜行者";
+ return String(text??"").split(/(「[^」]*」|“[^”]*”)/g).map((part,i)=>i%2?part:part.replace(/你們的/g,name+"一行人的").replace(/你們/g,name+"一行人").replace(/你的/g,name+"的").replace(/你/g,name)).join("");
+}
+function collectStoryBlocks(scene,protagonist){
+ const source=Array.isArray(scene?.blocks)?scene.blocks:[];
+ let blocks=source.map(x=>typeof x==="string"?{type:"narration",text:x}:x).filter(Boolean).flatMap(x=>{
+  const type=["dialogue","d","對白","对话"].includes(x.type)?"dialogue":"narration";
+  const raw=String(x.text??x.content??"").trim();
+  const paragraphs=type==="narration"?raw.split(/\n\s*\n/).filter(Boolean):[raw];
+  return paragraphs.map(text=>({type,speaker:clean(x.speaker,40),text:thirdPerson(clean(text,1400),protagonist)}));
+ });
+ if(!blocks.length){
+  const prose=clean(scene?.story??scene?.prose??scene?.narration??scene?.content??"",6000);
+  blocks=prose.split(/\n\s*\n/).filter(Boolean).slice(0,12).map(text=>({type:"narration",speaker:"",text:thirdPerson(clean(text,1400),protagonist)}));
+ }
+ return blocks.filter(b=>b.text.length>=2).slice(0,14);
+}
+function normalizeStoryOptions(scene,input){
+ const choices=Array.isArray(scene?.options)?scene.options:[];
+ const safe=choices.map(x=>typeof x==="string"?{label:x,kind:"observe"}:x).filter(x=>x&&clean(x.label,50).length>=2);
+ const known=(Array.isArray(input?.choices)?input.choices:[]).filter(x=>clean(x?.label,50).length>=2);
+ for(const x of known)if(safe.length<3&&!safe.some(y=>clean(y.label,50)===clean(x.label,50)))safe.push(x);
+ const speaker=clean((Array.isArray(scene?.blocks)?scene.blocks:[]).find(x=>x?.speaker)?.speaker,20);
+ const fallbacks=[
+  {label:speaker?"向"+speaker+"追問事情真相":"向現場的人追問剛才發生的異常",hint:"深入了解人物的動機",kind:"talk"},
+  {label:"細看現場的異常細節，尋找隱藏線索",hint:"尋找可以查證的證據",kind:"observe"},
+  {label:"暫時保留心中的疑問，觀察眾人的反應",hint:"不要暴露已掌握的情報",kind:"conceal"}
+ ];
+ for(const x of fallbacks)if(safe.length<3&&!safe.some(y=>y.label===x.label))safe.push(x);
+ return safe.slice(0,3).map((x,i)=>{const k=kinds.has(x.kind)?x.kind:"observe";return {id:"ai-"+i,label:clean(x.label,50),hint:clean(x.hint,60),kind:k,cost:["run","sneak","physical","risk","fight"].includes(k)?Math.max(0,Math.min(20,Number(x.cost)||8)):0,progress:Math.max(0,Math.min(2,Number(x.progress)||1)),flag:"ai-"+i}});
+}
 const recentResponses=new Map();
 let probeCache={at:0,value:null};
 const system=[
-"你是高水平無限流互動小說作者。繁體中文、內地網文書面語，避免廣東話、HUD、遊戲解說與冗長抒情。每幕約280至400中文字，至少5個 blocks（3段敘事＋1段人物對白），有實際事件、因果、張力和性格鮮明人物。",
-"返回單一JSON：title,mood,blocks:[{type:narration|dialogue,speaker?,text}],options:[{label,hint,kind,cost,progress}]恰好3個,missionArc,npcUpdates,facts,resolution,npcEvents,sideQuests。只返回JSON，不要代玩家選擇。",
+"以成熟中國網絡小說作家的筆法創作連載小說。繁體中文書面語，人物心理、場面調度、因果、衝突與對話要連貫自然。每幕約350至550中文字推進一個完整事件，分成3至6個自然段落。禁止任務報告、HUD、回合制戰報、列表式旁白。",
+"敘事只用第三人稱有限視角：主角姓名為 protagonist，主角的行動、心境、觀察使用其姓名或適當的他／她，嚴禁旁白『你看見』『你發現』『你走向』『你的心』『你決定』。角色對話可以正常使用『你』。主角要有自己的性格與內心掙扎，而不是玩家攝影機。",
+"僅返回合法 JSON：title,mood,blocks:[{type:narration|dialogue,speaker?,text}],options:[{label,hint,kind,cost,progress}]三個,resolution。missionArc,npcUpdates,facts,npcEvents,sideQuests可省略；勿輸出說明。場景與角色對話自然穿插，對話採用「」。",
 "options應包含合乎場面的不同策略（調查／對話／隱瞞／冒險），kind限talk/observe/conceal/sneak/run/hide/physical/risk/fight/rest；非體力行動cost=0，其餘cost<=20。",
 "世界規劃18至28次真實抉擇，前18次不得提前完結；NPC有獨立目的，會記住玩家抉擇，支線與主線互相影響。不可修改角色數值、物品、任務結算或主神規則。",
 "worldKind=adaptation：嚴格沿用媒介mediaType所指定作品的已核實設定、人物性格、歷史事件與時間線。以新角色介入，衍生支線可以分歧，但不可冒充官方劇情；不確定的情節不要亂編作正史。",
@@ -103,7 +137,7 @@ const system=[
 ].join("\n");
 function context(v){
 let limited=(a,n=8)=>Array.isArray(a)?a.slice(-n):[];
-return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history,5).map(x=>clean(x,105)),previousScenes:limited(v?.previousScenes,3).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,270)})),base:limited(v?.base,4).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,310)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,8).map(([name,x])=>({name:clean(name,40),trust:x?.trust||0,attitude:clean(x?.attitude,65),memory:clean(x?.memory,120)})):[],worldFacts:limited(v?.worldFacts,8).map(x=>clean(x,95)),worldHistory:limited(v?.worldHistory,3).map(x=>clean(x,100)),priorArc:limited(v?.priorArc,4).map(x=>clean(x,75)),sideQuests:limited(v?.sideQuests,5).map(q=>({title:clean(q?.title,60),objective:clean(q?.objective,90),status:clean(q?.status,18),progress:Number(q?.progress)||0})),npcAgency:limited(v?.npcAgency,4).map(x=>({name:clean(x?.name,38),event:clean(x?.event,130),intent:clean(x?.intent,100)})),branchConsequences:limited(v?.branchConsequences,4).map(x=>({npc:clean(x?.npc,35),kind:clean(x?.kind,20),trust:Number(x?.trust)||0})),state:v?.state||{}};
+return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),protagonist:clean(v?.protagonist,30)||"夜行者",world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history,5).map(x=>clean(x,105)),previousScenes:limited(v?.previousScenes,3).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,270)})),base:limited(v?.base,4).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,310)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,8).map(([name,x])=>({name:clean(name,40),trust:x?.trust||0,attitude:clean(x?.attitude,65),memory:clean(x?.memory,120)})):[],worldFacts:limited(v?.worldFacts,8).map(x=>clean(x,95)),worldHistory:limited(v?.worldHistory,3).map(x=>clean(x,100)),priorArc:limited(v?.priorArc,4).map(x=>clean(x,75)),sideQuests:limited(v?.sideQuests,5).map(q=>({title:clean(q?.title,60),objective:clean(q?.objective,90),status:clean(q?.status,18),progress:Number(q?.progress)||0})),npcAgency:limited(v?.npcAgency,4).map(x=>({name:clean(x?.name,38),event:clean(x?.event,130),intent:clean(x?.intent,100)})),branchConsequences:limited(v?.branchConsequences,4).map(x=>({npc:clean(x?.npc,35),kind:clean(x?.kind,20),trust:Number(x?.trust)||0})),state:v?.state||{}};
 }
 export default {
 async fetch(request){
@@ -161,7 +195,7 @@ input.canon=canon;
 const ctl=new AbortController();const timeout=setTimeout(()=>ctl.abort(),23500);
 let result=null,usedModel=MODEL;
 const endpoint="https://api.groq.com/openai/v1/chat/completions";
-const basePayload={temperature:0.65,max_completion_tokens:input.phase===0?1750:1550,response_format:{type:"json_object"},stream:false,messages:[{role:"system",content:system+"\n"+longStoryRules},{role:"user",content:JSON.stringify(input)}]};
+const basePayload={temperature:0.65,max_completion_tokens:input.phase===0?2050:1950,response_format:{type:"json_object"},stream:false,messages:[{role:"system",content:system+"\n"+longStoryRules},{role:"user",content:JSON.stringify(input)}]};
 async function invoke(model,simplified=false){
  const payload={...basePayload,model};
  if(model.startsWith("openai/gpt-oss")){payload.reasoning_effort="low";payload.include_reasoning=false}
@@ -205,10 +239,10 @@ if(!result.ok){
 let data;try{data=await result.json()}catch(e){return reply(502,{error:"INVALID_PROVIDER_RESPONSE"})}
 let raw=clean(data?.choices?.[0]?.message?.content,12000);const ticks=String.fromCharCode(96).repeat(3);if(raw.startsWith(ticks)){raw=raw.slice(raw.indexOf("\n")+1);if(raw.endsWith(ticks))raw=raw.slice(0,-3)}
 let scene;try{scene=JSON.parse(raw.trim())}catch(e){return reply(502,{error:"INVALID_AI_JSON",message:"模型回傳格式不正確，請重試目前一幕"})}
-const blocks=(Array.isArray(scene.blocks)?scene.blocks:[]).slice(0,12).map(x=>({type:x.type==="dialogue"?"dialogue":"narration",speaker:clean(x.speaker,40),text:clean(x.text,1300)}));
-if(blocks.length<5||blocks.filter(x=>x.type==="narration").length<3||!blocks.some(x=>x.type==="dialogue")||blocks.some(x=>x.text.length<4))return reply(502,{error:"SCENE_INCOMPLETE",message:"AI 生成內容不足，請重試目前一幕"});
-const opts=(Array.isArray(scene.options)?scene.options:[]).slice(0,3).map((x,i)=>{const k=kinds.has(x.kind)?x.kind:"observe";return {id:"ai-"+i,label:clean(x.label,50),hint:clean(x.hint,60),kind:k,cost:["run","sneak","physical","risk","fight"].includes(k)?Math.max(0,Math.min(20,Number(x.cost)||8)):0,progress:Math.max(0,Math.min(2,Number(x.progress)||1)),flag:"ai-"+i}});
-if(opts.length!==3||opts.some(x=>x.label.length<4))return reply(502,{error:"CHOICES_INCOMPLETE",message:"AI 選項不足三個，請重新生成"});
+const blocks=collectStoryBlocks(scene,input.protagonist);
+const narrativeLength=blocks.filter(x=>x.type==="narration").reduce((sum,x)=>sum+x.text.replace(/\s/g,"").length,0);
+if(blocks.length<2||narrativeLength<100)return reply(502,{error:"SCENE_INCOMPLETE",message:"模型只返回零碎內容，劇情已保留；可重新生成",detail:{blocks:blocks.length,narrativeLength,finishReason:data?.choices?.[0]?.finish_reason||""}});
+const opts=normalizeStoryOptions(scene,input);
 const quota=modelGates.get(usedModel)||{};
 const payload={quota:{remainingTokens:quota.remaining,resetSeconds:quota.reset},usage:{promptTokens:Number(data?.usage?.prompt_tokens)||0,completionTokens:Number(data?.usage?.completion_tokens)||0,totalTokens:Number(data?.usage?.total_tokens)||0},title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:usedModel,
 canon:canon&&{title:canon.title,url:canon.url,source:canon.source,confidence:canon.confidence,extract:canon.extract},
