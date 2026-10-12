@@ -68,3 +68,35 @@ test("legacy Nightwalker default protagonist is migrated safely, without wiping 
  assert.ok(src.includes('nameCustomized:false'));
  assert.ok(src.includes('function save(s,storage)'));
 });
+
+test("user-confirmed 2001 TV edition is pinned into the generated scene rather than overwritten by another adaptation",async()=>{
+ const previous=globalThis.fetch,key=process.env.GROQ_API_KEY;
+ process.env.GROQ_API_KEY="mock-not-a-real-key";
+ const selected="尋秦記 (電視劇)",url="https://zh.wikipedia.org/wiki/"+encodeURIComponent(selected.replace(/ /g,"_"));
+ let sourceFetched=false,modelCalled=0;
+ globalThis.fetch=async (u,opt)=>{
+  const target=String(u);
+  if(target.includes("wikipedia.org/w/api.php")){
+   sourceFetched=true;
+   return new Response(JSON.stringify({query:{pages:[{title:selected,extract:"《尋秦記》是2001年無線電視拍攝的香港古裝科幻電視劇，改編自黃易同名小說。由古天樂飾演項少龍，故事講述其穿越至戰國時代，並協助當時被扣留在趙國的秦國人物，在歷史與個人命運之間展開冒險。"}]}}),{status:200});
+  }
+  if(target.includes("groq.com/openai/v1/chat/completions")){
+   modelCalled++;
+   const fixture={title:"進入戰國",blocks:[{type:"narration",text:"林燁聽見城門外傳來密集的腳步聲。他看見遠方戰旗在風中獵獵作響，對這個陌生年代的恐懼終於有了形狀。掌心裡那枚現代製造的硬幣冰涼，提醒他並不屬於此地。遠處的軍士仍在盤問行人，他知道必須先弄清此刻身處哪座城池，再決定是否尋找項少龍。"}],options:[{label:"向路人詢問現況",kind:"talk"}],resolution:{readyToConclude:false}};
+   return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(fixture)}}]}),{status:200,headers:{"Content-Type":"application/json"}});
+  }
+  throw new Error("unexpected host:"+target);
+ };
+ try{
+  const req=new Request("https://test.invalid/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+   world:"尋秦記",task:"尋找回歸主神空間的線索",worldKind:"adaptation",mediaType:"劇集",mode:"custom",phase:0,protagonist:"林燁",sessionKey:"pinned-v1",verifiedSource:url,verifiedSourceTitle:selected
+  })});
+  const response=await api.fetch(req);
+  const data=await response.json();
+  assert.equal(response.status,200);
+  assert.equal(data.canon.title,selected);
+  assert.equal(data.canon.url,url);
+  assert.equal(modelCalled,1);
+  assert.equal(sourceFetched,true);
+ }finally{globalThis.fetch=previous;if(key===undefined)delete process.env.GROQ_API_KEY;else process.env.GROQ_API_KEY=key}
+});
