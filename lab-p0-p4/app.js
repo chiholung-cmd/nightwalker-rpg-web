@@ -12,7 +12,7 @@ const objId=id=>D.items.find(x=>x.id===id);
 const skill=id=>D.skills.find(x=>x.id===id);
 const world=id=>D.worlds.find(x=>x.id===id);
 const task=id=>D.tasks.find(x=>x.id===id);
-const playerName=()=>s.profile?.nameCustomized&&String(s.profile.name||"").trim()?String(s.profile.name).trim():"";
+const playerName=()=>String(s.profile?.name||"").trim()&&String(s.profile.name).trim()!=="夜行者"&&(s.profile.nameCustomized||!Object.prototype.hasOwnProperty.call(s.profile,"nameCustomized"))?String(s.profile.name).trim():(s.profile?.nameCustomized?String(s.profile.name||"").trim():"");
 const literaryName=()=>playerName()||"主角";
 const icon={hub:"◎",profile:"◈",warehouse:"▥",loadout:"⚒",upgrade:"✧",portal:"◌",memory:"▤",settings:"⚙"};
 function aiSceneKey(m){return m?.seed+"-"+m?.world+"-"+m?.phase}
