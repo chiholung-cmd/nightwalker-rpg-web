@@ -80,6 +80,31 @@ test("concealment without discovery does not magically reduce trust",()=>{
  assert.equal(s.mission.npcMemory.世娜.trust,2);
 });
 
+test("generic chat with a named person does not farm their trust",()=>{
+ const {W,s}=makeGame();
+ s.mission.npcMemory={世娜:{trust:0,lastSeen:2,memory:""}};
+ s.mission.phase=2;W.onAction(s,{kind:"talk",label:"向世娜閒談"},report("向世娜閒談"));
+ assert.equal(s.mission.npcMemory.世娜.trust,0);
+});
+
+test("the same supportive choice cannot repeatedly raise NPC trust",()=>{
+ const {W,s}=makeGame();
+ s.mission.npcMemory={世娜:{trust:0,lastSeen:1,memory:""}};
+ const action={kind:"talk",label:"向世娜說出重要情報"};
+ s.mission.phase=2;W.onAction(s,action,report(action.label));
+ s.mission.phase=3;W.onAction(s,action,report(action.label));
+ assert.equal(s.mission.npcMemory.世娜.trust,1);
+ assert.equal(s.mission.branchConsequences.length,1);
+});
+
+test("NPC autonomy does not invent repeated off-screen events",()=>{
+ const {W,s}=makeGame();
+ s.mission.npcMemory={世娜:{trust:0,lastSeen:1,goal:"尋找失蹤的母親",memory:""}};
+ s.mission.phase=2;W.onAction(s,{kind:"observe",label:"看一眼窗外"},report("看一眼窗外"));
+ s.mission.phase=3;W.onAction(s,{kind:"talk",label:"和車廂裡的人交流"},report("和車廂裡的人交流"));
+ assert.equal(s.mission.agencyEvents.length,0);
+});
+
 test("old saves missing evidence arrays still advance safely",()=>{
  const {W,s}=makeGame(),q=quest(s.mission);
  q.progress=1;delete q.evidence;
