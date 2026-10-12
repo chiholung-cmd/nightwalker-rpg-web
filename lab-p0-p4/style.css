@@ -348,3 +348,21 @@ animation:none!important;transition:none!important;
  .novel-first-stage .scene-prose,.novel-first-stage .scene-prose *{animation:none!important;transition:none!important}
  .novel-first-stage .scene-prose::before{display:none!important}
 }
+
+
+/* World transfer: separate licensed-media universes from player-authored originals */
+.world-kind-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:13px 0 13px}
+.world-kind-tabs button{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-width:0;min-height:69px;padding:11px 6px;border:1px solid #52677c;border-radius:9px;background:#14283b;color:#c3d5dd;font:700 14px/1.3 "Noto Serif TC",serif;cursor:pointer}
+.world-kind-tabs button small{font:400 10px/1.45 system-ui,sans-serif;color:#98b6c6;text-align:center}
+.world-kind-tabs button.selected{color:#f9e6bd;border-color:#d2af79;background:linear-gradient(115deg,#394453,#243748);box-shadow:inset 0 0 19px #dcb78213}
+.world-kind-tabs button.selected small{color:#e6d0b2}
+.world-form{min-width:0}
+.world-form p{font-size:12px;line-height:1.75;color:#c4d5dd;margin:8px 0}
+.world-mediums{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 14px}
+.world-mediums button{border:1px solid #577288;border-radius:15px;background:#172f42;color:#b8d0da;font:600 11px/1.45 system-ui,sans-serif;padding:7px 10px;cursor:pointer}
+.world-mediums button.selected{color:#f3e3c1;border-color:#c8aa7e;background:#344353}
+.world-input-label{display:block;font:600 11px/1.6 system-ui,sans-serif;color:#efdec3;margin:11px 0 3px}
+.world-premise-input{display:block;box-sizing:border-box;width:100%;min-height:108px;border-radius:9px;border:1px solid #688699;background:#142a3c;color:#f7f4f0;font:400 12px/1.7 "Noto Serif TC",serif;padding:11px 12px;resize:vertical}
+.world-premise-input::placeholder{color:#9aabb9}
+.world-premise-input:focus,.world-form .custom-world-input:focus{outline:1px solid #d1b27b;border-color:#d1b27b}
+@media(max-width:360px){.world-kind-tabs button{font-size:12px;min-height:63px}.world-mediums button{font-size:10px;padding:6px 8px}}
