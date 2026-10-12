@@ -16,7 +16,7 @@ for(const lang of ["zh","en"]){
  if(!result.ok)continue;
  const raw=await result.json();
  const normalize=s=>String(s||"").normalize("NFKC").replace(/[\s《》『』「」:：—\-]/g,"").toLowerCase();
- const pages=(raw.query?.pages||[]).filter(x=>x.extract?.length>180);
+ const pages=(raw.query?.pages||[]).filter(x=>x.extract?.length>80);
  pages.sort((a,b)=>{const score=x=>normalize(x.title)===normalize(title)?2:normalize(x.title).includes(normalize(title))?1:0;return score(b)-score(a)});
  const page=pages[0];
  if(page&&((normalize(page.title)===normalize(title))||normalize(page.title).includes(normalize(title)))){
