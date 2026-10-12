@@ -1,0 +1,141 @@
+(function(global){
+"use strict";
+const E=global.NW_ENGINE,D=global.NW_DATA;
+if(!E||!D)return;
+const W={
+busan:{opening:"車窗外掠過一排排灰白色的樓宇，列車的震動沿著椅背傳到你的肩上。乘客還在談笑，卻有一道不合時宜的低吼，從前方車廂的玻璃門後緩緩傳來。你抬起頭，望見一隻沾血的手掌貼在了門上。",npc:"世娜",voices:["「剛才那個人明明還能說話。」世娜抱緊背包，嗓音發顫，「現在為什麼會變成那個樣子？」","「拜託，先不要吵。」世娜努力平復呼吸，「車廂裡還有孩子，我們總得想一個辦法。」"],chapters:[
+{p:"門縫間傳來越來越密集的撞擊聲。你注意到地上的行李還在輕輕搖晃，而那名倒地的列車員，正以極不自然的姿勢重新站起。此刻或許還能阻止恐慌擴散。",options:[["watch","觀察列車員的眼睛與動作","在動手之前判斷感染徵兆","observe",0,1,"infected"],["comfort","安撫身旁的乘客","讓車廂暫時保持秩序","talk",0,1,"calm"],["rush","趁混亂向前方車廂奔去","可能耗費體力，進入持續奔跑","run",11,1,"route"]]},
+{p:"突然響起的金屬撞擊聲，讓玻璃門後幾個人影同時轉過頭。你本能地壓低了呼吸：那些失去理智的東西或許看不清你的位置，卻能準確追蹤聲音。",options:[["sound","利用掉落水瓶測試牠們的聽覺","可能發現感染者的行動弱點","observe",0,1,"sound"],["tell","低聲詢問世娜通往後車廂的道路","需要獲得她的信任","talk",0,1,"passage"],["block","將行李堆到搖晃的玻璃門前","需要體力，暫時阻隔危險","physical",9,1,"barrier"]]},
+{p:"廣播裡的女聲重複了一句『列車運行正常』。七秒後，同一句話又響了一遍，尾音卻多出一個你的輪迴者編號。你忽然明白，這個世界裡存在不屬於原本劇情的東西。",options:[["trace","記住第二段廣播的間隔與來源","調查可能存在的隱藏線索","observe",0,1,"anomaly"],["protect","護送幾名乘客離開危險的車門","可能延續奔跑造成的體力消耗","run",9,1,"saved"],["silence","拉著世娜躲進無人的服務間","降低暴露風險，中止追逐","hide",0,1,"hideout"]]},
+{p:"一名乘客指著別人衣袖上的血漬，聲稱對方已經感染。人群像被火星引燃的乾草，轉眼便劃分成互相戒備的兩邊。你看見一個孩子嚇得不敢哭出聲。",options:[["prove","冷靜查驗血漬來源，再向乘客解釋","嘗試以證據平息爭執","talk",0,1,"evidence"],["lead","組織大家一個接一個移向出口","需要維持隊伍秩序","physical",7,1,"evacuation"],["quiet","不參與爭辯，暗中觀察最可疑的人","可能掌握事件背後的異常","observe",0,1,"suspect"]]},
+{p:"終於，前方那道厚重的玻璃門發出碎裂的脆響。你聽見有人大喊著逃跑，卻看見另一個人在通道裡跌倒。可怕的是，感染者並沒有第一時間朝那個人撲去，而是追向身後響起的尖叫。",options:[["lure","拋出金屬物品，將感染者引往另一邊","需要掌握聲音線索","physical",8,2,"lured","sound"],["rescue","折回扶起跌倒的乘客","冒險救人，可能受傷","risk",9,1,"rescued"],["escape","抓住空檔沿著通道全速奔跑","消耗體力並延續追逐","run",14,1,"escaped"]]},
+{p:"列車開始減速，最後一道安全門就在十幾步外。身後的腳步聲卻絲毫沒有減少。你知道，現在做出的選擇，很可能決定自己將帶著怎樣的記憶離開這個世界。",options:[["leadexit","確認倖存者全部通過安全門","需要承擔最後一段風險","physical",8,1,"complete"],["cover","留下來掩護最後一名乘客","可能造成受傷，但能挽救別人","risk",8,1,"sacrifice"],["slip","趁所有人分神獨自穿過安全門","不需要消耗資源，但可能失去信任","talk",0,1,"alone"]]}]},
+demon:{opening:"夜色如水，山路上的泥土混著一絲血腥味。村莊盡頭亮著零星的燈火，沒有一個人敢走出屋門。你忽然聽見樹林深處傳來帶著笑意的低語，像有什麼東西正在享受獵物恐懼的氣味。",npc:"受傷村民",voices:["「鬼殺隊還沒來！」受傷的村民壓低聲音，「你們千萬別往樹林裡走……那東西，被砍傷了還能恢復！」","「山裡有條舊路。」老人顫抖著指向東面，「如果能把牠引到那裡，也許能拖到天亮。」"],chapters:[
+{p:"你看見村口的木欄被某種利爪撕開，碎屑間還有一段剛剛凝固的血跡。此刻夜色尚深，貿然與鬼正面衝突並不是唯一出路。",options:[["trace","檢查木欄上的爪痕與拖行印記","找出鬼出沒的路線","observe",0,1,"tracks"],["talk","向受傷村民詢問鬼的行動規律","需要仔細安撫對方","talk",0,1,"villager"],["stealth","借著樹影悄悄靠近林子","開始持續潛行，體力將逐步下降","sneak",5,1,"shadow"]]},
+{p:"林間忽然響起一聲嘶啞的笑。瘦長的身影沿著樹幹緩緩滑下，像是在故意向躲藏的人展示自己的獵食範圍。鬼並沒有立刻發動攻擊，而是在仔細嗅聞某種氣味。",options:[["watch","觀察鬼的肩部與攻擊預備動作","尋找不必正面交鋒的破綻","observe",0,1,"pattern"],["evac","引導村民從小路避開鬼的視線","需要一定體力，可能吸引注意","physical",8,1,"evac"],["bait","丟出碎石，引牠離開村口","有危險，但能改變敵人的位置","risk",7,1,"lure"]]},
+{p:"幾步之外，鬼的手臂像枯枝一樣彎折，隨後又在你面前恢復如初。你意識到，就算把牠打得骨斷筋折，也未必能真正結束這一切。遠處的天際仍然漆黑，距離黎明還有一段時間。",options:[["terrain","尋找通往朝陽方向的狹窄山道","利用環境而非直接拼命","observe",0,1,"sunpath"],["guardvill","與村民一起封住通往村莊的入口","持續用力，耗費體力","physical",10,1,"defence"],["challenge","趁鬼轉身時持武器迎上去","正式進入危險交戰，可能受傷","fight",14,1,"duel"]]},
+{p:"山風吹得樹葉沙沙作響。鬼像是忽然嗅到了什麼，將目光投向藏身的村民。你看見那雙眼睛裡沒有半分猶豫，只有準備撲殺的興奮。這一次，你必須決定是救人、引開牠，還是尋找致命時機。",options:[["protect","搶先引開鬼，護住村民撤退","高風險護送，可能受傷","risk",10,1,"protected"],["distract","從側面製造聲響，將鬼誘向山路","消耗體力並開始追逐","run",11,1,"lured"],["position","守在石壁旁等待牠露出破綻","觀察與位置優勢","observe",0,1,"opening"]]},
+{p:"夜色開始鬆動，遠處天空出現一絲極淡的灰白。鬼似乎也察覺到了什麼，動作變得越來越焦躁。你注意到牠總會避開山脊上的空曠地帶，似乎不願在那裡久留。",options:[["sun","把牠一步步誘向即將見光的山脊","利用已發現的道路線索","physical",9,2,"suntrap","sunpath"],["hold","留在村口維持最後一道防線","需要消耗體力","physical",12,1,"held"],["strike","瞄準關節，與鬼短暫交鋒","傷害鬼，亦會遭到反擊","fight",16,1,"strike"]]},
+{p:"東方升起第一線日光。鬼的動作突然遲疑，眼神第一次流露出焦慮。只要再拖延片刻，村民就能活下來；可牠已經察覺你的真正意圖，猛地向最後一片陰影撲去。",options:[["waitsun","利用位置守住道路直到日出","拖延時間，保住村莊","physical",9,2,"dawn"],["block","與鬼正面交鋒阻止牠逃進陰影","高風險戰鬥","fight",18,1,"final"],["save","先送受傷的村民走出危險地帶","救援他人，放棄直接追擊","risk",9,1,"rescued"]]}]},
+alice:{opening:"澀谷十字路口的紅燈剛剛亮起，街上卻一個人也沒有。廣告屏的色彩映在空蕩的柏油路上，像一場永遠不會散場的演出。你的手機忽然震動，顯示出一行冷冰冰的文字：請於規定時間內入場。",npc:"夏帆",voices:["「這裡根本不是正常的東京。」夏帆緊緊攥住自己的卡片，「剛才我還能聽見街上的人說話。」","「我不想靠猜的。」夏帆望向你，「如果把線索拼起來，或許大家都有機會走出去。」"],chapters:[
+{p:"入口處站著幾名陌生人。沒有人知道彼此的名字，卻都在盯著電子屏上的倒數時間。你留意到其中一人始終把手插在口袋裡，像是在藏著某件東西。",options:[["read","先看清入場告示與規則","獲取遊戲規則，不消耗資源","observe",0,1,"rules"],["ask","向夏帆了解剛才發生的事","建立資訊交換","talk",0,1,"introduced"],["follow","跟隨沉默的人進入側門","可能進入另一條路線","sneak",5,1,"side"]]},
+{p:"屋內的六名參加者各自收到一張不同的提示紙條。牆上有三道門，門牌下卻沒有任何可以辨認的指引。倒數器安靜地跳動著，讓每一秒都顯得格外漫長。",options:[["compare","觀察每張提示卡上重複的圖案","發現規則的共同點","observe",0,1,"symbols"],["share","主動公開自己的提示，邀請大家交換","信任可能增加，也可能遭到利用","talk",0,1,"share"],["withhold","暫時保留自己的卡片不說","降低曝光，但可能引起猜忌","conceal",0,0,"withhold"]]},
+{p:"一名男子突然拍案而起，說有人交出了假的提示。原本平靜的房間迅速分成兩派，幾名參加者甚至開始後退，生怕自己成為下一個被推向出口的人。",options:[["proof","請大家把卡片並排，逐一驗證","用證據處理猜疑","observe",0,1,"proof"],["mediate","站出來平息爭執，聽完所有人的說法","改善信任，但不保證獲得情報","talk",0,1,"peace"],["listen","先退後一步，聽誰最急於掩蓋細節","嘗試辨認撒謊的人","conceal",0,1,"liar"]]},
+{p:"其中一張卡片的角落留著不自然的折痕。你將幾張紙反過來，發現那些看似無關的數字，似乎能拼出一個完整的序列。可還差最後一塊，只有某個沉默的參加者沒有公開卡片。",options:[["reason","整理已公開的線索，推演正確出口","依靠觀察與邏輯","observe",0,1,"sequence"],["persuade","說服沉默的人交出最後一張卡片","透過對話取得資訊","talk",0,1,"lastcard"],["search","檢查出口門框是否藏著補充提示","有機會找到另一種解法","observe",0,1,"door"]]},
+{p:"倒數只剩最後一分鐘。三道門忽然同時亮起警示燈，所有參加者都下意識朝你望來。你清楚知道，即使找出答案，也未必能讓所有人願意相信。",options:[["choose","根據線索宣布自己認定的出口","可能左右眾人的命運","talk",0,2,"answer"],["guide","先帶人避開錯誤門口，維持秩序","小幅體力消耗","physical",7,1,"order"],["expose","指出故意混淆提示的人","揭露隱藏意圖","talk",0,1,"traitor"]]},
+{p:"最後的提示音響起。門後傳來機械鎖逐一解除的聲音，走廊裡卻依然一片寂靜。你望著其他參加者，突然明白這場遊戲真正考驗的不是誰算得最快，而是人在死亡面前究竟會不會相信別人。",options:[["all","盡力讓仍在場的所有人依次撤離","延續先前建立的合作","talk",0,1,"all"],["private","低聲與夏帆確認出口後先行離開","確保自己安全","talk",0,1,"pair"],["wait","留下來確認最後一人的情況","可能遭遇最後的風險","risk",6,1,"last"]]}]},
+deathnote:{opening:"東京夜雨沿著便利店的玻璃緩緩滑落。螢幕裡的新聞正在播報一宗離奇死亡，而你桌面上那封沒有郵戳的信件，早在十分鐘前就已寫好了死者姓名。你忽然意識到，這個世界最危險的武器或許不是刀槍。",npc:"匿名調查員",voices:["「先不要相信你手上的任何一份資料。」電話那頭傳來經過處理的聲音，「有人正故意讓調查者暴露身份。」","「如果你的推斷是對的，我們需要更多證據。」對方停頓了一下，「尤其是那些不願意公開姓名的人。」"],chapters:[
+{p:"信封裡的字跡工整得近乎機械。每一個姓名旁邊都列著死亡時間，最後一行卻只有空白。對面的玻璃映出一道人影，你不知道對方是普通路人，還是一直在等待你拆信的人。",options:[["date","核對新聞與信件的死亡時間","建立第一份可信證據","observe",0,1,"timeline"],["call","使用匿名電話聯絡調查員","試探對方的態度","talk",0,1,"contact"],["destroy","先撕下可能暴露自己身份的部分","隱藏資料來源","conceal",0,1,"safe"]]},
+{p:"街對面的黑色雨衣始終沒有移動。你從玻璃反光裡看見，那人似乎正留意手錶上的時間。你的直覺告訴你，這並非巧合。",options:[["copy","先留下匿名副本，再保存原件","避免證據完全遺失","observe",0,1,"backup"],["watch","從另一側出口觀察雨衣人的舉動","謹慎追蹤，需要維持潛行","sneak",5,1,"shadow"],["ask","詢問店員是否見過那個人","透過一般對話取得證言","talk",0,1,"witness"]]},
+{p:"沒有住戶的公寓裡，電腦螢幕突然亮了起來。第一行是一組陌生的編號，第二行卻精確寫出了你曾在另一個輪迴世界使用的代號。你感到某種無形的視線正落在自己背上。",options:[["system","查看檔案生成時間，確認是否來自主神","追查世界異常線索","observe",0,1,"system"],["leave","合上電腦，不在此處暴露更多資訊","減少暴露風險","conceal",0,1,"secret"],["probe","輸入假身份試探監視者反應","有精神壓力風險","risk",0,1,"probe"]]},
+{p:"匿名調查員終於帶來一份新的時間線。裡面幾個關鍵日期，恰好與你手上資料重合。對方卻希望交換所有參與者的真實姓名，你注意到其中有人在這時不自然地低下頭。",options:[["verify","逐項核對線索，才決定是否合作","確保證據可信","observe",0,1,"verify"],["share","只交換匿名資料，不提供任何真名","維持合作，同時保護身份","talk",0,1,"anonymous"],["mislead","提供一份不涉及真名的試探性假線索","或可識破監視者，但可能破壞信任","conceal",0,1,"bait"]]},
+{p:"公寓走廊裡的燈突然熄滅，口袋裡早已關機的手機微微震動。屏幕上顯示了一句不應該出現在這個世界的話：『輪迴者，你已經被發現。』你明白，在這裡繼續停留只會讓情況惡化。",options:[["secure","收起證據，沿安全通道離開","謹慎撤離，開始連續移動","run",9,1,"escape"],["hide","躲進無人辦公室，等待腳步聲離去","中止追蹤，保持匿名","hide",0,1,"hidden"],["callhelp","匿名聯絡可信人士，請對方接應","透過人脈解決危機","talk",0,1,"aid"]]},
+{p:"雨聲終於小了一些。你攤開最後一張資料卡，目光沿著那些被寫下的名字逐一移動。每一個名字都曾代表一個活生生的人，而這場調查還遠遠沒有結束。",options:[["submit","匿名交出已核實的證據","保護身份並推進主線","talk",0,1,"complete"],["archive","把原件藏在安全的位置，留下記錄","為未來的任務保留線索","conceal",0,1,"archive"],["release","將資料交給可靠的第三方保存","建立較長期的合作關係","talk",0,1,"shared"]]}]}
+};
+function ensure(m){if(!m.storyState)m.storyState={exertion:null,exposure:0,tension:0,last:null,notes:[],lastReply:"",flags:[],encounter:false};return m.storyState}
+function distinct(a){return Array.from(new Set(a))}
+function get(s){
+const m=s.mission;if(!m)return null;const st=ensure(m),data=W[m.world]||W.busan;let idx=Math.min(5,m.phase),section=data.chapters[idx];
+let opts=section.options.map(([id,label,hint,kind,cost,progress,flag,require])=>({id,label,hint,kind,cost,progress,flag,require,reasons:[]}));
+if(m.mode==="team"&&idx===2)opts[1]={id:"coordinate",label:"與隊友商量如何完成主神任務",hint:"共同推進目標，也許改變關係",kind:"talk",cost:0,progress:1,flag:"teamwork",reasons:[]};
+if(m.mode==="versus"&&idx===3)opts[1]={id:"rival",label:"與敵隊接觸，試探他們真正的目的",hint:"可以談判，也可能暴露意圖",kind:"talk",cost:0,progress:1,flag:"parley",reasons:[]};
+if(idx>=3&&s.profile.sta<15){opts[2]={id:"rest",label:"尋找掩護，稍作喘息並整理思路",hint:"結束持續奔跑／潛行，恢復少量體力",kind:"rest",cost:0,progress:0,flag:"breath",reasons:[]}}
+for(const o of opts){if(o.require&&!m.flags.includes(o.require)&&!st.flags.includes(o.require))o.reasons.push("仍未發現相關線索");if(o.kind==="run"||o.kind==="sneak"||o.kind==="physical"||o.kind==="fight"||o.kind==="risk")if(s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length}
+const active=!!st.encounter && (m.world==="demon"||m.world==="busan");
+return {world:data,section,actions:opts,exertion:st.exertion,active,phase:idx,storyState:st};
+}
+function excerpt(s){const m=s.mission,g=get(s);if(!g)return null;const st=g.storyState,data=g.world,idx=g.phase;const playerText=m.mode==="solo"?"這次只有你一名輪迴者被送入這個世界。四周的人物有他們自己的恐懼與打算，並不會因為你的出現就自然信任你。":m.mode==="team"?"主神安排的隊友跟在不遠處，但每個人都在用自己的方式判斷局勢。你可以向他們求助，也可以選擇獨自處理眼前的事。":"另一組輪迴者就在這個世界裡。你們未必非要正面交戰，但彼此的任務目標很可能互相衝突。";
+let story=idx===0?data.opening+"　"+g.section.p:g.section.p;
+let consequence=st.lastReply||"";
+let person=m.mode==="team"&&m.crew.length&&idx%3===2?m.crew[idx%m.crew.length].name:data.npc;
+let dialogue=m.mode==="team"&&m.crew.length&&idx%3===2?"「我能幫忙，但需要知道你的計畫。」那名隊友看著你，「我們之間的合作，不應該只是主神的一條命令。」":data.voices[idx%2];
+if(m.mode==="versus"&&idx===3&&m.rival){person=m.rival.name;dialogue="「你也在尋找同一個目標？」對方沒有立即拔出武器，反倒露出一絲意味不明的笑意，「看來我們還有談談的餘地。」"}
+let continuation=st.exertion==="run"?"你已經連續移動了一段距離，肺部開始傳來火辣辣的刺痛。倘若繼續保持速度，體力就會不斷流失。":st.exertion==="sneak"?"你仍在陰影間壓低身形移動，肌肉長時間繃緊。這樣可以避開許多目光，但不可能永遠不付出體力代價。":"";
+let prior=st.last&&idx>0?"上一個抉擇的影響尚未散去。"+consequence:"";
+return {title:idx===0?"傳送落點":idx===5?"抉擇前夜":"異變漸深",story,person,dialogue,mode:idx===0?playerText:"",continuation,prior,ending:idx===5?"不論主神會給出怎樣的評價，這個決定都會寫進你的輪迴記錄。":"此時仍有不止一條道路。你可以根據自己的情報和判斷行動，而不是每次都拔出武器。",mood:m.world==="demon"&&idx===3?"shock":m.world==="deathnote"&&idx===2?"eerie":idx===4?"suspense":idx===5?"resolve":"calm"}
+}
+function apply(s,action,original){
+const m=s.mission;if(!m||m.finished)return {error:"當前沒有正在進行的任務"};const st=ensure(m),o=action;
+if(o.reasons?.length)return {error:o.reasons.join("、")};
+const p=s.profile,weapon=E.item(s.loadout.weapon),before={hp:p.hp,sta:p.sta,mp:p.mp,san:p.san,progress:m.progress};let events=[],visible=o.kind==="run"||o.kind==="sneak"||o.kind==="physical"||o.kind==="risk"||o.kind==="fight";
+if(o.cost>0){p.sta=Math.max(0,p.sta-o.cost);events.push("你為這次行動付出了 "+o.cost+" 點體力。")}
+if(st.exertion&&(o.kind!=="rest"&&o.kind!=="hide")){
+const rate=st.exertion==="run"?5:3;let drain=Math.min(rate,p.sta);
+p.sta=Math.max(0,p.sta-drain);
+if(drain)events.push((st.exertion==="run"?"持續奔跑":"長時間潛行")+"令體力再下降 "+drain+" 點。");
+}
+if(o.kind==="rest"||o.kind==="hide"||o.kind==="talk"||o.kind==="observe"||o.kind==="conceal")st.exertion=null;
+if(o.kind==="run")st.exertion="run";
+if(o.kind==="sneak")st.exertion="sneak";
+if(o.kind==="rest"){p.sta=Math.min(100,p.sta+18);events.push("你借著短暫的安全空隙調整呼吸，恢復了部分體力。")}
+if(o.kind==="risk"||o.kind==="fight"){
+const danger=(m.world==="demon"?16:m.world==="busan"?10:5);
+const mitigation=(E.item(s.loadout.armor)?.def||0);
+const hurt=Math.max(0,danger-mitigation-(m.flags.includes("pattern")?3:0));
+p.hp=Math.max(0,p.hp-hurt);events.push("這個冒險決定讓你承受了 "+hurt+" 點傷害。");
+if(o.kind==="fight"){st.encounter=true;const damage=Math.max(2,(weapon?.dmg||3)+Math.floor(p.attrs.str/2));m.enemy.hp=Math.max(0,m.enemy.hp-damage);events.push("你逼退敵人，造成 "+damage+" 點傷害；但對方尚未失去威脅。")}
+}
+if(o.id==="coordinate"&&m.crew.length){const crew=m.crew[m.phase%m.crew.length];s.bonds[crew.id]=(s.bonds[crew.id]||0)+1;crew.bond++;events.push(crew.name+"理解了你的安排，開始更信任你的判斷。")}
+if(o.kind==="talk"&&m.mode==="team"&&m.crew.length&&["share","leadexit","all","protect"].includes(o.id)){const c=m.crew[0];s.bonds[c.id]=(s.bonds[c.id]||0)+1;}
+if(o.kind==="conceal")st.exposure=Math.max(0,st.exposure-1);
+if(o.id==="rush"||o.id==="challenge")st.tension++;
+if(o.flag){if(!m.flags.includes(o.flag))m.flags.push(o.flag);st.flags.push(o.flag)}
+m.progress+=o.progress||0;
+if(o.kind==="observe"&&s.profile.bloodline==="sight"&&!m.flags.includes("bloodsight")){m.progress++;m.flags.push("bloodsight");events.push("靈視血脈讓你察覺了普通人忽略的細節。")}
+if(o.id==="withhold"&&m.crew.length){st.exposure--;events.push("其他人沒有發現你保留了部分資訊。")}
+if(m.mode==="versus"&&m.rival&&m.phase>=2&&m.phase%2===0&&!["rival","mislead"].includes(o.id)){m.rival.progress++;events.push("敵對輪迴小隊也在暗中推進自己的計畫。")}
+if((o.flag==="pattern"||o.flag==="sound"||o.flag==="system")&&m.progress>=2&&!m.hidden){m.hidden=true;events.push("你發現了一條與主神隱藏目標相關的線索。")}
+let reply={
+talk:"你沒有急著動武，而是先讓對方把話說完。這次交流並非毫無收穫，對方的態度已經出現變化。",
+observe:"你從不起眼的細節裡拼出了一條新的線索。事件的輪廓比剛才清晰了一些。",
+conceal:"你把真正的想法藏了起來。至少此刻，還沒有人知道你打算做什麼。",
+run:"你抓住混亂的瞬間向前衝去，身後的聲音很快被拉開了一段距離。",
+sneak:"你收斂呼吸，沿著陰影慢慢移動，沒有立刻引起旁人的注意。",
+physical:"你用實際行動改變了眼前的局面，但事情並不因此變得簡單。",
+risk:"你成功做出了選擇，也真正承擔了它的代價。那些旁觀者看你的眼神已經不一樣。",
+fight:"武器撞擊的震動沿著手臂傳來。你逼迫敵人後退，卻清楚知道這不代表危機已經解除。",
+hide:"你躲進較為安全的位置，終於有機會重新思考下一步。",
+rest:"你平緩了急促的呼吸。短暫的停頓並不丟人，很多時候正是活下去的關鍵。"
+}[o.kind]||"這個決定讓周圍的局勢出現了新的變化。";
+st.last=o.id;st.lastReply=reply;st.notes.push({choice:original||o.label,kind:o.kind,reply,at:m.phase});
+m.turn++;m.phase++;
+m.roundEvents=[reply,...events.slice(-2)];m.log.push(reply,...events);
+const report={action:original||o.label,events:[reply,...events],delta:{hp:p.hp-before.hp,sta:p.sta-before.sta,mp:p.mp-before.mp,san:p.san-before.san,progress:m.progress-before.progress},kind:o.kind};
+m.history.push(report);
+if(m.phase>=6||p.hp<=0)E.end(s);
+return {error:null,report,finished:!!m.finished}
+}
+function choose(s,i){const g=get(s);if(!g)return {error:"尚未進入輪迴世界"};const a=g.actions[i];if(!a)return {error:"沒有這個選擇"};return apply(s,a)}
+function free(s,text){let val=String(text||"").trim();if(val.length<2)return {error:"請先輸入想採取的行動"};if(val.length>180)return {error:"請將行動縮短至180字以內"};const g=get(s);if(!g)return {error:"尚未進入輪迴世界"};
+const checks=[
+[/格擋|重擊|砍|斬|攻擊|射擊|拔刀|戰鬥/, "fight"],
+[/跑|衝|追|逃離|護送|趕往/, "run"],
+[/潛行|偷偷|尾隨|摸索|蹲下/, "sneak"],
+[/休息|喘息|停下|恢復體力/, "rest"],
+[/躲|藏匿|掩藏|閉嘴/, "hide"],
+[/查看|查驗|分析|搜尋|比對|觀察|推理|研究|調查/, "observe"],
+[/交談|聊天|安慰|說服|詢問|商量|請求|交換情報|談判/, "talk"],
+[/隱瞞|假裝|保密|銷毀|偽裝/, "conceal"],
+[/扶起|搬運|推開|守住|堵住|築起/, "physical"]
+];
+let kind=checks.find(([re])=>re.test(val))?.[1];
+if(!kind)return {error:"目前自由文字仍採用規則判定，請具體描述觀察、對話、隱瞞、潛行、移動或戰鬥；AI 生成劇情尚未連線。"};
+let cost={fight:15,run:10,sneak:5,physical:7,observe:0,talk:0,conceal:0,rest:0,hide:0}[kind];
+if(s.profile.sta<cost)return {error:"體力不足，無法完成這個動作"};
+return apply(s,{id:"free-"+kind,label:val,hint:"自訂行動",kind,cost,progress:kind==="fight"?1:kind==="rest"?0:1,flag:"free-"+kind,reasons:[]},val);
+}
+function skills(s){const m=s.mission;if(!m)return [];let list=s.loadout.active;return list.map(id=>{let sk=E.skill(id),avail=E.availability(s,id);return {id,name:sk?.name||id,sta:sk?.sta||0,mp:sk?.mp||0,desc:sk?.desc||"",ok:avail.ok,reasons:avail.reasons}})}
+function useSkill(s,id){const sk=E.skill(id),check=E.availability(s,id);if(!check.ok)return {error:check.reasons.join("、")};let kind=sk?.power?"fight":sk?.effect==="reveal"?"observe":sk?.effect==="persuade"?"talk":sk?.effect==="heal"?"rest":"physical";
+const r=apply(s,{id:"skill-"+id,label:"施展「"+sk.name+"」",kind,cost:sk.sta||0,progress:sk.effect==="reveal"?2:sk.effect==="persuade"?2:sk.power?1:0,flag:"skill-"+id,reasons:[]}, "施展「"+sk.name+"」");
+if(!r.error){s.profile.mp=Math.max(0,s.profile.mp-(sk.mp||0));if(sk.effect==="heal")s.profile.hp=Math.min(100,s.profile.hp+22);if(sk.effect==="shield")s.profile.san=Math.min(100,s.profile.san+8);if(sk.cooldown&&s.mission&&!s.mission.finished)s.mission.cooldowns[id]=sk.cooldown+1;
+if(sk.power&&s.mission&&!s.mission.finished){const extra=Math.round(sk.power*.65);s.mission.enemy.hp=Math.max(0,s.mission.enemy.hp-extra);r.report.events.push("招式額外造成 "+extra+" 點傷害。");}}
+return r;
+}
+function preview(a){const p=[];if(a.cost>0)p.push("STA −"+a.cost);
+if(a.kind==="run")p.push("後續奔跑每幕 STA −5");
+if(a.kind==="sneak")p.push("持續潛行每幕 STA −3");
+if(a.kind==="rest")p.push("STA +18");
+if(a.kind==="fight"||a.kind==="risk")p.push("可能受傷");
+return p}
+global.NW_STORY={get,excerpt,choose,free,skills,useSkill,preview,ensure};
+})(window);
