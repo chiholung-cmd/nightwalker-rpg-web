@@ -14,6 +14,7 @@ async function collection(){
  }catch(_){clientPromise=null;retryConnectionAt=now()+30000;return null}
 }
 export async function getSharedCooldown(model){
+ if(!process.env.MONGODB_URI)return 0;
  const id=modelId(model),cached=local.get(id)||0;
  if(cached>now())return cached;
  const col=await collection();
@@ -27,6 +28,7 @@ export async function getSharedCooldown(model){
  }catch(_){return cached}
 }
 export async function putSharedCooldown(model,until){
+ if(!process.env.MONGODB_URI)return false;
  const id=modelId(model),t=Math.min(now()+25*3600000,Math.max(now(),Number(until)||0));
  if(t<=now())return false;
  local.set(id,Math.max(local.get(id)||0,t));
