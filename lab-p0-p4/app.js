@@ -16,7 +16,7 @@ const icon={hub:"◎",profile:"◈",warehouse:"▥",loadout:"⚒",upgrade:"✧",
 function aiSceneKey(m){return m?.seed+"-"+m?.world+"-"+m?.phase}
 async function checkAiStatus(){
 if(temporary.aiChecked)return;
-try{const res=await fetch("/api/story",{cache:"no-store"});const info=await res.json();temporary.aiConfigured=!!(res.ok&&info.configured)}
+try{const res=await fetch("/api/story?probe=1",{cache:"no-store"});const info=await res.json();temporary.aiConfigured=!!(res.ok&&info.configured)}
 catch(e){temporary.aiConfigured=false}
 temporary.aiChecked=true;if(temporary.aiConfigured&&s.mission&&!s.mission.finished)s.mission.director=true;render()
 }
