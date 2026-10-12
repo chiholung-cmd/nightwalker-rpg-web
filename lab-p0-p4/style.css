@@ -194,3 +194,157 @@
 @keyframes griefFade{0%{opacity:0;filter:blur(3px)}100%{opacity:1;filter:none}}
 @keyframes resolveLight{0%{opacity:.2;text-shadow:0 0 25px #e3c893}100%{opacity:1;text-shadow:none}}
 @media(prefers-reduced-motion:reduce){.novel-first-stage *{animation:none!important}}
+
+
+/* E+ v2 — mood-directed, beat-synchronised visual-novel text theatre.
+   Does not alter choices, world state or scroll area geometry. */
+.novel-first-stage .scene-prose .novel-beat{position:relative;z-index:1;max-width:100%;transform-origin:50% 45%}
+.novel-first-stage .scene-prose .novel-beat .novel-dialogue{position:relative}
+.novel-first-stage .scene-prose .novel-beat .novel-dialogue b{display:inline-block;padding:3px 10px 4px 0;font-size:12px;letter-spacing:.35px;text-shadow:0 0 12px #e6d0a756}
+.novel-first-stage .scene-prose .novel-beat .novel-dialogue p{min-height:1.85em}
+.novel-first-stage .scene-prose .novel-beat .novel-dialogue{border-left-width:3px;border-image:linear-gradient(to bottom,#e7cf9e,#7ca1b5,transparent) 1}
+.novel-first-stage .scene-prose .novel-beat .novel-system{position:relative;overflow:hidden}
+.novel-first-stage .scene-prose .novel-system::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:#a4dbed8d;box-shadow:0 0 15px #95d8ea80;pointer-events:none}
+.novel-first-stage .scene-prose .novel-beat p.eplus-typing::after{content:"▍";display:inline;color:#f9d5a2;font-size:.86em;text-shadow:0 0 13px #f2d8b6;animation:fxCaret .55s steps(2,end) infinite}
+.novel-first-stage .scene-prose .novel-system.eplus-typing::after{content:"▋";color:#83dfe9;animation:fxCaret .6s steps(2,end) infinite}
+.novel-first-stage .scene-prose .eplus-skip{position:sticky;top:6px;z-index:9;float:right;font:600 11px/1.35 system-ui,sans-serif;background:#1e3448ed;border:1px solid #90a8b0;color:#e2edf2;padding:7px 11px;border-radius:20px;box-shadow:0 3px 12px #06131f9e;margin:-3px 0 10px 6px;cursor:pointer}
+.novel-first-stage .scene-prose .eplus-skip[hidden]{display:none!important}
+.novel-first-stage .scene-prose .eplus-skip:active{transform:scale(.97)}
+.novel-first-stage .scene-prose.fx-strong,.novel-first-stage .scene-prose.fx-standard{isolation:isolate}
+.novel-first-stage .scene-prose.fx-strong::before,.novel-first-stage .scene-prose.fx-standard::before{
+content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0
+}
+.novel-first-stage .scene-prose.fx-strong .novel-beat{
+animation:fxBeatStrong .78s cubic-bezier(.14,.9,.28,1) both;
+animation-delay:calc(var(--beat,0) * .19s);
+}
+.novel-first-stage .scene-prose.fx-standard .novel-beat{
+animation:fxBeatStandard .44s ease-out both;
+animation-delay:calc(var(--beat,0) * .08s)
+}
+.novel-first-stage .scene-prose.fx-strong .novel-beat .novel-dialogue{
+animation:fxDialogue .72s cubic-bezier(.14,1.1,.36,1) both;
+animation-delay:calc(var(--beat,0) * .19s + .16s);
+}
+.novel-first-stage .scene-prose.fx-strong .novel-beat .novel-dialogue b{animation:fxSpeaker .85s ease-out both;animation-delay:calc(var(--beat,0) * .19s + .28s)}
+.novel-first-stage .scene-prose.fx-strong .novel-system{
+animation:fxTerminalIn 1.1s steps(12,end) both;
+animation-delay:calc(var(--beat,0) * .13s);
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="calm"]{
+background:radial-gradient(ellipse at 55% 18%,#3f55675c,transparent 74%),#111c2a;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="suspense"]{
+background:radial-gradient(ellipse at 50% 42%,#3f48535b,transparent 65%),#0a1521;
+animation:fxVignette .8s ease both;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="suspense"] .novel-beat{
+animation-name:fxSuspenseBeat;animation-duration:1.25s;
+animation-delay:calc(var(--beat,0) * .24s)
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="suspense"]::before{
+background:radial-gradient(ellipse at 50% 35%,transparent 22%,#060c18ad 100%);
+animation:fxShadowBreath 2.8s ease-in-out 1 both;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="eerie"]{
+background:radial-gradient(ellipse at 36% 45%,#49345877,transparent 74%),#101421;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="eerie"]::before{
+background:repeating-linear-gradient(180deg,transparent 0px,transparent 7px,#b77be30d 8px,transparent 10px);
+animation:fxEerieScan 2.1s linear 1 both;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="eerie"] .scene-eyebrow{
+color:#ddbaf1;text-shadow:1px 0 #cc8dbe,-1px 0 #6ecce7;animation:fxEerieTitle .85s steps(2,end) 2;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="eerie"] .novel-beat:nth-of-type(3n+1){
+animation-name:fxEerieBeat;animation-duration:1.05s;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="shock"]{
+background:radial-gradient(ellipse at 45% 30%,#66333a70,transparent 73%),#1b101b;
+animation:fxImpactShake .57s cubic-bezier(.2,.7,.2,1) 1 both;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="shock"]::before{
+background:linear-gradient(135deg,#c54c6880,transparent 72%);
+animation:fxImpactFlash .85s ease-out 1 both;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="shock"] .novel-dialogue{
+border-color:#ff889f;background:linear-gradient(90deg,#672d425e,transparent);
+animation-name:fxShockVoice;animation-duration:.85s;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="shock"] .scene-eyebrow{
+color:#ffc6cb;text-shadow:0 0 19px #e3557999;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="anger"]{
+background:radial-gradient(ellipse at 30% 22%,#6b2b3a58,transparent 74%),#191421;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="anger"]::before{
+background:linear-gradient(90deg,#b03a4d40,transparent 62%);
+animation:fxAngerPulse 1.8s ease 1 both;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="anger"] .novel-beat .novel-dialogue{
+border-color:#f3a3a8;animation-name:fxAngerVoice;animation-duration:.65s;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="grief"]{
+background:radial-gradient(ellipse at 50% 16%,#465b7970,transparent 70%),#0e1827;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="grief"]::before{
+background:linear-gradient(180deg,#56738b33,transparent 65%);
+animation:fxGriefMist 2.3s ease 1 both;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="grief"] .novel-beat{
+animation-name:fxGriefBeat;animation-duration:2.15s;
+animation-delay:calc(var(--beat,0) * .23s);
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="resolve"]{
+background:radial-gradient(ellipse at 62% 18%,#816b3e47,transparent 73%),#18212a;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="resolve"]::before{
+background:linear-gradient(105deg,transparent 10%,#dbbd6455 52%,transparent 90%);
+animation:fxResolveShine 2.1s ease-out 1 both;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="resolve"] .scene-eyebrow{
+color:#f9ddab;text-shadow:0 0 17px #dbb77477
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="system"]{
+background:radial-gradient(ellipse at 50% 17%,#25546a67,transparent 72%),#0b1724;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="system"]::before{
+background:repeating-linear-gradient(0deg,transparent 0px,transparent 13px,#5fd1e620 14px,transparent 15px);
+animation:fxSystemGrid 1.85s steps(10,end) 1 both;
+}
+.novel-first-stage .scene-prose.fx-strong[data-mood="system"] .novel-system{
+border-color:#9cd5e6;color:#c2f3f1;box-shadow:0 0 26px #64c4d43c;
+}
+.novel-first-stage .scene-prose.fx-static,
+.novel-first-stage .scene-prose.fx-static *,
+.novel-first-stage .scene-prose.motion-off,
+.novel-first-stage .scene-prose.motion-off *{
+animation:none!important;transition:none!important;
+}
+.novel-first-stage .scene-prose.fx-static::before,
+.novel-first-stage .scene-prose.motion-off::before{display:none!important}
+@keyframes fxCaret{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes fxBeatStrong{0%{opacity:0;filter:blur(5px);transform:translateY(19px) scale(.993)}64%{opacity:1;filter:blur(0);transform:translateY(-1px)}100%{opacity:1;filter:none;transform:none}}
+@keyframes fxBeatStandard{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
+@keyframes fxDialogue{0%{opacity:0;transform:translateX(-17px);filter:blur(3px)}68%{opacity:1;filter:none;transform:translateX(2px)}100%{opacity:1;transform:none}}
+@keyframes fxSpeaker{0%{opacity:0;letter-spacing:2px;text-shadow:0 0 23px #edc989}100%{opacity:1;letter-spacing:.35px;text-shadow:0 0 12px #e6d0a756}}
+@keyframes fxTerminalIn{0%{opacity:0;clip-path:inset(0 100% 0 0);filter:brightness(2)}60%{opacity:1;clip-path:inset(0 17% 0 0)}100%{opacity:1;clip-path:inset(0);filter:none}}
+@keyframes fxSuspenseBeat{0%{opacity:0;filter:blur(5px);transform:translateY(8px)}65%{opacity:.85;filter:blur(1px)}100%{opacity:1;filter:none;transform:none}}
+@keyframes fxVignette{0%{filter:brightness(.43)}100%{filter:brightness(1)}}
+@keyframes fxShadowBreath{0%{opacity:.85;transform:scale(.94)}50%{opacity:.42;transform:scale(1)}100%{opacity:0;transform:scale(1.02)}}
+@keyframes fxEerieScan{0%{opacity:0;transform:translateY(-6%)}30%{opacity:.8}100%{opacity:0;transform:translateY(5%)}}
+@keyframes fxEerieTitle{0%,50%{transform:translateX(0)}22%{transform:translateX(-2px)}27%{transform:translateX(2px)}68%{transform:translateX(1px)}80%,100%{transform:none;text-shadow:none}}
+@keyframes fxEerieBeat{0%{opacity:0;transform:translateX(-4px);filter:blur(5px)}48%{opacity:.68;transform:translateX(2px)}100%{opacity:1;filter:none;transform:none}}
+@keyframes fxImpactShake{0%,100%{transform:none}9%{transform:translateX(-6px)}18%{transform:translateX(5px)}30%{transform:translateX(-4px)}45%{transform:translateX(3px)}63%{transform:translateX(-2px)}80%{transform:translateX(1px)}}
+@keyframes fxImpactFlash{0%{opacity:.9}35%{opacity:.5}100%{opacity:0}}
+@keyframes fxShockVoice{0%{opacity:0;transform:scale(1.045)}54%{opacity:1;transform:scale(.996)}100%{opacity:1;transform:none}}
+@keyframes fxAngerPulse{0%{opacity:0}25%{opacity:.75}100%{opacity:0}}
+@keyframes fxAngerVoice{0%{opacity:0;transform:translateX(-20px)}65%{opacity:1;transform:translateX(3px)}100%{transform:translateX(0)}}
+@keyframes fxGriefMist{0%{opacity:.68}100%{opacity:0}}
+@keyframes fxGriefBeat{0%{opacity:0;transform:translateY(9px);filter:blur(4px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes fxResolveShine{0%{opacity:0;transform:translateX(-25%)}50%{opacity:.55}100%{opacity:0;transform:translateX(24%)}}
+@keyframes fxSystemGrid{0%{opacity:0;transform:translateY(-5%)}25%{opacity:.64}100%{opacity:0;transform:translateY(7%)}}
+@media(prefers-reduced-motion:reduce){
+ .novel-first-stage .scene-prose,.novel-first-stage .scene-prose *{animation:none!important;transition:none!important}
+ .novel-first-stage .scene-prose::before{display:none!important}
+}
