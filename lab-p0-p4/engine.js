@@ -20,7 +20,7 @@ try{if(st.getItem(RESET_MARK)!=="1"){
   ["nightwalker_p0p4_integrated_v1",OLD,"nightwalker_p0p4_fresh_v2_20261012"].forEach(k=>{if(st.removeItem)st.removeItem(k)});
   st.setItem(RESET_MARK,"1");
 }}catch(_){}
-let raw;try{raw=st.getItem(KEY)}catch(_){}if(raw){try{let a=JSON.parse(raw);if(a&&a.version===1&&a.profile&&a.loadout){if(!a.profile.nameCustomized&&a.profile.name==="夜行者")a.profile.name="";if(!a.mission)restoreAllResources(a);return a}}catch(_){}}let s=defaultState();
+let raw;try{raw=st.getItem(KEY)}catch(_){}if(raw){try{let a=JSON.parse(raw);if(a&&a.version===1&&a.profile&&a.loadout){if(!a.profile.nameCustomized&&a.profile.name==="夜行者")a.profile.name="";else if(!a.profile.nameCustomized&&String(a.profile.name||"").trim())a.profile.nameCustomized=true;if(!a.mission)restoreAllResources(a);return a}}catch(_){}}let s=defaultState();
 if(!s.mission)restoreAllResources(s);return s}
 function save(s,storage){try{(storage||global.localStorage).setItem(KEY,JSON.stringify(s))}catch(_){}}
 function restoreAllResources(s){
