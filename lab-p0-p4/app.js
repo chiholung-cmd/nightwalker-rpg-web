@@ -168,7 +168,8 @@ function missionUI(){
  const choices=scene.actions.map((o,i)=>'<button class="narrative-choice" data-do="act:'+i+'" '+(o.usable?"":"disabled")+'><span class="choice-no">0'+(i+1)+'</span><span class="choice-main"><b>'+esc(o.label)+'</b>'+(o.hint?'<small>'+esc(o.hint)+'</small>':"")+prettyEffects(o)+(o.reasons.length?'<small class="blocked">'+esc(o.reasons.join("、"))+'</small>':"")+'</span></button>').join("");
  const blocks=novel?.blocks||[];
  const prose=blocks.map((b,i)=>{
-  const begin='<div class="novel-beat" style="--beat:'+Math.min(i,10)+'" data-beat="'+i+'">';
+  const effect=i<8&&/（警告|警告|危險|主神提示|任務更新|警報）/.test(b.text||"")?"fx-alert":i<8&&/（死亡|斷氣|死了|失去呼吸|倒在血泊）/.test(b.text||"")?"fx-death":i<8&&/（真相|終於明白|我明白了|關鍵線索|原來如此）/.test(b.text||"")?"fx-reveal":"";
+  const begin='<div class="novel-beat '+effect+'" style="--beat:'+Math.min(i,10)+'" data-beat="'+i+'">';
   if(b.type==="dialogue")return begin+'<div class="novel-dialogue" data-voice="'+i+'"><b>'+esc(b.speaker)+'</b><p>'+esc(b.text)+'</p></div></div>';
   if(b.type==="system")return begin+'<div class="novel-system">'+esc(b.text)+'</div></div>';
   return begin+(b.text||"").split(/\n\n/).filter(Boolean).map(p=>'<p class="'+(b.consequence?"novel-choice-consequence":"")+'">'+esc(p)+'</p>').join("")+'</div>';
