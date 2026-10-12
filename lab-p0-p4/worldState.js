@@ -95,11 +95,7 @@ function onAction(s,action,report){
   }
  }
  m.branchConsequences=m.branchConsequences.slice(-35);
- for(const [name,npc] of Object.entries(m.npcMemory||{}).slice(0,8)){
-  if(!npc.goal||npc.lastSeen===phase)continue;
-  const evt={phase,name,event:"正依照自己的目的繼續行動："+simple(npc.goal).slice(0,75),intent:simple(npc.goal)};
-  if(!m.agencyEvents.some(e=>e.phase===phase&&e.name===name))m.agencyEvents.push(evt);
- }
+ // Autonomous NPC events must come from actual generated world events, not repeat the same goal each turn.
  m.agencyEvents=m.agencyEvents.slice(-30);
 }
 function ability(s,action,events){
