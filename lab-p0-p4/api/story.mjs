@@ -57,8 +57,15 @@ if(!process.env.GROQ_API_KEY)return reply(503,{configured:false,model:MODEL,stat
 if(probeCache.value&&Date.now()-probeCache.at<180000)return reply(probeCache.value.ok?200:503,{...probeCache.value,cached:true});
 try{
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),12000);
- let provider;try{provider=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+process.env.GROQ_API_KEY,"Content-Type":"application/json"},signal:ctrl.signal,body:JSON.stringify({model:MODEL,messages:[{role:"user",content:"Reply only OK"}],max_completion_tokens:24,temperature:0})})}finally{clearTimeout(timer)}
- const result={ok:provider.ok,configured:true,model:MODEL,status:provider.ok?"connected":provider.status===401?"unauthorized":provider.status===404?"model_not_found":provider.status===429?"provider_rate_limit":provider.status===400?"bad_request":"provider_"+provider.status,message:provider.ok?"Groq 模型已通過真實連線測試":"Groq 連線失敗，HTTP "+provider.status};
+ let provider,probeModel=MODEL;
+try{
+ for(const candidate of Array.from(new Set([MODEL,"openai/gpt-oss-120b"]))){
+    probeModel=candidate;
+    provider=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+process.env.GROQ_API_KEY,"Content-Type":"application/json"},signal:ctrl.signal,body:JSON.stringify({model:candidate,messages:[{role:"user",content:"Reply only OK"}],max_completion_tokens:24})});
+    if(provider.ok||![404,429].includes(provider.status))break;
+ }
+}finally{clearTimeout(timer)}
+ const result={ok:provider.ok,configured:provider.ok,model:probeModel,status:provider.ok?"connected":provider.status===401?"unauthorized":provider.status===404?"model_not_found":provider.status===429?"provider_rate_limit":provider.status===400?"bad_request":"provider_"+provider.status,message:provider.ok?"Groq 模型已通過真實連線測試":"Groq 連線失敗，HTTP "+provider.status};
  probeCache={at:Date.now(),value:result};return reply(provider.ok?200:503,result)
 }catch(e){return reply(503,{ok:false,configured:true,model:MODEL,status:"network_or_timeout",message:"Groq 無法在12秒內回應；請稍後再試"})}
 }
