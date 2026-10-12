@@ -32,6 +32,61 @@ deathnote:{opening:"東京夜雨沿著便利店的玻璃緩緩滑落。螢幕裡
 {p:"公寓走廊裡的燈突然熄滅，口袋裡早已關機的手機微微震動。屏幕上顯示了一句不應該出現在這個世界的話：『輪迴者，你已經被發現。』你明白，在這裡繼續停留只會讓情況惡化。",options:[["secure","收起證據，沿安全通道離開","謹慎撤離，開始連續移動","run",9,1,"escape"],["hide","躲進無人辦公室，等待腳步聲離去","中止追蹤，保持匿名","hide",0,1,"hidden"],["callhelp","匿名聯絡可信人士，請對方接應","透過人脈解決危機","talk",0,1,"aid"]]},
 {p:"雨聲終於小了一些。你攤開最後一張資料卡，目光沿著那些被寫下的名字逐一移動。每一個名字都曾代表一個活生生的人，而這場調查還遠遠沒有結束。",options:[["submit","匿名交出已核實的證據","保護身份並推進主線","talk",0,1,"complete"],["archive","把原件藏在安全的位置，留下記錄","為未來的任務保留線索","conceal",0,1,"archive"],["release","將資料交給可靠的第三方保存","建立較長期的合作關係","talk",0,1,"shared"]]}]}
 };
+
+const REACTIONS={
+busan:{
+watch:"你比其他乘客更早察覺那名列車員的瞳孔已經失去焦點。危險並非突然降臨，而是一直藏在人們不願面對的細節裡。",
+comfort:"世娜終於停下顫抖，開始幫忙照顧身邊的孩子。人群並未完全平靜，卻不再只顧著互相推擠。",
+rush:"你成功穿過擁擠的通道，卻在急促的奔跑中消耗了不少體力。身後有人驚叫著呼喚，聲音被車輪的轟鳴吞沒。",
+sound:"瓶子落地的一瞬間，幾個感染者幾乎同時轉頭。你終於掌握了可以用來活下去的規則。",
+block:"堆起來的行李擋住了一次撞擊，玻璃卻仍在震動。這道防線不是永久的，卻替乘客爭取了寶貴的時間。",
+trace:"兩次廣播竟然相差整整七秒。這個數字似乎與主神印記上的異常閃爍同步，你把它牢牢記在心裡。",
+silence:"服務間的門被輕輕帶上，外頭的腳步聲漸漸遠去。世娜看了你一眼，第一次沒有急著說話。",
+prove:"你把血跡的來源說清楚後，叫嚷的人群終於安靜片刻。有人低下頭，似乎因剛才的指責感到羞愧。",
+lure:"金屬物件在遠處撞出清脆的聲響，感染者果然改變了方向。你知道自己不是靠運氣賭對了。",
+cover:"你留在最後一扇門前。那一刻，世娜的目光落在你身上，像是終於明白有人會為陌生人承擔風險。"
+},
+demon:{
+trace:"爪痕的深淺證明那東西經常走同一條路。這並不是毫無規律的野獸，只要足夠耐心，總能找到牠的習慣。",
+talk:"老人告訴你一個看似無關緊要的細節：鬼總在日出前回到杉樹後方的山洞。你立刻記住了那個方向。",
+stealth:"你將身影藏進濕冷的杉木陰影裡。每走一步都必須繃緊肌肉，這種謹慎會慢慢奪走你的體力。",
+watch:"你發現鬼每次撲擊前右肩都會先沉下半寸。這個幾乎微不可見的動作，可能救下你的性命。",
+bait:"碎石在另一頭的樹根上彈了兩下。鬼果然偏過頭，露出藏在樹影裡那條狹窄的道路。",
+terrain:"沿著山道向東走，樹木逐漸稀疏。你看見一道即將接住第一縷晨光的山脊。",
+challenge:"你終於和鬼正面碰上。鐵器擊中的瞬間並不代表勝利，那道裂開的傷口竟然又慢慢癒合。",
+sun:"你沒有追逐鬼的身影，而是提前堵住了通往陰影的退路。山脊另一端，日光正一點一點升起。",
+waitsun:"你強迫自己留在原地，沒有被鬼的嘶吼逼得失去理智。最重要的一擊，或許根本不需要由你完成。"
+},
+alice:{
+read:"你把入場告示上的規則逐字看完，發現其中一條措辭與其他說明不同。看似普通的細節，或許正是破解遊戲的入口。",
+share:"當你主動放下卡片，夏帆猶豫了一下，也把自己的提示放到桌上。信任並非憑空出現，而是從有人先伸出手開始。",
+withhold:"你沒有公開全部資訊，卻明顯感覺到旁人看向你的目光變得戒備。這份沉默正在產生代價。",
+proof:"被指責的人終於有機會解釋。你讓所有卡片並排之後，幾處看似矛盾的地方反倒能互相印證。",
+mediate:"原本打算動手的男子慢慢放下拳頭。夏帆鬆了一口氣，卻仍然緊盯著牆上的倒數器。",
+listen:"你沒有插話，因此聽出了某個人的說辭先後不一。這種破綻比任何大聲指責都更有價值。",
+reason:"重複的圖案連成了一個合理的序列。你終於意識到，遊戲真正要求的不是猜出門牌，而是確認誰願意分享最後一條線索。",
+choose:"當你說出自己的判斷，整個房間安靜了片刻。人們終究要決定是否將命運交到你的推理上。"
+},
+deathnote:{
+date:"死亡時間與新聞的細節一一吻合。你得到的不是答案，而是一份尚可用來繼續追查的可信起點。",
+call:"對方並沒有立即回答你的問題，只要求你不要透露姓名。這種謹慎，至少證明他理解這個世界真正的危險。",
+destroy:"你抹去了可能暴露身份的痕跡，卻同時失去了一部分可供核對的原始線索。保密往往也有代價。",
+copy:"你用另一種方式保存了原始信件的內容。哪怕原件不幸遺失，也不至於令整條證據鏈就此中斷。",
+watch:"你保持距離，尾隨那名雨衣人穿過街角。對方似乎沒有察覺，但你的腳步必須始終控制在極輕的程度。",
+system:"畫面中的檔案建立時間比你進入這個世界還早。你第一次認真懷疑，有某個存在能預知輪迴者的到來。",
+leave:"你沒有輸入任何資料，悄悄合上電腦。至少在這個瞬間，你成功守住了自己的真實身份。",
+verify:"時間線中幾個不易察覺的矛盾被你找了出來。那些細小差異，足以證明調查員手上的資料不是全部。",
+share:"你只交換匿名情報。對方雖然沒有得到真名，卻願意繼續合作，這讓後續調查多了一條道路。",
+secure:"你把文件藏進衣內，離開那條傳來腳步聲的走廊。雨夜仍然危險，但你的身份暫時沒有暴露。"
+}
+};
+const BRANCHES={
+busan:[["sound",4,"先前那個金屬水瓶讓你明白，感染者更依賴聲音。如今通道裡有人跌倒，你忽然想到，也許不必正面與牠們搏命。"],["evacuation",5,"先前組織的撤離隊伍仍在維持秩序，有人看見你後立刻讓開一條通道。"]],
+demon:[["pattern",3,"你還記得那道微不可見的右肩預備動作。當鬼再次伏低身形時，你已經知道牠接下來要做甚麼。"],["sunpath",4,"你先前找到的東面山路就在不遠處。日光仍未完全出現，但那裡確實比村口更適合封住鬼的退路。"]],
+alice:[["share",3,"先前有幾個人因你主動交換情報而放下戒心。當最後一張卡片遲遲沒有出現時，他們開始願意替你說話。"],["liar",4,"你已經從那個參加者的話語裡聽出了矛盾。他此刻越是催促眾人選門，你便越覺得其中有問題。"]],
+deathnote:[["backup",3,"你保存的匿名副本仍然完好。對方要求交出所有資料時，你知道自己至少還握著一條退路。"],["anonymous",4,"你此前堅持不透露姓名，因此電話那頭的人始終無法確認你的身份。這份謹慎此刻開始顯出價值。"]]
+};
+
 function ensure(m){if(!m.storyState)m.storyState={exertion:null,exposure:0,tension:0,last:null,notes:[],lastReply:"",flags:[],encounter:false};return m.storyState}
 function distinct(a){return Array.from(new Set(a))}
 function get(s){
@@ -46,6 +101,8 @@ return {world:data,section,actions:opts,exertion:st.exertion,active,phase:idx,st
 }
 function excerpt(s){const m=s.mission,g=get(s);if(!g)return null;const st=g.storyState,data=g.world,idx=g.phase;const playerText=m.mode==="solo"?"這次只有你一名輪迴者被送入這個世界。四周的人物有他們自己的恐懼與打算，並不會因為你的出現就自然信任你。":m.mode==="team"?"主神安排的隊友跟在不遠處，但每個人都在用自己的方式判斷局勢。你可以向他們求助，也可以選擇獨自處理眼前的事。":"另一組輪迴者就在這個世界裡。你們未必非要正面交戰，但彼此的任務目標很可能互相衝突。";
 let story=idx===0?data.opening+"　"+g.section.p:g.section.p;
+const branch=(BRANCHES[m.world]||[]).filter(([flag,phase])=>phase===idx&&m.flags.includes(flag)).map(x=>x[2]).join("\n\n");
+if(branch)story+="\n\n"+branch;
 let consequence=st.lastReply||"";
 let person=m.mode==="team"&&m.crew.length&&idx%3===2?m.crew[idx%m.crew.length].name:data.npc;
 let dialogue=m.mode==="team"&&m.crew.length&&idx%3===2?"「我能幫忙，但需要知道你的計畫。」那名隊友看著你，「我們之間的合作，不應該只是主神的一條命令。」":data.voices[idx%2];
@@ -97,7 +154,7 @@ fight:"武器撞擊的震動沿著手臂傳來。你逼迫敵人後退，卻清�
 hide:"你躲進較為安全的位置，終於有機會重新思考下一步。",
 rest:"你平緩了急促的呼吸。短暫的停頓並不丟人，很多時候正是活下去的關鍵。"
 }[o.kind]||"這個決定讓周圍的局勢出現了新的變化。";
-st.last=o.id;st.lastReply=reply;st.notes.push({choice:original||o.label,kind:o.kind,reply,at:m.phase});
+st.last=o.id;st.lastReply=REACTIONS[m.world]?.[o.id]||reply;st.notes.push({choice:original||o.label,kind:o.kind,reply,at:m.phase});
 m.turn++;m.phase++;
 m.roundEvents=[reply,...events.slice(-2)];m.log.push(reply,...events);
 const report={action:original||o.label,events:[reply,...events],delta:{hp:p.hp-before.hp,sta:p.sta-before.sta,mp:p.mp-before.mp,san:p.san-before.san,progress:m.progress-before.progress},kind:o.kind};
