@@ -74,3 +74,66 @@
 .narrative-stage .story-footer{flex-basis:33px}
 .narrative-stage .free-row{flex-basis:35px}
 }
+
+
+/* HOTFIX 2026-10-12: the reward claim control must remain accessible even on
+   short phone viewports or when text/translation increases content height. */
+.mission-result-screen{
+  flex:1;display:flex;flex-direction:column;
+  min-height:0;height:100%;width:100%;overflow:hidden;
+  background:radial-gradient(circle at 50% 15%,#3a5064,#142637 55%,#0c1828 100%);
+}
+.mission-result-scroll{
+  flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+  scrollbar-width:thin;scrollbar-color:#7693a6 transparent;
+  padding:24px 16px 28px;
+}
+.mission-result-content{
+  width:100%;max-width:470px;margin:0 auto;text-align:center;
+  display:flex;flex-direction:column;align-items:stretch;gap:13px;
+}
+.mission-result-content .eyebrow{margin-top:5px}
+.mission-result-content .rank{
+  font:700 clamp(72px,16vw,96px)/1 Georgia,serif;
+  color:#eed3a0;padding-top:3px;
+  text-shadow:0 5px 24px #f1c46f28;
+}
+.mission-result-content h1{
+  font:700 clamp(22px,5vw,28px)/1.45 "Noto Serif TC",serif;
+  color:#f3eee5;margin:0;
+}
+.mission-result-content>p{
+  font:400 13px/1.7 "Noto Serif TC",serif;color:#bfcfd9;margin:1px 0 4px;
+}
+.mission-result-content .result-panel{text-align:center;margin-top:4px}
+.mission-result-content .result-panel .piece{padding:10px 0}
+.mission-result-content .result-panel .piece>div{min-width:0;flex:1}
+.mission-result-content .result-quote{
+  white-space:normal;line-height:1.8;margin:3px 0;
+}
+.mission-result-content .card{width:100%;margin:3px 0 0}
+.mission-result-content .card-body{text-align:left;line-height:1.85}
+.mission-result-actions{
+  position:relative;z-index:2;flex:0 0 auto;width:100%;
+  padding:11px 16px max(15px,env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,#1d3448,#112234);
+  border-top:1px solid #77909f;box-shadow:0 -12px 35px #0b1723bb;
+}
+.mission-result-actions>p{
+  text-align:center;font:500 10px/1.5 system-ui,sans-serif;
+  color:#b3c8d1;margin:0 0 7px;
+}
+.mission-result-actions .btn{
+  width:100%;min-height:52px;margin:0;display:flex;
+  align-items:center;justify-content:center;font-size:14px;
+  border:1px solid #e4c895;border-radius:9px;
+}
+@media(max-height:700px){
+  .mission-result-scroll{padding:12px 13px 20px}
+  .mission-result-content{gap:9px}
+  .mission-result-content .rank{font-size:70px}
+  .mission-result-content .result-panel .piece{padding:7px 0}
+  .mission-result-actions{padding-top:8px;padding-bottom:max(11px,env(safe-area-inset-bottom))}
+  .mission-result-actions .btn{min-height:49px}
+}
