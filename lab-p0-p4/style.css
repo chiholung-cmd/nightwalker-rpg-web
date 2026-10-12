@@ -143,3 +143,54 @@
 .novel-first-stage .novel-choice-consequence{color:#ddcfb6!important;padding-left:10px;border-left:2px solid #a89271;margin-bottom:20px!important}
 .novel-first-stage .scene-prose{scroll-behavior:smooth}
 @media(max-height:700px){.novel-first-stage .novel-system{margin:8px 0 12px;padding:8px 10px;font-size:11px}}
+
+
+/* REINFORCEMENT: navigable category -> branch -> item, not a flat list */
+.upgrade-category{display:flex;justify-content:space-between;align-items:center;gap:15px;min-height:69px;width:100%;padding:14px;background:linear-gradient(115deg,#1b3549,#172b3d);border:1px solid #587589;border-radius:9px;color:#f2f1ec;text-align:left}
+.upgrade-category b{font-size:14px;display:block}
+.upgrade-category small{display:block;font:400 10px/1.6 system-ui,sans-serif;color:#b0c9d6;margin-top:6px}
+.upgrade-category span{font-size:23px;color:#e8cea0}
+.upgrade-breadcrumb{padding:7px 12px;display:flex;align-items:center;gap:9px;color:#b9cbd6;font-size:11px;min-height:37px}
+.upgrade-breadcrumb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.negative-note{color:#f0b3c0;font-size:11px;line-height:1.65}
+.custom-world-input{width:100%;padding:11px 12px;border-radius:8px;border:1px solid #688699;background:#142a3c;color:#f7f4f0;font:400 13px system-ui,sans-serif;margin:10px 0 5px}
+.custom-world-input::placeholder{color:#869fab}
+.ai-state{flex:0 0 auto;min-height:36px;display:flex;align-items:center;gap:5px;justify-content:space-between;flex-wrap:wrap;padding:6px 10px;background:#263f51;color:#eed5a2;font-size:11px;border-bottom:1px solid #567081}
+
+/* E+ Emotional cinematic effects: text-first, no scene illustrations */
+.novel-first-stage .scene-prose{position:relative}
+.novel-first-stage .scene-prose>p{animation:novelEnter .65s cubic-bezier(.2,.75,.35,1) both}
+.novel-first-stage .scene-prose>p:nth-of-type(2){animation-delay:.10s}
+.novel-first-stage .scene-prose>p:nth-of-type(3){animation-delay:.21s}
+.novel-first-stage .scene-prose>p:nth-of-type(4){animation-delay:.34s}
+.novel-first-stage .scene-prose>p:nth-of-type(5){animation-delay:.46s}
+.novel-first-stage .scene-prose .novel-dialogue{animation:dialogueRise 1.15s cubic-bezier(.2,.9,.25,1) both;animation-delay:.25s}
+.novel-first-stage .scene-prose .novel-dialogue p{animation:spokenReveal 1.35s ease-out both;animation-delay:.35s}
+.novel-first-stage .novel-system{animation:systemBoot .95s steps(9,end) both;box-shadow:0 0 18px #8faac019;letter-spacing:.4px}
+.novel-first-stage .scene-prose[data-mood="suspense"]>p{animation:tenseFade 1.65s ease-out both}
+.novel-first-stage .scene-prose[data-mood="suspense"]>p:nth-of-type(3){animation-delay:.35s}
+.novel-first-stage .scene-prose[data-mood="shock"]{animation:sceneShock .45s ease-in-out both;box-shadow:inset 0 0 85px #d53f594d}
+.novel-first-stage .scene-prose[data-mood="shock"] .novel-dialogue{border-left-color:#eaa5b6;animation:shockText .7s cubic-bezier(.2,1,.45,1) both}
+.novel-first-stage .scene-prose[data-mood="shock"]>p:first-of-type{color:#fff0ee}
+.novel-first-stage .scene-prose[data-mood="eerie"]{background:radial-gradient(ellipse at 38% 55%,#3e2e5269,transparent 75%),#151827}
+.novel-first-stage .scene-prose[data-mood="eerie"] .scene-eyebrow{animation:glitchPulse 2.3s steps(2,end) both;color:#dec9e8}
+.novel-first-stage .scene-prose[data-mood="anger"] .novel-dialogue{background:linear-gradient(90deg,#7138486b,transparent);border-color:#e3a0a7;animation:angerPush .7s both}
+.novel-first-stage .scene-prose[data-mood="anger"] .novel-dialogue p{color:#f9d5d4}
+.novel-first-stage .scene-prose[data-mood="grief"]>p{animation:griefFade 2.8s ease both;color:#d5dae4}
+.novel-first-stage .scene-prose[data-mood="grief"] .novel-dialogue{animation:griefFade 3s ease both}
+.novel-first-stage .scene-prose[data-mood="resolve"] .scene-eyebrow{color:#efdfbc;animation:resolveLight 1.75s ease both}
+.novel-first-stage .scene-prose[data-mood="resolve"]>p:last-of-type{color:#f3dfbb}
+.novel-first-stage .scene-prose[data-mood="system"] .novel-system{animation:systemBoot 1.4s steps(9,end) both;border-color:#8db5c4;color:#baedf0}
+.novel-first-stage .scene-prose.motion-off *{animation:none!important;transition:none!important}
+@keyframes novelEnter{0%{opacity:0;transform:translateY(7px);filter:blur(2px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes dialogueRise{0%{opacity:0;transform:translateY(11px)}100%{opacity:1;transform:none}}
+@keyframes spokenReveal{0%{opacity:0;clip-path:inset(0 100% 0 0)}100%{opacity:1;clip-path:inset(0 0 0 0)}}
+@keyframes systemBoot{0%{opacity:0;clip-path:inset(0 100% 0 0);filter:brightness(2.5)}80%{opacity:1;clip-path:inset(0 4% 0 0)}100%{opacity:1;clip-path:inset(0);filter:brightness(1)}}
+@keyframes tenseFade{0%{opacity:0;filter:blur(4px);letter-spacing:2px}100%{opacity:1;filter:none;letter-spacing:normal}}
+@keyframes sceneShock{15%{transform:translateX(-4px)}30%{transform:translateX(4px)}50%{transform:translateX(-2px)}75%{transform:translateX(2px)}100%{transform:none}}
+@keyframes shockText{0%{opacity:0;transform:scale(1.07)}100%{opacity:1;transform:scale(1)}}
+@keyframes glitchPulse{0%{opacity:0;text-shadow:2px 0 #a86ea3}45%{opacity:.5;text-shadow:-2px 0 #80c3d3}75%{opacity:1;text-shadow:none}100%{opacity:1}}
+@keyframes angerPush{0%{opacity:0;transform:translateX(-14px)}60%{opacity:1;transform:translateX(3px)}100%{transform:none}}
+@keyframes griefFade{0%{opacity:0;filter:blur(3px)}100%{opacity:1;filter:none}}
+@keyframes resolveLight{0%{opacity:.2;text-shadow:0 0 25px #e3c893}100%{opacity:1;text-shadow:none}}
+@media(prefers-reduced-motion:reduce){.novel-first-stage *{animation:none!important}}
