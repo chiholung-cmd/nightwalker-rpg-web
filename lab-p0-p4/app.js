@@ -80,11 +80,12 @@ s.worldLibrary[wkey]=saved;
  }
 }catch(e){if(s.mission===m&&m.phase===phase){
  const limited=e.httpStatus===429||e.code==="GROQ_RATE_LIMIT";
- const delay=limited?Math.max(3,Math.ceil(e.retryAfter||30)):e.code==="AI_TIMEOUT"?6:0;
+ const incomplete=["SCENE_INCOMPLETE","INVALID_AI_JSON","CHOICES_INCOMPLETE"].includes(e.code);
+ const delay=limited?Math.max(3,Math.ceil(e.retryAfter||30)):incomplete?9:e.code==="AI_TIMEOUT"?6:0;
  temporary.aiDelayUntil=delay?Date.now()+delay*1000:0;
  temporary.aiError=String(e.message||e).slice(0,135)+(delay?"（"+delay+"秒後可再試）":"");
  temporary.aiFailedKey=key;
- if(delay&&delay<=120&&temporary.aiAutoAttempts<2){
+ if(delay&&delay<=120&&temporary.aiAutoAttempts<(incomplete?1:2)){
   temporary.aiAutoAttempts++;
   clearTimeout(temporary.aiRetryTimer);
   temporary.aiRetryTimer=setTimeout(()=>{
