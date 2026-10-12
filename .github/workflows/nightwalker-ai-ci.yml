@@ -24,5 +24,6 @@ jobs:
           node --check lab-p0-p4/api/story.mjs
           node --check lab-p0-p4/story.js
           node --check lab-p0-p4/engine.js
+          node --check lab-p0-p4/worldState.js
       - name: Groq free-tier mocks and regression tests
-        run: node --test lab-p0-p4/tests/ai-rate-limit.test.mjs
+        run: node --test lab-p0-p4/tests/*.test.mjs
