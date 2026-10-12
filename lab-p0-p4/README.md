@@ -31,3 +31,17 @@ After mission resolution, accepting the reward immediately restores **HP 100/100
 ## Dedicated Supabase project and security
 
 The separate **Nightwalker RPG** project is provisioned in Singapore with five RLS-enabled tables: `nw_profiles`, `nw_game_saves`, `nw_mission_records`, `nw_character_relationships`, and `nw_party_rooms`. It is completely separate from other apps' databases. Policies grant authenticated players access only to their own records, and party rooms are presently owner-only. The static browser app still uses localStorage until player authentication and a server-authoritative save sync are implemented. Do not embed service-role credentials in the frontend. Creating a database does not activate live online multiplayer.
+
+## Narrative-first revision (2026-10-12)
+
+The in-world experience is now an interactive **Traditional-Chinese infinite-flow novel**, not a three-button combat RPG:
+
+- Each chapter displays immersive narrative prose and a character dialogue panel, with exactly **three contextual narrative choices and a fourth free-text action** below the text on the same mobile screen.
+- Combat is **not** a default option. Investigation, conversation, cooperation, withholding information, moral decisions, escape and stealth are authored by world and chapter. The first scene in **all four worlds** begins without compulsory combat choices. An optional combat encounter can be initiated when dramatically appropriate.
+- **No automatic STA/SP/HP deduction for ordinary dialogue, observation or choice navigation.** Numerical consequence chips appear only for physical actions, prolonged running, stealth, attack, rest or risky actions.
+- Sustained running burns 5 STA on subsequent physical scenes; stealth burns 3 STA per subsequent physical scene. Conversation, hiding, slowing to observe, and taking a rest end exertion without charging an arbitrary dialogue tax. Rest can recover 18 STA.
+- HP/STA/MP/SAN remain visible in a separate **Status** panel, not as a constant combat HUD. Weapon/equipment and optional skills remain in contextual menus.
+- Author-specific responses and discovered clues persist through the task and inform later paragraphs. NPC cast follows the assigned world and mission mode; the same companion is not forced into every world.
+- Skills are optional, and their requirements, cooldowns and MP costs are enforced by the engine. Inventory use no longer automatically advances story chapters or generates fictitious combat damage while in a safe narrative scene.
+- **Free text is still handled by deterministic intent parsing; real generative story AI is not yet connected.** Online player-to-player cooperation and cloud saves remain separate unfinished integrations.
+- Previous full automatic HP/STA/MP/SAN recovery at mission settlement remains unchanged, as do the warehouse, battle inventory, gear requirements and Supabase RLS schema.
