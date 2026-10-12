@@ -53,7 +53,7 @@ if(temporary.aiPending)return;
 if(!force&&temporary.aiFailedKey===key)return;
 temporary.aiPending=true;temporary.aiKey=key;temporary.aiError="";render();
 const known=window.NW_NOVEL?.scene(s);
-const scene=N.get(s);const body={sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,90)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
+const scene=N.get(s);const body={protagonist:String(s.profile?.name||"夜行者").slice(0,30),sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,90)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
 try{
  const res=await fetch("/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
  const obj=await res.json();if(!res.ok){const error=new Error(obj.message||obj.error||"AI 劇情暫時無法載入");error.code=obj.error||"";error.httpStatus=res.status;error.retryAfter=Number(obj.retryAfter)||0;throw error}
@@ -61,7 +61,7 @@ try{
  if(s.mission===m&&m.phase===phase&&!m.finished){
  temporary.aiDelayUntil=0;clearTimeout(temporary.aiRetryTimer);temporary.aiRetryTimer=0;temporary.aiUsage={model:obj.model||"",...(obj.usage||{}),remainingTokens:obj.quota?.remainingTokens??null};s.aiLastUsage={...temporary.aiUsage,at:Date.now()};
  m.aiScenes ||= {};m.aiOptions ||= {};
- m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:m.mode,resolution:obj.resolution||{readyToConclude:false}};if(Array.isArray(obj.options)&&obj.options.length===3)m.aiOptions[phase]=obj.options;if(Array.isArray(obj.missionArc)&&obj.missionArc.length>=3)m.missionArc||=obj.missionArc.slice(0,4);
+ m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[m.mode]||"輪迴篇"),resolution:obj.resolution||{readyToConclude:false}};if(Array.isArray(obj.options)&&obj.options.length===3)m.aiOptions[phase]=obj.options;if(Array.isArray(obj.missionArc)&&obj.missionArc.length>=3)m.missionArc||=obj.missionArc.slice(0,4);
 window.NW_WORLD?.ingest?.(s,obj,phase);
 m.npcMemory ||= {};
 for(const upd of obj.npcUpdates||[]){if(!upd.name||!upd.memory)continue;
@@ -80,11 +80,12 @@ s.worldLibrary[wkey]=saved;
  }
 }catch(e){if(s.mission===m&&m.phase===phase){
  const limited=e.httpStatus===429||e.code==="GROQ_RATE_LIMIT";
- const delay=limited?Math.max(3,Math.ceil(e.retryAfter||30)):e.code==="AI_TIMEOUT"?6:0;
+ const incomplete=["SCENE_INCOMPLETE","INVALID_AI_JSON","CHOICES_INCOMPLETE"].includes(e.code);
+ const delay=limited?Math.max(3,Math.ceil(e.retryAfter||30)):incomplete?9:e.code==="AI_TIMEOUT"?6:0;
  temporary.aiDelayUntil=delay?Date.now()+delay*1000:0;
  temporary.aiError=String(e.message||e).slice(0,135)+(delay?"（"+delay+"秒後可再試）":"");
  temporary.aiFailedKey=key;
- if(delay&&delay<=120&&temporary.aiAutoAttempts<2){
+ if(delay&&delay<=120&&temporary.aiAutoAttempts<(incomplete?1:2)){
   temporary.aiAutoAttempts++;
   clearTimeout(temporary.aiRetryTimer);
   temporary.aiRetryTimer=setTimeout(()=>{
@@ -203,6 +204,12 @@ if(s.settings.reducedMotion)return "off";
 const mode=s.settings.eplusMode;
 return mode==="standard"||mode==="off"||mode==="strong"?mode:"strong"
 }
+// Render archived AI scenes and authored offline scenes with the same third-person voice.
+function literaryProse(value){
+ const name=String(s.profile?.name||"夜行者").trim().slice(0,30)||"夜行者";
+ return String(value||"").split(/(「[^」]*」|“[^”]*”|《[^》]*》|『[^』]*』)/g)
+  .map((part,i)=>i%2?part:part.replace(/你們的/g,name+"一行人的").replace(/你們/g,name+"一行人").replace(/你的/g,name+"的").replace(/你/g,name)).join("");
+}
 function prettyEffects(action){const parts=N.preview(action);return parts.length?'<div class="story-costs">'+parts.map(x=>'<span>'+esc(x)+'</span>').join("")+'</div>':""}
 
 function missionUI(){
@@ -216,15 +223,15 @@ function missionUI(){
   const begin='<div class="novel-beat '+effect+'" style="--beat:'+Math.min(i,10)+'" data-beat="'+i+'">';
   if(b.type==="dialogue")return begin+'<div class="novel-dialogue" data-voice="'+i+'"><b>'+esc(b.speaker)+'</b><p>'+esc(b.text)+'</p></div></div>';
   if(b.type==="system")return begin+'<div class="novel-system">'+esc(b.text)+'</div></div>';
-  return begin+(b.text||"").split(/\n\n/).filter(Boolean).map(p=>'<p class="'+(b.consequence?"novel-choice-consequence":"")+'">'+esc(p)+'</p>').join("")+'</div>';
+  return begin+literaryProse(b.text||"").split(/\n\n/).filter(Boolean).map(p=>'<p class="'+(b.consequence?"novel-choice-consequence":"")+'">'+esc(p)+'</p>').join("")+'</div>';
  }).join("");
  const notice=scene.exertion?'<span class="narrative-condition">持續'+(scene.exertion==="run"?"奔跑":"潛行")+'中</span>':"";
  const bar='<div class="story-top"><span>'+esc(w.name)+' <small>· '+esc(m.title)+'</small></span><button data-do="status">狀態 ◈</button></div>';
- const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+(m.director?' 幕 · 長篇輪迴':' / 6 幕')+'　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(eplusMode()==="strong"?"E+強":eplusMode()==="standard"?"E+標":"E+關","toggleMotion","tiny ghost")+'</div></div>';
+ const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+(m.director?' 章 · 輪迴長篇':' / 6 章 · 離線篇')+'　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(eplusMode()==="strong"?"E+強":eplusMode()==="standard"?"E+標":"E+關","toggleMotion","tiny ghost")+'</div></div>';
  const popups=[];
  if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只有發生體力消耗、施展術式或受到傷害時，才需要特別注意數值。</p>'+a("關閉","status","small ghost")+'</div>');
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
- if(temporary.showSkills)popups.push('<div class="mission-popup"><div class="card-heading">已配置的招式與技能</div><p class="popup-note">招式不會自動取代劇情選項；你可以選擇是否在此刻施展。</p>'+N.skills(s).map(x=>'<button class="button-row story-skill" data-do="cast:'+x.id+'" '+(x.ok?"":"disabled")+'><div><b>'+esc(x.name)+'</b><small>'+esc(x.desc)+'</small><small>'+(x.sta?"STA −"+x.sta+" ":"")+(x.mp?"MP −"+x.mp:"")+(x.reasons.length?" · "+esc(x.reasons.join("、")):"")+'</small></div><span>使用 ›</span></button>').join("")+a("關閉","skills","small ghost")+'</div>');
+ if(temporary.showSkills)popups.push('<div class="mission-popup"><div class="card-heading">已配置的招式與技能</div><p class="popup-note">招式不會自動取代劇情選項；招式可以在合適的劇情節點使用。</p>'+N.skills(s).map(x=>'<button class="button-row story-skill" data-do="cast:'+x.id+'" '+(x.ok?"":"disabled")+'><div><b>'+esc(x.name)+'</b><small>'+esc(x.desc)+'</small><small>'+(x.sta?"STA −"+x.sta+" ":"")+(x.mp?"MP −"+x.mp:"")+(x.reasons.length?" · "+esc(x.reasons.join("、")):"")+'</small></div><span>使用 ›</span></button>').join("")+a("關閉","skills","small ghost")+'</div>');
  if(temporary.showLog)popups.push('<div class="mission-popup"><div class="card-heading">輪迴經歷</div><div class="log-lines">'+m.log.slice(-12).map(x=>'<p>'+esc(x)+'</p>').join("")+'</div>'+a("關閉","logs","small ghost")+'</div>');
  if(temporary.showTask)popups.push('<div class="mission-popup"><div class="card-heading">主神任務</div><p class="popup-note">'+esc(m.title)+' · '+esc(m.worldName)+'</p><p class="popup-note">'+esc(m.objective)+'</p>'+
 (m.director?'<p class="popup-note">長篇輪迴 · 第 '+(m.phase+1)+' 幕 · '+esc(m.phase<5?"調查":m.phase<10?"人物關係":m.phase<16?"危機升級":m.phase<23?"決戰":"結局")+'</p>'+
@@ -233,9 +240,9 @@ function missionUI(){
 (m.canon?.url?'<p class="popup-note">公開原作資料：<a href="'+esc(m.canon.url)+'" target="_blank" rel="noopener noreferrer">'+esc(m.canon.title)+' ↗</a></p>':"")+
 (m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
  return '<div class="mission-stage narrative-stage novel-first-stage">'+bar+
- '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+(novel?.mode||"主神任務")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+a("檢查 AI","nav:settings","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
+ '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[novel?.mode]||novel?.mode||"輪迴篇")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+a("檢查 AI","nav:settings","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
  toolbox+'<div class="fixed-choices story-choice-panel">'+notice+choices+
- '<div class="free-row"><input id="free-action" maxlength="180" placeholder="或者，由你來決定……" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("執行","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
+ '<div class="free-row"><input id="free-action" maxlength="180" placeholder="亦可自行決定下一步情節……" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("執行","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
  '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"單人輪迴":m.mode==="team"?"協同任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
 }
 function resultUI(){

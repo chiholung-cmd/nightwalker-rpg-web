@@ -8,11 +8,11 @@ process.env.GROQ_API_KEY="mock-test-only-not-a-real-key";
 const sample={
  title:"夜車入口",mood:"suspense",
  blocks:[
-  {type:"narration",text:"最後一班列車停在異常漆黑的站台。"},
-  {type:"narration",text:"所有乘客同時轉身，將目光投向你的方向。"},
+  {type:"narration",text:"最後一班列車停在異常漆黑的站台。車窗外的燈光一盞接一盞熄滅，月台盡頭似乎有個人影始終沒有移動。"},
+  {type:"narration",text:"所有乘客同時轉身，將目光投向你的方向。剛才還在哭鬧的孩子突然安靜下來，連原本嘈雜的廣播也停止了。"},
   {type:"dialogue",speaker:"站長",text:"「千萬不要打開第三道門。」"},
-  {type:"narration",text:"門外有一隻手，正在沿著玻璃向下滑動。"},
-  {type:"narration",text:"你注意到地上的腳印，全都朝著列車內部。"}
+  {type:"narration",text:"門外有一隻手，正在沿著玻璃向下滑動。指尖留下的印記不是水痕，而是暗紅色的血線，慢慢匯成某種文字。"},
+  {type:"narration",text:"你注意到地上的腳印，全都朝著列車內部。林燁低頭看了片刻，終於意識到所有痕跡都沒有回頭的方向。"}
  ],
  options:[
   {label:"先詢問站長有關第三道門的秘密",hint:"爭取信任",kind:"talk",cost:0,progress:1},
@@ -23,17 +23,17 @@ const sample={
  npcUpdates:[],facts:[],npcEvents:[],sideQuests:[],
  resolution:{readyToConclude:false}
 };
-const base=(premise="一個不斷重複午夜的荒廢車站，乘客不能對鏡子說話。",sessionKey="test-session")=>new Request("https://nightwalker.test/api/story",{
+const base=(premise="一個不斷重複午夜的荒廢車站，乘客不能對鏡子說話。",sessionKey="test-session",choices=[])=>new Request("https://nightwalker.test/api/story",{
  method:"POST",headers:{"Content-Type":"application/json"},
  body:JSON.stringify({world:"零號月台",task:"尋找活著的乘客",mode:"custom",
- worldKind:"original",premise,sessionKey,phase:1})
+ worldKind:"original",premise,sessionKey,protagonist:"林燁",choices,phase:1})
 });
 const json=(value,status=200,headers={})=>new Response(JSON.stringify(value),{
  status,headers:{"Content-Type":"application/json",...headers}
 });
 const models=["openai/gpt-oss-20b","openai/gpt-oss-120b","qwen/qwen3.8-27b"];
 let sequence=0;
-async function sandbox(statusMap={}){
+async function sandbox(statusMap={},storyFixture=sample){
  const calls=[];
  globalThis.fetch=async (url,options)=>{
   if(String(url).endsWith("/models"))return json({data:models.map(id=>({id}))});
@@ -43,7 +43,7 @@ async function sandbox(statusMap={}){
   if(status==="daily")return json({error:{message:"RPD exhausted"}},429,{"x-ratelimit-remaining-requests":"0","x-ratelimit-reset-requests":"20h5m"});
   if(status===429)return json({error:{message:"TPM exhausted"}},429,{
     "retry-after":"18","x-ratelimit-remaining-tokens":"0","x-ratelimit-reset-tokens":"18s"});
-  return json({choices:[{message:{content:JSON.stringify(sample)}}],usage:{
+  return json({choices:[{message:{content:JSON.stringify(storyFixture)}}],usage:{
     prompt_tokens:1250,completion_tokens:850,total_tokens:2100}},status,{
     "x-ratelimit-remaining-tokens":"5200","x-ratelimit-reset-tokens":"22s"});
  };
@@ -118,6 +118,59 @@ test("RPD exhaustion respects provider daily reset and avoids request hammering"
  const second=await api.fetch(base());
  assert.equal(second.status,429);
  assert.equal(calls.length,3);
+});
+
+
+test("two meaningful prose blocks no longer fail rigid five-block validator",async()=>{
+ const scene={...sample,blocks:[
+  {type:"narration",text:"你看見雨後的車站湧出黑霧，站內電子鐘始終停在零點。那名穿灰色外套的管理員擋在出口，沉默地數著每一個離開車廂的人。人群裡有人哭泣，卻沒有人敢開口問原因。"},
+  {type:"dialogue",speaker:"管理員",text:"「你不要靠近鏡子！」"},
+  {type:"narration",text:"你發現地上的足跡只有進站方向，從未有人離開過。林燁胸口微微一沉，握緊了身旁那張不知何時出現的車票。列車廣播忽然響起，念出的卻是他自己的名字。"}
+ ]};
+ const {api,calls}=await sandbox({},scene);
+ const res=await api.fetch(base());
+ const data=await res.json();
+ assert.equal(res.status,200);
+ assert.equal(calls.length,1);
+ assert.equal(data.blocks.length,3);
+ assert.ok(data.blocks[0].text.includes("林燁看見"));
+ assert.ok(data.blocks[2].text.includes("林燁發現"));
+ assert.ok(data.blocks[1].text.includes("「你不要靠近鏡子！」"));
+ assert.ok(!data.blocks[0].text.includes("你看見"));
+});
+
+test("single substantial novel paragraph remains playable",async()=>{
+ const one=sample.blocks.filter(x=>x.type==="narration").map(x=>x.text).join("，")+"。";
+ const {api}=await sandbox({}, {...sample,blocks:[{type:"narration",text:one}]});
+ const res=await api.fetch(base());
+ const data=await res.json();
+ assert.equal(res.status,200);
+ assert.equal(data.blocks.length,1);
+ assert.equal(data.options.length,3);
+});
+
+test("missing model choices recover from authored story, without another API call",async()=>{
+ const scene={...sample,options:[{label:"先向站長確認站內規矩",kind:"talk",hint:"查證他知道多少"}]};
+ const known=[
+  {label:"仔細搜查站內異常足跡",kind:"observe"},
+  {label:"先觀察其他乘客的舉動",kind:"conceal"}
+ ];
+ const {api,calls}=await sandbox({},scene);
+ const res=await api.fetch(base(undefined,undefined,known));
+ const data=await res.json();
+ assert.equal(res.status,200);
+ assert.equal(data.options.length,3);
+ assert.equal(data.options[0].label,"先向站長確認站內規矩");
+ assert.equal(data.options[1].label,"仔細搜查站內異常足跡");
+ assert.equal(calls.length,1);
+});
+
+test("truly empty provider prose still fails instead of inventing a fake scene",async()=>{
+ const {api,calls}=await sandbox({}, {...sample,blocks:[{type:"narration",text:"結束。"}],options:[]});
+ const res=await api.fetch(base());
+ assert.equal(res.status,502);
+ assert.equal((await res.json()).error,"SCENE_INCOMPLETE");
+ assert.equal(calls.length,1);
 });
 
 test.after(()=>{
