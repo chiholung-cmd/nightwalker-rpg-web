@@ -53,7 +53,10 @@ if(temporary.aiPending)return;
 if(!force&&temporary.aiFailedKey===key)return;
 temporary.aiPending=true;temporary.aiKey=key;temporary.aiError="";render();
 const known=window.NW_NOVEL?.scene(s);
-const scene=N.get(s);const directorBrief=window.NW_WORLD?.directorContext?.(s)||null;const body={directorBrief,protagonist:String(s.profile?.name||"夜行者").slice(0,30),sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,90)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
+const scene=N.get(s);const directorBrief=window.NW_WORLD?.directorContext?.(s)||null;
+const storyBible=window.NW_BIBLE?.context?.(s)||null;
+const endingAudit=m.phase>=19?(window.NW_BIBLE?.endingAudit?.(s)||null):null;
+const body={directorBrief,storyBible,endingAudit,canonTimeline:(m.canonTimeline||[]).slice(0,6),protagonist:String(s.profile?.name||"夜行者").slice(0,30),sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,90)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
 try{
  const res=await fetch("/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
  const obj=await res.json();if(!res.ok){const error=new Error(obj.message||obj.error||"AI 劇情暫時無法載入");error.code=obj.error||"";error.httpStatus=res.status;error.retryAfter=Number(obj.retryAfter)||0;throw error}
@@ -64,13 +67,11 @@ try{
  m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[m.mode]||"輪迴篇"),resolution:obj.resolution||{readyToConclude:false}};if(Array.isArray(obj.options)&&obj.options.length===3)m.aiOptions[phase]=obj.options;if(Array.isArray(obj.missionArc)&&obj.missionArc.length>=3&&!m.missionArc?.length)m.missionArc=obj.missionArc.slice(0,4);
 window.NW_WORLD?.ingest?.(s,obj,phase);
 window.NW_WORLD?.recordChapter?.(s,obj,phase);
-m.npcMemory ||= {};
-for(const upd of obj.npcUpdates||[]){if(!upd.name||!upd.memory)continue;
-const prev=m.npcMemory[upd.name]||{trust:0};
-m.npcMemory[upd.name]={trust:Math.max(-10,Math.min(10,(prev.trust||0)+(Number(upd.trustChange)||0))),attitude:upd.attitude||prev.attitude||"",memory:upd.memory,updated:phase};
-}
+window.NW_BIBLE?.ingest?.(s,obj,phase);
+window.NW_WORLD?.mergeNpcUpdates?.(s,obj.npcUpdates,phase);
 m.storyFacts=Array.from(new Set([...(m.storyFacts||[]),...(obj.facts||[]).filter(t=>typeof t==="string"&&t.length<170)])).slice(-70);
 if(obj.canon?.url&&obj.canon.confidence!=="unverified")m.canon=obj.canon;
+if(Array.isArray(obj.canonTimeline)&&obj.canonTimeline.length)m.canonTimeline=obj.canonTimeline.slice(0,6);
 s.worldLibrary ||= {};
 const wkey=window.NW_WORLD?.key?.(m)||(m.worldKind==="original"?"original:":"adaptation:")+(m.worldName||m.world);
 const saved=s.worldLibrary[wkey]||{name:m.worldName,worldKind:m.worldKind||"catalog",visits:0,npcs:{},facts:[],chapters:[],source:null};
@@ -238,6 +239,7 @@ function missionUI(){
 (m.director?'<p class="popup-note">長篇輪迴 · 第 '+(m.phase+1)+' 幕 · '+esc(m.phase<5?"調查":m.phase<10?"人物關係":m.phase<16?"危機升級":m.phase<23?"決戰":"結局")+'</p>'+
 (m.missionArc||[]).map((q,i)=>'<p class="popup-note">階段 '+(i+1)+'：'+esc(q)+'</p>').join(""):'<p class="popup-note">當前進度：'+m.progress+' / '+m.required+'</p>')+
 (m.directorPlan?.threads||[]).filter(t=>t.status==="open").slice(-3).map(t=>'<p class="popup-note"><b>未解伏筆：</b>'+esc(t.setup)+' · 第'+(t.chapter+1)+'章埋下</p>').join("")+
+(m.director&&m.phase>=19?'<p class="popup-note"><b>結局一致性檢查：</b>未交代人物 '+esc((window.NW_BIBLE?.endingAudit?.(s)?.unclearCharacters||[]).join("、")||"無")+'</p>':"")+
 (m.quests||[]).map(q=>'<p class="popup-note"><b>支線：</b>'+esc(q.title)+' · '+(q.status==="completed"?"已完成":q.progress+"/"+q.required)+' · '+esc(q.objective)+(q.evidence?.length?' · 有效線索：'+esc(q.evidence.at(-1).action):'')+'</p>').join("")+
 (m.canon?.url?'<p class="popup-note">公開原作資料：<a href="'+esc(m.canon.url)+'" target="_blank" rel="noopener noreferrer">'+esc(m.canon.title)+' ↗</a></p>':"")+
 (m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
