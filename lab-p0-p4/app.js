@@ -18,7 +18,7 @@ async function checkAiStatus(){
 if(temporary.aiChecked)return;
 try{const res=await fetch("/api/story",{cache:"no-store"});const info=await res.json();temporary.aiConfigured=!!(res.ok&&info.configured)}
 catch(e){temporary.aiConfigured=false}
-temporary.aiChecked=true;render()
+temporary.aiChecked=true;if(temporary.aiConfigured&&s.mission&&!s.mission.finished)s.mission.director=true;render()
 }
 async function generateAiScene(force){
 const m=s.mission;if(!m||m.finished||!temporary.aiConfigured)return;
@@ -28,15 +28,14 @@ if(temporary.aiPending)return;
 if(!force&&temporary.aiFailedKey===key)return;
 temporary.aiPending=true;temporary.aiKey=key;temporary.aiError="";render();
 const known=window.NW_NOVEL?.scene(s);
-const scene=N.get(s);const body={mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-8).map(x=>x.action),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-2).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-3).map(b=>({type:b.type,speaker:b.speaker||"",text:b.text||""}))),base:(known?.blocks||[]).slice(0,8),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
+const scene=N.get(s);const body={directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],priorArc:m.missionArc||[],mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-8).map(x=>x.action),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-2).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-3).map(b=>({type:b.type,speaker:b.speaker||"",text:b.text||""}))),base:(known?.blocks||[]).slice(0,8),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
 try{
  const res=await fetch("/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
  const obj=await res.json();if(!res.ok)throw Error(obj.message||obj.error||"AI 劇情暫時無法載入");
  if(!Array.isArray(obj.blocks)||obj.blocks.length<4)throw Error("AI 劇情格式不完整");
  if(s.mission===m&&m.phase===phase&&!m.finished){
  m.aiScenes ||= {};m.aiOptions ||= {};
- m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:m.mode};
- if(m.world==="custom")m.aiOptions[phase]=obj.options||[];
+ m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:m.mode,resolution:obj.resolution||{readyToConclude:false}};if(Array.isArray(obj.options)&&obj.options.length===3)m.aiOptions[phase]=obj.options;if(Array.isArray(obj.missionArc)&&obj.missionArc.length>=3)m.missionArc||=obj.missionArc.slice(0,4);
  temporary.aiError="";temporary.aiFailedKey="";persist();
  }
 }catch(e){if(s.mission===m&&m.phase===phase){temporary.aiError=String(e.message||e).slice(0,150);temporary.aiFailedKey=key}}
@@ -151,7 +150,7 @@ function prettyEffects(action){const parts=N.preview(action);return parts.length
 function missionUI(){
  const m=s.mission;
  if(m.finished)return resultUI();
- const scene=N.get(s),novel=m.aiScenes?.[m.phase]||window.NW_NOVEL?.scene(s)||{title:"世界構築中",mood:"system",blocks:[{type:"system",text:"主神正在構築你指定的世界。等待 AI 劇情載入……"}]},w=m.world==="custom"?{name:m.worldName}:world(m.world);
+ const scene=N.get(s),novel=m.aiScenes?.[m.phase]||(m.director?null:window.NW_NOVEL?.scene(s))||{title:"世界構築中",mood:"system",blocks:[{type:"system",text:"主神正在續寫輪迴世界。本幕尚未生成，請等待或重試……"}]},w=m.world==="custom"?{name:m.worldName}:world(m.world);
  const choices=scene.actions.map((o,i)=>'<button class="narrative-choice" data-do="act:'+i+'" '+(o.usable?"":"disabled")+'><span class="choice-no">0'+(i+1)+'</span><span class="choice-main"><b>'+esc(o.label)+'</b>'+(o.hint?'<small>'+esc(o.hint)+'</small>':"")+prettyEffects(o)+(o.reasons.length?'<small class="blocked">'+esc(o.reasons.join("、"))+'</small>':"")+'</span></button>').join("");
  const blocks=novel?.blocks||[];
  const prose=blocks.map((b,i)=>{
@@ -162,7 +161,7 @@ function missionUI(){
  }).join("");
  const notice=scene.exertion?'<span class="narrative-condition">持續'+(scene.exertion==="run"?"奔跑":"潛行")+'中</span>':"";
  const bar='<div class="story-top"><span>'+esc(w.name)+' <small>· '+esc(m.title)+'</small></span><button data-do="status">狀態 ◈</button></div>';
- const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+' / 6 幕　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(eplusMode()==="strong"?"E+強":eplusMode()==="standard"?"E+標":"E+關","toggleMotion","tiny ghost")+'</div></div>';
+ const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+(m.director?' 幕 · 長篇輪迴':' / 6 幕')+'　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(eplusMode()==="strong"?"E+強":eplusMode()==="standard"?"E+標":"E+關","toggleMotion","tiny ghost")+'</div></div>';
  const popups=[];
  if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只有發生體力消耗、施展術式或受到傷害時，才需要特別注意數值。</p>'+a("關閉","status","small ghost")+'</div>');
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
@@ -257,7 +256,7 @@ if(cmd==="customWorld"){
 }
 if(cmd==="assign"){let err=E.mainGodAssign(s);if(err)return notice(err);render();return}
 if(cmd.startsWith("coord:")){let err=E.assignReturn(s,cmd.slice(6));if(err)return notice(err);render();return}
-if(cmd==="launch"){let err=E.launch(s);if(err)return notice(err);temporary.showItems=false;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
+if(cmd==="launch"){let err=E.launch(s);if(err)return notice(err);if(temporary.aiConfigured)s.mission.director=true;temporary.showItems=false;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
 if(cmd==="cycleSkill"){E.changeSkill(s,(s.mission?.chosenSkill||0)+1);render();return}
 if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);render();return}
 if(cmd==="free"){let v=R.querySelector("#free-action")?.value||"";let out=N.free(s,v);if(out.error)return notice(out.error);render();return}
