@@ -2,7 +2,7 @@
 "use strict";
 const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElementById("app");
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
-let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false};
+let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiPending:false,aiError:"",worldInput:""};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const q=v=>"'"+esc(v)+"'";
 const num=n=>Number(n||0).toLocaleString("en-US");
@@ -61,9 +61,32 @@ card("裝備欄",'<div class="gear-grid">'+weap+'</div>')+slotChoices+
 card("主動招式（最多 6）",'<div class="skill-slots">'+currentSkills+'</div><div class="card-subhead">可加入的技能</div>'+options)+
 card("被動能力（最多 3）",(passive||"未配置被動技能")+'<div class="card-subhead">可用被動技能</div>'+passiveMore)+card("已攜帶行囊",'<div class="bag-list">'+(bag||'<div class="empty">背包尚未放入任何物品。</div>')+'</div>'+a("到倉庫添加物品","nav:warehouse","small"))+
 a("確認配置／進入輪迴準備","nav:portal","block main")+'</div>'}
-function upgrade(){const p=s.profile;let attrs=D.attributes.map(([id,name])=>{let cost=80+(p.attrs[id]-6)*30;return '<div class="upgrade-row"><div><b>'+name+'</b><small>當前 '+p.attrs[id]+' · 下一級 '+(p.attrs[id]+1)+'</small></div>'+a("+1　"+cost+" 積分","boost:"+id,"small prime")+'</div>'}).join("");
-let skills=D.skills.filter(x=>!["strike","guard","observe","focus"].includes(x.id)).map(sk=>{const learned=s.learned.includes(sk.id),price=D.skillPrices[sk.id]||0,locks=E.tierOK(s,sk);return '<div class="upgrade-row"><div><b>'+esc(sk.name)+'</b><small>'+esc(sk.desc)+'</small><div class="minor-meta">Lv.'+sk.tier+' · '+(sk.active?"主動":"被動")+' · STA '+(sk.sta||0)+' / MP '+(sk.mp||0)+' · CD '+(sk.cooldown||0)+'</div></div>'+a(learned?"已習得":locks.length?"需 LV."+sk.tier:price+" 積分","learn:"+sk.id,"small "+(learned||locks.length?"ghost":"prime"),learned||locks.length?'disabled':"")+'</div>'}).join("");
-return section("REINFORCEMENT NETWORK","主神強化","屬性門檻、已習得技能及出戰配置分開管理；購買後仍要裝入招式欄。")+'<div class="scroll-content column-gap">'+card("基礎身體與精神屬性",attrs)+card("技能學習與進化",skills)+card("血脈覺醒（排他路線）",D.bloodlines.map(b=>{const reasons=[];if(p.level<b.tier)reasons.push("Lv."+b.tier);if(p.missions<b.missions)reasons.push("輪迴 "+b.missions+" 次");for(const id in b.requires)if((p.attrs[id]||0)<b.requires[id])reasons.push(id+" ≥ "+b.requires[id]);return '<div class="upgrade-row"><div><b>'+esc(b.name)+'</b><small>'+esc(b.effect)+'</small><small style="color:#f0bbc4">副作用：'+esc(b.drawback)+'</small><div class="minor-meta">'+(reasons.join(" / ")||"符合條件")+'</div></div>'+a(p.bloodline===b.id?"已覺醒":p.bloodline?"已有血脈":reasons.length?"未解鎖":b.cost+" 積分","blood:"+b.id,"small "+(p.bloodline||reasons.length?"ghost":"prime"),(p.bloodline||reasons.length)?"disabled":"")+'</div>'}).join(""))+a("前往技能配置","nav:loadout","block main")+'</div>'}
+const UPGRADE_CATEGORIES=[
+{id:"attr",title:"身體特質",subtitle:"五維屬性與衍生強化",branches:[["力量","strength"],["敏捷","agility"],["體魄","body"],["感知","sense"],["意志","will"]]},
+{id:"skill",title:"技能學習",subtitle:"戰鬥、偵查、輔助、術式及被動技能",branches:[["近戰戰鬥","近戰"],["遠程戰鬥","遠程"],["身法與潛行","身法"],["生存與探索","探索"],["情報與交涉","調查"],["醫療支援","醫療"],["防護與抗性","防護"],["精神與術式","術式"],["呼吸與武學","呼吸法"],["常駐被動","被動"]]},
+{id:"blood",title:"血脈覺醒",subtitle:"獸系、靈異、元素、禁忌",branches:[["獸系血脈","獸系"],["靈異血脈","靈異系"],["元素血脈","元素系"],["禁忌血脈","禁忌系"]]},
+{id:"power",title:"異能／精神",subtitle:"感知、控制、防護、干涉",branches:[["超感知","感知系"],["意念控制","控制系"],["精神防護","防護系"],["因果干涉","干涉系"]]},
+{id:"equipment",title:"裝備強化",subtitle:"武器、防具、飾品、消耗品與材料",branches:[["近戰武器","weapon"],["遠程武器","ranged"],["防具","armor"],["飾品","accessory"],["消耗品","consumable"],["特殊道具","tool"]]},
+{id:"companion",title:"夥伴契約",subtitle:"偵查、戰鬥、輔助、精神類",branches:[["偵查型","scout"],["戰鬥型","fighter"],["輔助型","support"],["精神型","spirit"]]},
+{id:"healing",title:"治療恢復",subtitle:"生命、體力、靈力、污染與血脈穩定",branches:[["身體傷勢","hp"],["體力恢復","sta"],["靈力恢復","mp"],["精神污染","san"],["血脈穩定","blood"]]}
+];
+const UPGRADE_ATTR={strength:"str",agility:"agi",body:"con",sense:"per",will:"wil"};
+const BLOODLINE_GROUP={wolf:"獸系",sight:"靈異系",ember:"元素系",blank:"禁忌系"};
+function upgrade(){
+const c=UPGRADE_CATEGORIES.find(x=>x.id===temporary.upgradeCategory),sub=temporary.upgradeSub,p=s.profile;
+const head=section("REINFORCEMENT NETWORK","主神強化","大類 → 子類 → 具體強化。只有真正已實裝的能力可兌換，其餘僅作流派規劃，不扣積分。");
+if(!c)return head+'<div class="scroll-content column-gap">'+UPGRADE_CATEGORIES.map(x=>'<button class="upgrade-category" data-do="upcat:'+x.id+'"><div><b>'+esc(x.title)+'</b><small>'+esc(x.subtitle)+'</small></div><span>›</span></button>').join("")+'</div>';
+const menu='<div class="upgrade-breadcrumb">'+a("全部強化","upback:root","tiny ghost")+'<span> / '+esc(c.title)+(sub?" / "+esc(c.branches.find(x=>x[1]===sub)?.[0]||sub):"")+'</span></div>';
+if(!sub)return head+menu+'<div class="scroll-content column-gap">'+c.branches.map(([title,id])=>'<button class="upgrade-category" data-do="upsub:'+id+'"><div><b>'+esc(title)+'</b><small>'+esc(c.subtitle)+'</small></div><span>›</span></button>').join("")+'</div>';
+let content="",label=c.branches.find(x=>x[1]===sub)?.[0]||sub;
+if(c.id==="attr"){const id=UPGRADE_ATTR[sub],name=D.attributes.find(x=>x[0]===id)?.[1];if(id){const cost=80+(p.attrs[id]-6)*30;content=card(name,piece("當前 "+p.attrs[id]+" → "+(p.attrs[id]+1),"提升能力，可能解鎖更多武器與招式",a("+1　"+cost+" 積分","boost:"+id,"small prime")));}}
+if(c.id==="skill"){const found=D.skills.filter(x=>x.school===sub);content=found.length?found.map(sk=>{const learned=s.learned.includes(sk.id),price=D.skillPrices[sk.id]||0,locks=E.tierOK(s,sk);return card(esc(sk.name),'<p>'+esc(sk.desc)+'</p><div class="minor-meta">Lv.'+sk.tier+' · '+(sk.active?"主動技能":"被動技能")+' · STA '+(sk.sta||0)+' / MP '+(sk.mp||0)+' · CD '+(sk.cooldown||0)+'</div>'+(learned?tag("已習得","gold"):price?a(locks.length?"條件未達："+esc(locks.join("、")):"兌換 "+price+" 積分","learn:"+sk.id,"small "+(locks.length?"ghost":"prime"),locks.length?"disabled":""):tag("初始技能")))}).join(""):card(label,"流派分類已建立；尚未加入具實際效果的技能，暫時不能兌換");}
+if(c.id==="blood"){const found=D.bloodlines.filter(x=>BLOODLINE_GROUP[x.id]===sub);content=found.length?found.map(b=>{const locks=[];if(p.level<b.tier)locks.push("Lv."+b.tier);if(p.missions<b.missions)locks.push("輪迴 "+b.missions+" 次");for(const k in b.requires)if((p.attrs[k]||0)<b.requires[k])locks.push(k+"≥"+b.requires[k]);let owned=p.bloodline===b.id,unavailable=!!p.bloodline||locks.length;return card(esc(b.name),'<p>'+esc(b.effect)+'</p><p class="negative-note">代價：'+esc(b.drawback)+'</p><div class="minor-meta">'+(locks.join(" / ")||"基礎條件符合")+'</div>'+a(owned?"已覺醒":unavailable?"尚未解鎖":"覺醒 "+b.cost+" 積分","blood:"+b.id,"small "+(unavailable?"ghost":"prime"),unavailable?"disabled":""))}).join(""):card(label,"尚未開放");}
+if(c.id==="equipment"){const goods=D.shop.map(([id,cost])=>({...objId(id),cost})).filter(x=>sub==="ranged"?(x.tags||[]).includes("遠程"):sub==="weapon"?x.type==="weapon"&&!(x.tags||[]).includes("遠程"):x.type===sub);content=goods.length?goods.map(x=>card(esc(x.name),'<p>'+esc(x.desc)+'</p><p>主神積分：'+x.cost+'</p>'+a("前往商店","nav:warehouse","small prime"))).join(""):card(label,"暫未上架此類道具");}
+if(c.id==="healing")content=card(label,sub==="hp"||sub==="sta"||sub==="mp"||sub==="san"?"輪迴結算後會免費回滿四項資源；世界內可以通過消耗品或技能恢復。":"血脈穩定專項仍在設計中；目前無可購買的效果。")+a("前往倉庫補給","nav:warehouse","block ghost");
+if(c.id==="power"||c.id==="companion")content=card(label,"此系統已細分好類別，尚未有可驗證、可兌換的能力。後續加入時會遵守技能門檻、消耗、冷卻及作用效果。");
+return head+menu+'<div class="scroll-content column-gap">'+content+'</div>'
+}
 function missionBoard(){if(s.mission)return missionUI();
 let banner=s.assignment?(()=>{let t=task(s.assignment.task),w=world(t.world);return '<div class="assigned"><div class="eyebrow">MAIN GOD / ASSIGNED SCENARIO</div><span class="mode-label">'+({solo:"單人任務",team:"團隊任務",versus:"對抗任務"}[t.mode])+'</span><h2>'+esc(t.name)+'</h2><p>《'+w.name+'》 · '+esc(w.tone)+'</p><div class="rule"></div><h3>主線目標</h3><p>'+esc(t.goal)+'</p><div class="assigned-desc">'+esc(t.desc)+'</div><small>隱藏任務：尚未公開。世界及模式已鎖定，無法免費重抽。</small></div>'})():'<div class="unassigned"><div class="main-god-eye">◌</div><div class="eyebrow">DESTINY LOCKED / UNKNOWN</div><h2>主神尚未公布你的下一個世界</h2><p>可能進入電影、動畫或劇集世界。每次任務可為單人、合作小隊或對抗任務，主神將決定你的入場位置與身份。</p></div>';
 let stages=s.assignment?card("傳送前最後確認",'<div class="summary-lines">'+piece("主武器",objId(s.loadout.weapon)?.name||"無")+piece("防具",objId(s.loadout.armor)?.name||"無")+piece("主動技能",s.loadout.active.map(x=>skill(x)?.name).join("、"))+piece("行囊",s.loadout.backpack.length+" 件 · "+E.weight(s)+"/"+E.capacity(s)+" 負重")+'</div>'+a("重新配置裝備","nav:loadout","block ghost")+a("確認 Loadout，正式進入世界","launch","block main")):a("接受主神隨機指派","assign","block main");
@@ -147,6 +170,9 @@ if(cmd.startsWith("unpack:")){let err=E.removeBag(s,Number(cmd.slice(7)));if(err
 if(cmd.startsWith("skill:")){const id=cmd.slice(6),err=E.toggleSkill(s,id,!skill(id)?.active);if(err)return notice(err);render();return}
 if(cmd.startsWith("buy:")){let err=E.buy(s,cmd.slice(4));if(err)return notice(err);notice("已購入道具並存入主神倉庫。");return}
 if(cmd.startsWith("learn:")){let err=E.learn(s,cmd.slice(6));if(err)return notice(err);notice("技能已習得，請到戰前配置裝入招式欄。");return}
+if(cmd.startsWith("upcat:")){temporary.upgradeCategory=cmd.slice(6);temporary.upgradeSub="";render();return}
+if(cmd.startsWith("upsub:")){temporary.upgradeSub=cmd.slice(6);render();return}
+if(cmd==="upback:root"){temporary.upgradeCategory="";temporary.upgradeSub="";render();return}
 if(cmd.startsWith("blood:")){let err=E.buyBloodline(s,cmd.slice(6));if(err)return notice(err);notice("血脈覺醒成功，能力和副作用已生效。");return}
 if(cmd.startsWith("boost:")){let err=E.boost(s,cmd.slice(6));if(err)return notice(err);render();return}
 if(cmd==="assign"){let err=E.mainGodAssign(s);if(err)return notice(err);render();return}
