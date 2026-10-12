@@ -154,7 +154,7 @@ fight:"武器撞擊的震動沿著手臂傳來。你逼迫敵人後退，卻清�
 hide:"你躲進較為安全的位置，終於有機會重新思考下一步。",
 rest:"你平緩了急促的呼吸。短暫的停頓並不丟人，很多時候正是活下去的關鍵。"
 }[o.kind]||"這個決定讓周圍的局勢出現了新的變化。";
-st.last=o.id;st.lastReply=REACTIONS[m.world]?.[o.id]||reply;st.notes.push({choice:original||o.label,kind:o.kind,reply,at:m.phase});
+st.last=o.id;st.lastReply=global.NW_NOVEL?.reaction(m.world,o.id)||REACTIONS[m.world]?.[o.id]||reply;st.notes.push({choice:original||o.label,kind:o.kind,reply,at:m.phase});
 for(const id in m.cooldowns)m.cooldowns[id]=Math.max(0,m.cooldowns[id]-1);
 m.turn++;m.phase++;
 m.roundEvents=[st.lastReply,...events.slice(-2)];m.log.push(st.lastReply,...events);
