@@ -2,6 +2,9 @@
   "functions": {
     "api/story.mjs": {
       "maxDuration": 30
+    },
+    "api/save.mjs": {
+      "maxDuration": 20
     }
   }
 }
