@@ -2,7 +2,7 @@
 "use strict";
 const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElementById("app");
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
-let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,worldInput:"",worldType:"adaptation",worldMedia:"電影",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
+let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,freeDraft:"",freeReview:null,worldInput:"",worldType:"adaptation",worldMedia:"電影",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const q=v=>"'"+esc(v)+"'";
 const num=n=>Number(n||0).toLocaleString("en-US");
@@ -239,10 +239,15 @@ function missionUI(){
 (m.quests||[]).map(q=>'<p class="popup-note"><b>支線：</b>'+esc(q.title)+' · '+(q.status==="completed"?"已完成":q.progress+"/"+q.required)+' · '+esc(q.objective)+(q.evidence?.length?' · 有效線索：'+esc(q.evidence.at(-1).action):'')+'</p>').join("")+
 (m.canon?.url?'<p class="popup-note">公開原作資料：<a href="'+esc(m.canon.url)+'" target="_blank" rel="noopener noreferrer">'+esc(m.canon.title)+' ↗</a></p>':"")+
 (m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
+ const freeReview=temporary.freeReview;
+ if(freeReview&&freeReview.key===aiSceneKey(m)&&freeReview.phase===m.phase){
+  const effects=freeReview.effects?.length?freeReview.effects.join(" · "):"無即時體力消耗";
+  popups.push('<div class="mission-popup" role="dialog" aria-label="確認自由文字行動"><div class="card-heading">確認小說情節行動</div><p class="popup-note">主角將會：'+esc(freeReview.value)+'</p><p class="popup-note">判定：'+esc(freeReview.label)+' · '+esc(effects)+'</p><p class="popup-note">確認後，劇情同角色資源才會改變。</p><div class="free-confirm-actions">'+a("確認執行","freeConfirm","small main")+a("修改文字","freeCancel","small ghost")+'</div></div>');
+ }
  return '<div class="mission-stage narrative-stage novel-first-stage">'+bar+
  '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[novel?.mode]||novel?.mode||"輪迴篇")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+a("檢查 AI","nav:settings","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
  toolbox+'<div class="fixed-choices story-choice-panel">'+notice+choices+
- '<div class="free-row"><input id="free-action" maxlength="180" placeholder="亦可自行決定下一步情節……" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("執行","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
+ '<div class="free-row"><input id="free-action" maxlength="180" placeholder="亦可自行決定下一步情節……" value="'+esc(temporary.freeDraft)+'" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("預覽行動","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
  '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"單人輪迴":m.mode==="team"?"協同任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
 }
 function resultUI(){
@@ -370,8 +375,25 @@ if(cmd==="launch"){
  startNovel();return
 }
 if(cmd==="cycleSkill"){E.changeSkill(s,(s.mission?.chosenSkill||0)+1);render();return}
-if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);render();return}
-if(cmd==="free"){let v=R.querySelector("#free-action")?.value||"";let out=N.free(s,v);if(out.error)return notice(out.error);render();return}
+if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);temporary.freeReview=null;temporary.freeDraft="";render();return}
+if(cmd==="free"){
+ const value=R.querySelector("#free-action")?.value??temporary.freeDraft;
+ temporary.freeDraft=value;
+ const out=N.analyzeFree(s,value);
+ if(out.error){temporary.freeReview=null;return notice(out.error)}
+ temporary.freeReview={value,kind:out.kind,label:out.label,effects:out.effects,phase:out.phase,key:aiSceneKey(s.mission)};
+ render();return
+}
+if(cmd==="freeCancel"){temporary.freeReview=null;render();return}
+if(cmd==="freeConfirm"){
+ const review=temporary.freeReview,m=s.mission;
+ if(!review||!m||review.key!==aiSceneKey(m)||review.phase!==m.phase||review.value!==temporary.freeDraft){
+  temporary.freeReview=null;return notice("劇情或行動內容已改變，請重新預覽，未扣除任何資源。");
+ }
+ const out=N.free(s,review.value,review.kind);
+ if(out.error){temporary.freeReview=null;return notice(out.error)}
+ temporary.freeReview=null;temporary.freeDraft="";render();return
+}
 if(cmd==="items"){temporary.showItems=!temporary.showItems;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
 if(cmd==="logs"){temporary.showLog=!temporary.showLog;temporary.showItems=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
 if(cmd==="taskinfo"){temporary.showTask=!temporary.showTask;temporary.showStatus=false;temporary.showItems=false;temporary.showSkills=false;temporary.showLog=false;render();return}
@@ -401,7 +423,7 @@ if(cmd==="toggleMotion"){const next=eplusMode()==="strong"?"standard":eplusMode(
 if(cmd==="skipFx"){temporary.fxSkippedFor=temporary.fxSceneKey;window.NW_EFFECTS?.skip?.();const pane=R.querySelector?.(".scene-prose");pane?.classList?.add("fx-static");pane?.classList?.remove("fx-strong","fx-standard");const skip=R.querySelector?.(".eplus-skip");if(skip)skip.hidden=true;return}
 if(cmd==="export"){try{const blob=new Blob([JSON.stringify(s,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nightwalker-save.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}catch(_){notice("此瀏覽器暫不支援匯出。")}return}
 }
-R.addEventListener("input",ev=>{const el=ev.target;if(el.id==="media-world-name")temporary.mediaWorldDraft=el.value.slice(0,50);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=el.value.slice(0,450)});
+R.addEventListener("input",ev=>{const el=ev.target;if(el.id==="free-action")temporary.freeDraft=el.value.slice(0,180);if(el.id==="media-world-name")temporary.mediaWorldDraft=el.value.slice(0,50);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=el.value.slice(0,450)});
 R.addEventListener("click",ev=>{let t=ev.target.closest("[data-do]");if(!t||t.disabled)return;handle(t.dataset.do)});
 render();
 checkAiStatus();
