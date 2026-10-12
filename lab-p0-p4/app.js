@@ -208,7 +208,7 @@ function missionStory(){return N.excerpt(s)}
 function eplusMode(){
 if(s.settings.reducedMotion)return "off";
 const mode=s.settings.eplusMode;
-return mode==="standard"||mode==="off"||mode==="strong"?mode:"strong"
+return mode==="standard"||mode==="off"||mode==="strong"?mode:"off"
 }
 // Render archived AI scenes and authored offline scenes with the same third-person voice.
 function literaryProse(value){
