@@ -173,6 +173,25 @@ test("truly empty provider prose still fails instead of inventing a fake scene",
  assert.equal(calls.length,1);
 });
 
+
+test("character dialogue keeps second-person address without requiring Chinese quotation marks",async()=>{
+ const scene={...sample,blocks:sample.blocks.map((x,i)=>i===2?{...x,text:"你應該相信我。這趟列車根本不會駛往終點。"}:x)};
+ const {api}=await sandbox({},scene);
+ const res=await api.fetch(base());
+ const data=await res.json();
+ assert.equal(res.status,200);
+ assert.equal(data.blocks[2].type,"dialogue");
+ assert.equal(data.blocks[2].text,"你應該相信我。這趟列車根本不會駛往終點。");
+});
+
+test("published book and film titles are not rewritten as the protagonist's name",async()=>{
+ const scene={...sample,blocks:sample.blocks.map((x,i)=>i===0?{...x,text:x.text+"書店櫥窗裡的《你的名字》封面已經泛黃。"}:x)};
+ const {api}=await sandbox({},scene);
+ const res=await api.fetch(base());
+ const data=await res.json();
+ assert.equal(res.status,200);
+ assert.ok(data.blocks[0].text.includes("《你的名字》"));
+});
 test.after(()=>{
  globalThis.fetch=originalFetch;
  if(oldKey===undefined)delete process.env.GROQ_API_KEY;
