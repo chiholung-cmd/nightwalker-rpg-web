@@ -35,30 +35,71 @@ function ingest(s,scene,phase){
    if(!labels[trigger]||!title||!objective)continue;
    if(m.quests.some(q=>q.title===title)||m.quests.length>=5)continue;
    const id="quest-"+(m.quests.length+1)+"-"+phase;
-   m.quests.push({id,title,objective,trigger,progress:0,required:2,status:"active",reward:35,started:phase});
+   m.quests.push({id,title,objective,trigger,progress:0,required:2,status:"active",reward:35,started:phase,evidence:[]});
    m.log.push("主神支線已發現："+title);
  }
 }
+// A sidequest is a concrete goal, not a counter for unrelated action kinds.
+const genericPhrases=/主神|任務|支線|目標|完成|成功|獲得|取得|嘗試|設法|努力|需要|必須|想辦法|一個|一名|一些|周圍|附近|的|地|了|把|將|跟|與|對|去|中|在/g;
+const genericMatches=new Set(["行動","事件","現場","人物","世界","時間","這個","事情","進行","知道","線索","一切","情況","選擇","現在","其他","調查","尋找","發現","主角","敵人","所有","任何","隊友"]);
+const normalize=x=>simple(x).replace(/[^\p{Script=Han}a-zA-Z0-9]/gu,"").replace(genericPhrases,"").toLowerCase();
+function questEvidence(objective,choice){
+ const target=normalize(objective),action=normalize(choice);
+ if(target.length<2||action.length<2)return "";
+ for(let size=Math.min(7,target.length);size>=2;size--){
+  for(let i=0;i<=target.length-size;i++){
+   const term=target.slice(i,i+size);
+   if(!genericMatches.has(term)&&action.includes(term))return term;
+  }
+ }
+ return "";
+}
+function npcTarget(m,action,report){
+ const text=simple([action.label,action.hint,report.action].filter(Boolean).join(" ")).toLowerCase();
+ const entries=Object.keys(m.npcMemory||{}).filter(name=>name.length>=2&&text.includes(name.toLowerCase()));
+ // Only the specifically referenced person may be affected. Never mutate "last seen NPC" blindly.
+ return entries.sort((a,b)=>b.length-a.length)[0]||"";
+}
 function onAction(s,action,report){
  const m=s.mission;if(!m||!report)return;
- m.quests||=[];m.branchConsequences||=[];
+ m.quests||=[];m.branchConsequences||=[];m.agencyEvents||=[];
  const kind=action.kind,phase=m.phase;
+ const actionText=simple(report.action||action.label||action.hint),source=[actionText,action.hint||""].join(" ");
  for(const q of m.quests){
-   if(q.status!=="active"||q.trigger!==kind)continue;
-   q.progress=clamp(q.progress+1,0,q.required);
-   if(q.progress>=q.required){q.status="completed";q.completedAt=phase;m.log.push("支線任務「"+q.title+"」達成；結算時額外取得 "+q.reward+" 積分。");}
+  if(q.status!=="active")continue;
+  const matched=questEvidence(q.objective||q.title,source);
+  // Two-character evidence needs to match the suggested action type; specific names/terms can cross categories.
+  if(!matched||(matched.length<3&&q.trigger!==kind))continue;
+  q.evidence ||= [];
+  if(q.evidence.some(e=>e.phase===phase||e.action===actionText))continue;
+  q.evidence.push({phase,action:actionText,kind,matched});
+  q.evidence=q.evidence.slice(-8);
+  q.progress=clamp(Math.max(Number(q.progress)||0,q.evidence.length),0,q.required||2);
+  m.log.push("支線線索「"+q.title+"」："+actionText+"（"+q.progress+"/"+q.required+"）");
+  if(q.progress>=(q.required||2)){
+   q.status="completed";q.completedAt=phase;
+   m.log.push("支線任務「"+q.title+"」完成，結算時額外獲得 "+q.reward+" 積分。");
+  }
  }
- if(kind==="talk"||kind==="conceal"||kind==="fight"||kind==="risk"){
-   const npc=Object.entries(m.npcMemory||{}).sort((a,b)=>(b[1].lastSeen||0)-(a[1].lastSeen||0))[0];
-   if(npc){const [name,p]=npc;const change=kind==="talk"?1:kind==="conceal"?-1:kind==="fight"?-2:-1;
-    p.trust=clamp((p.trust||0)+change,-10,10);
-    p.memory=simple((p.memory||"")+"；第"+phase+"幕你採取"+labels[kind]+"行動");
-    m.branchConsequences.push({phase,npc:name,kind,trust:p.trust});
-   }
+ const name=npcTarget(m,action,report);
+ if(name){
+  const p=m.npcMemory[name],word=actionText+String(action.hint||"");
+  const hostile=/騙|欺|威脅|強迫|誤導|陷害|出賣|羞辱/.test(word);
+  const supportive=/告知|分享|說出|坦白|安慰|合作|幫|救|支持|承諾|解釋|道歉|保護|求助|協助/.test(word);
+  const repeated=m.branchConsequences.some(e=>e.npc===name&&e.kind===kind&&e.action===actionText);
+  const delta=repeated?0:kind==="fight"?-2:hostile?-1:(kind==="talk"||kind==="risk")&&supportive?1:0;
+  if(delta){
+   const old=Number(p.trust)||0;
+   p.trust=clamp(old+delta,-10,10);
+   p.memory=simple((p.memory||"")+"；第"+phase+"章，主角採取「"+actionText+"」");
+   p.lastDecision=actionText;
+   m.branchConsequences.push({phase,npc:name,kind,action:actionText,change:p.trust-old,trust:p.trust});
+   m.log.push(name+"的關係有所變化（"+(delta>0?"+":"")+delta+" 信任）。");
+  }
  }
  m.branchConsequences=m.branchConsequences.slice(-35);
-for(const [name,npc] of Object.entries(m.npcMemory||{}).slice(0,8)){if(!npc.goal||npc.lastSeen===phase)continue;const evt={phase,name,event:"正依照自己的目的繼續採取行動："+simple(npc.goal).slice(0,75),intent:simple(npc.goal)};if(!(m.agencyEvents||[]).some(e=>e.phase===phase&&e.name===name)){m.agencyEvents||=[];m.agencyEvents.push(evt)}}
-m.agencyEvents=m.agencyEvents.slice(-30);
+ // Autonomous NPC events must come from actual generated world events, not repeat the same goal each turn.
+ m.agencyEvents=m.agencyEvents.slice(-30);
 }
 function ability(s,action,events){
  const m=s.mission,p=s.profile;if(!m)return;
