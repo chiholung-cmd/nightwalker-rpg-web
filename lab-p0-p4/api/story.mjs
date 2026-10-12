@@ -54,7 +54,7 @@ if(request.method==="GET"){
 const url=new URL(request.url);
 if(url.searchParams.get("probe")!=="1")return reply(200,{service:"Nightwalker AI",configured:!!process.env.GROQ_API_KEY,model:MODEL});
 if(!process.env.GROQ_API_KEY)return reply(503,{configured:false,model:MODEL,status:"no_key",message:"伺服器未找到 GROQ_API_KEY"});
-if(probeCache.value&&Date.now()-probeCache.at<180000)return reply(probeCache.value.ok?200:503,{...probeCache.value,cached:true});
+if(probeCache.value&&Date.now()-probeCache.at<(probeCache.value.ok?180000:30000))return reply(probeCache.value.ok?200:503,{...probeCache.value,cached:true});
 try{
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),12000);
  let provider,probeModel=MODEL;
