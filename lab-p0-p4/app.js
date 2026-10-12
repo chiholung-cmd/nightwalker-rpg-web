@@ -45,7 +45,7 @@ m.npcMemory[upd.name]={trust:Math.max(-10,Math.min(10,(prev.trust||0)+(Number(up
 m.storyFacts=Array.from(new Set([...(m.storyFacts||[]),...(obj.facts||[]).filter(t=>typeof t==="string"&&t.length<170)])).slice(-70);
 if(obj.canon?.url&&obj.canon.confidence!=="unverified")m.canon=obj.canon;
 s.worldLibrary ||= {};
-const wkey=(m.worldKind||"catalog")+":"+(m.worldName||m.world);
+const wkey=window.NW_WORLD?.key?.(m)||(m.worldKind==="original"?"original:":"adaptation:")+(m.worldName||m.world);
 const saved=s.worldLibrary[wkey]||{name:m.worldName,worldKind:m.worldKind||"catalog",visits:0,npcs:{},facts:[],chapters:[],source:null};
 saved.npcs={...saved.npcs,...m.npcMemory};saved.facts=Array.from(new Set([...(saved.facts||[]),...(m.storyFacts||[])])).slice(-90);
 if(m.canon)saved.source=m.canon;
