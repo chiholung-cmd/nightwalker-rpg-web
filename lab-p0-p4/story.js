@@ -90,7 +90,10 @@ deathnote:[["backup",3,"你保存的匿名副本仍然完好。對方要求交�
 function ensure(m){if(!m.storyState)m.storyState={exertion:null,exposure:0,tension:0,last:null,notes:[],lastReply:"",flags:[],encounter:false};return m.storyState}
 function distinct(a){return Array.from(new Set(a))}
 function get(s){
-const m=s.mission;if(!m)return null;const st=ensure(m),data=W[m.world]||W.busan;let idx=Math.min(5,m.phase),section=data.chapters[idx];
+const m=s.mission;if(!m)return null;
+const st=ensure(m);
+if(m.world==="custom"){const custom=m.aiOptions?.[m.phase]||[];const opts=custom.map((x,i)=>{let o={id:x.id||"ai-"+i,label:x.label,hint:x.hint,kind:x.kind,cost:Number(x.cost)||0,progress:Number(x.progress)||1,flag:x.flag||"ai-option-"+i,reasons:[]};if(["run","sneak","physical","risk","fight"].includes(o.kind)&&s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length;return o});return {world:{name:m.worldName},section:null,actions:opts,exertion:st.exertion,active:false,phase:m.phase,storyState:st}}
+const data=W[m.world]||W.busan;let idx=Math.min(5,m.phase),section=data.chapters[idx];
 let opts=section.options.map(([id,label,hint,kind,cost,progress,flag,require])=>({id,label,hint,kind,cost,progress,flag,require,reasons:[]}));
 if(m.mode==="team"&&idx===2)opts[1]={id:"coordinate",label:"與隊友商量如何完成主神任務",hint:"共同推進目標，也許改變關係",kind:"talk",cost:0,progress:1,flag:"teamwork",reasons:[]};
 if(m.mode==="versus"&&idx===3)opts[1]={id:"rival",label:"與敵隊接觸，試探他們真正的目的",hint:"可以談判，也可能暴露意圖",kind:"talk",cost:0,progress:1,flag:"parley",reasons:[]};
