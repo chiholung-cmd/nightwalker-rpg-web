@@ -79,3 +79,13 @@ The previous scene renderer produced disjointed RPG-flavored snippets: one mecha
 - Each AI-generated scene is persisted in the browser save, prior AI scene passages and last eight actions are carried forward as limited memory. AI may not change stats, loot, mission rule authority, or force completion.
 - One-time fresh start migration uses the new browser key `nightwalker_new_start_20261012_v2`. Previous Nightwalker saves are deleted only on first load of the new version, not on every refresh. Defaults: Lv.1, zero completed runs/worlds, baseline warehouse/loadout, 1000 starting test points. Supabase project/tables and all other applications remain intact.
 - **Cloud save and real-time multiplayer are not yet connected**, and a configured Groq key plus successful serverless deployment test is required before live AI generation can be claimed.
+
+## E+ cinematic text performance v2
+
+- Reading is still **text-only**, with the novel and NPC dialogue presented before the same three contextual choices and one free-action field.
+- Narration is divided into timed dramatic **story beats**. NPC dialogue and Main God system text have real per-character typewriter delivery, with reserved paragraph height to avoid jumping layouts.
+- Eight distinct moods: calm, suspense, eerie, shock, anger, grief, resolve, and system. The shock shake/flash is brief and does not loop.
+- Reader intensity is a persisted three-position switch: **strong → standard → off**. Respect OS `prefers-reduced-motion`.
+- A **skip performance** button immediately reveals the full current scene; it never skips a decision or modifies any character stats.
+- Animations occur **once per new story phase** (including a newly generated AI scene), rather than repeating whenever an inventory/status panel opens. Reading scroll position is preserved when the same scene is re-rendered.
+- All effects are local browser effects without access to gameplay state. The production HTML loads `effects.js` before `app.js`; CSS and application script use an E+ v2 cache key.
