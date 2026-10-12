@@ -45,3 +45,15 @@ The in-world experience is now an interactive **Traditional-Chinese infinite-flo
 - Skills are optional, and their requirements, cooldowns and MP costs are enforced by the engine. Inventory use no longer automatically advances story chapters or generates fictitious combat damage while in a safe narrative scene.
 - **Free text is still handled by deterministic intent parsing; real generative story AI is not yet connected.** Online player-to-player cooperation and cloud saves remain separate unfinished integrations.
 - Previous full automatic HP/STA/MP/SAN recovery at mission settlement remains unchanged, as do the warehouse, battle inventory, gear requirements and Supabase RLS schema.
+
+## Playable-novel rewrite (October 2026)
+
+The previous scene renderer produced disjointed RPG-flavored snippets: one mechanical narration paragraph, an unrelated NPC utterance and a repetitive decision prompt. The new `novel.js` provides 24 authored Traditional-Chinese chapters in a Mainland web-fiction narrative register (six scenes per world across four worlds).
+
+- The prose, character dialogue, Main God entry prompt, rising tension and choices form a single scene in reading order. Conversation, action and discovery are woven together instead of being separated into repeated UI blocks.
+- The Main God assigns mission type and goals at entry. The mission panel is optional, not repeated in every paragraph.
+- Three story-context choices plus one free-text option remain under the reading area on the same mobile screen.
+- Every standard world choice has its own corresponding authored consequence; recognized free actions receive world-specific follow-up prose rather than generic "you didn't fight" filler.
+- World clues and party/rival assignment selectively affect passages. Existing saved missions resume from their stored chapter and flags.
+- The underlying engine still has a **six-scene narrative spine** per mission and free-text intent parser. Genuine open-ended AI-authored dialogue and large branching narrative memory will require an external LLM and server-side orchestration; do not imply they are implemented in this static release.
+- Player progression, HP/STA/MP/SAN full recovery at settlement, inventory, equipment/skills, warehouse and Supabase schema remain intact.
