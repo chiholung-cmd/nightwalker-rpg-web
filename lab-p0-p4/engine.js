@@ -106,7 +106,7 @@ w=s.assignment.world==="custom"?{id:"custom",name:s.assignment.worldTitle,enemy:
 if(s.profile.bloodline==="wolf")s.profile.sta=clamp(s.profile.sta+15,0,100);
 if(s.profile.bloodline==="blank")s.profile.san=clamp(s.profile.san-10,0,100);let seed=s.assignment.seed;
 let actors=taskObj.mode==="team"?[D.companions[seed%4],D.companions[(seed+1)%4]]:taskObj.mode==="versus"?[D.companions[(seed+1)%4]]:[],opponent=taskObj.mode==="versus"?D.rivals[seed%3]:null;
-s.mission={...copy(s.assignment),title:taskObj.name,aiScenes:{},aiOptions:{},phase:0,turn:0,progress:0,required:taskObj.required,flags:[],evidence:[],outcomes:[],log:[],history:[],bag,crew:actors.map(x=>({...x,bond:s.bonds[x.id]||0})),rival:opponent?{...opponent,progress:0}:null,enemy:{name:taskObj.mode==="versus"?opponent.name:w.enemy,hp:taskObj.mode==="versus"?opponent.hp:w.foeHp,max:taskObj.mode==="versus"?opponent.hp:w.foeHp,intent:0,bleed:0,stunned:0},status:{guard:0,barrier:0,bonus:0,poison:0},cooldowns:{},chosenSkill:0,weaponCondition:100,hidden:false,finished:false,roundEvents:[],mode:taskObj.mode,objective:taskObj.goal,worldName:w.name};
+s.mission={...copy(s.assignment),title:taskObj.name,aiScenes:{},aiOptions:{},director:false,npcMemory:{},storyFacts:[],missionArc:[],phase:0,turn:0,progress:0,required:taskObj.required,flags:[],evidence:[],outcomes:[],log:[],history:[],bag,crew:actors.map(x=>({...x,bond:s.bonds[x.id]||0})),rival:opponent?{...opponent,progress:0}:null,enemy:{name:taskObj.mode==="versus"?opponent.name:w.enemy,hp:taskObj.mode==="versus"?opponent.hp:w.foeHp,max:taskObj.mode==="versus"?opponent.hp:w.foeHp,intent:0,bleed:0,stunned:0},status:{guard:0,barrier:0,bonus:0,poison:0},cooldowns:{},chosenSkill:0,weaponCondition:100,hidden:false,finished:false,roundEvents:[],mode:taskObj.mode,objective:taskObj.goal,worldName:w.name};
 s.assignment=null;s.screen="mission";return null}
 function availability(s,skillId){let sk=skill(skillId),m=s.mission;if(!sk)return {ok:false,reasons:["技能不存在"]};let r=[];if(!s.loadout.active.includes(skillId))r.push("未裝入出戰招式欄");if(!s.learned.includes(skillId))r.push("尚未習得");r.push(...tierOK(s,sk));if(s.profile.sta<(sk.sta||0))r.push("STA 不足");if(s.profile.mp<(sk.mp||0))r.push("MP 不足");if(m&&(m.cooldowns[skillId]||0)>0)r.push("冷卻 "+m.cooldowns[skillId]+" 回合");if(skillId==="sunbreath"&&!(item(s.loadout.weapon)?.tags||[]).includes("日光"))r.push("必須使用日光武器");return {ok:!r.length,reasons:r}}
 function derived(s){let m=s.mission;if(!m)return null;let w=world(m.world),t=task(m.task),active=s.loadout.active,selected=active[m.chosenSkill%Math.max(1,active.length)]||"observe",isFight=m.world==="demon"||m.mode==="versus"||(m.world==="busan"&&m.phase>=2);
@@ -200,14 +200,26 @@ function end(s){let m=s.mission;if(!m||m.finished)return;let success=m.progress>
 m.finished=true;m.result=result;m.reward=copy({A:{credits:370,xp:220},B:{credits:190,xp:110},D:{credits:40,xp:35}}[result]);
 if(m.hidden&&result!=="D"){m.reward.credits+=80;m.log.push("隱藏任務完成獎勵：+80 主神積分。")}
 m.loot=result==="A"?{demon:"sunsteel",busan:"flare",alice:"badge",deathnote:"recorder"}[m.world]:result==="B"?"medkit":null;
-if(m.loot)m.log.push("獲得戰利品："+item(m.loot).name);m.log.push(result==="A"?"主神確認：任務主要目標已完成。":result==="B"?"主神確認：部分完成，仍有遺漏。":"主神確認：任務失敗。");m.phase=Math.min(m.phase,6)}
+if(m.loot)m.log.push("獲得戰利品："+item(m.loot).name);m.log.push(result==="A"?"主神確認：任務主要目標已完成。":result==="B"?"主神確認：部分完成，仍有遺漏。":"主神確認：任務失敗。");m.phase=Math.min(m.phase,m.director?28:6)}
 function finish(s){const m=s.mission;if(!m||!m.finished)return "任務仍未結束";if(m.claimed)return "結算已經領取";m.claimed=true;
 s.profile.credits+=m.reward.credits;s.profile.xp+=m.reward.xp;while(s.profile.xp>=220){s.profile.xp-=220;s.profile.level++}
 s.profile.missions++;if(m.world!=="custom"&&!s.discovered.includes(m.world))s.discovered.push(m.world);
 for(const id in m.bag)s.warehouse[id]=(s.warehouse[id]||0)+m.bag[id];
 if(m.loot)s.warehouse[m.loot]=(s.warehouse[m.loot]||0)+1;
-const summary={date:new Date().toISOString(),task:m.task,world:m.world,worldName:m.worldName,worldKind:m.worldKind||null,mediaType:m.mediaType||null,worldPremise:m.worldKind==="original"?m.premise||"":null,mode:m.mode,result:m.result,loot:m.loot,hidden:m.hidden,choices:m.history.map(x=>x.action),events:m.log.slice(-12),points:m.reward.credits,crew:m.crew.map(x=>x.name),rival:m.rival?.name||null};s.records.unshift(summary);s.records=s.records.slice(0,100);
+const summary={date:new Date().toISOString(),task:m.task,world:m.world,worldName:m.worldName,npcMemory:m.npcMemory||{},missionArc:m.missionArc||[],worldFacts:m.storyFacts||[],worldKind:m.worldKind||null,mediaType:m.mediaType||null,worldPremise:m.worldKind==="original"?m.premise||"":null,mode:m.mode,result:m.result,loot:m.loot,hidden:m.hidden,choices:m.history.map(x=>x.action),events:m.log.slice(-12),points:m.reward.credits,crew:m.crew.map(x=>x.name),rival:m.rival?.name||null};s.records.unshift(summary);s.records=s.records.slice(0,100);
 s.memory.unshift({world:m.world,text:"在《"+m.worldName+"》完成「"+m.title+"」，評價 "+m.result+"；"+(m.evidence.at(-1)||m.log.at(-2)||"未留下特殊線索"),tag:m.result,at:Date.now()});s.memory=s.memory.slice(0,80);
+// Keep meaningful world and character history for later reincarnations.
+s.worldLibrary ||= {};
+const libraryKey=(m.worldKind||"catalog")+":"+(m.worldName||m.world);
+const previous=s.worldLibrary[libraryKey]||{name:m.worldName,worldKind:m.worldKind||"catalog",visits:0,npcs:{},facts:[],chapters:[],source:m.canon||null};
+previous.visits++;
+previous.lastVisited=summary.date;
+previous.npcs={...previous.npcs,...(m.npcMemory||{})};
+previous.facts=Array.from(new Set([...(previous.facts||[]),...(m.storyFacts||[])] )).slice(-100);
+previous.chapters.unshift({date:summary.date,result:summary.result,choices:summary.choices.slice(-16),events:summary.events});
+previous.chapters=previous.chapters.slice(0,20);
+if(m.canon)previous.source=m.canon;
+s.worldLibrary[libraryKey]=previous;
 restoreAllResources(s);
 s.lastReward=summary;s.mission=null;s.assignment=null;s.screen="hub";return null}
 function rest(s){if(s.mission)return "輪迴途中不可使用主神的免費恢復";restoreAllResources(s);return null}

@@ -92,7 +92,7 @@ function distinct(a){return Array.from(new Set(a))}
 function get(s){
 const m=s.mission;if(!m)return null;
 const st=ensure(m);
-if(m.world==="custom"){const custom=m.aiOptions?.[m.phase]||[];const opts=custom.map((x,i)=>{let o={id:x.id||"ai-"+i,label:x.label,hint:x.hint,kind:x.kind,cost:Number(x.cost)||0,progress:Number(x.progress)||1,flag:x.flag||"ai-option-"+i,reasons:[]};if(["run","sneak","physical","risk","fight"].includes(o.kind)&&s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length;return o});return {world:{name:m.worldName},section:null,actions:opts,exertion:st.exertion,active:false,phase:m.phase,storyState:st}}
+if(m.world==="custom"||m.director){const custom=m.aiOptions?.[m.phase]||[];const opts=custom.map((x,i)=>{let o={id:x.id||"ai-"+i,label:x.label,hint:x.hint,kind:x.kind,cost:Number(x.cost)||0,progress:Number(x.progress)||1,flag:x.flag||"ai-option-"+i,reasons:[]};if(["run","sneak","physical","risk","fight"].includes(o.kind)&&s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length;return o});return {world:{name:m.worldName},section:null,actions:opts,exertion:st.exertion,active:false,phase:m.phase,storyState:st}}
 const data=W[m.world]||W.busan;let idx=Math.min(5,m.phase),section=data.chapters[idx];
 let opts=section.options.map(([id,label,hint,kind,cost,progress,flag,require])=>({id,label,hint,kind,cost,progress,flag,require,reasons:[]}));
 if(m.mode==="team"&&idx===2)opts[1]={id:"coordinate",label:"與隊友商量如何完成主神任務",hint:"共同推進目標，也許改變關係",kind:"talk",cost:0,progress:1,flag:"teamwork",reasons:[]};
@@ -163,11 +163,19 @@ m.turn++;m.phase++;
 m.roundEvents=[st.lastReply,...events.slice(-2)];m.log.push(st.lastReply,...events);
 const report={action:original||o.label,events:[st.lastReply,...events],delta:{hp:p.hp-before.hp,sta:p.sta-before.sta,mp:p.mp-before.mp,san:p.san-before.san,progress:m.progress-before.progress},kind:o.kind};
 m.history.push(report);
-if(m.phase>=6||p.hp<=0)E.end(s);
+const director=!!m.director;
+if(p.hp<=0)E.end(s);
+else if(!director&&m.phase>=6)E.end(s);
+else if(director){
+ const minTurns=18,maxTurns=28;
+ const resolved=!!m.aiScenes?.[m.phase-1]?.resolution?.readyToConclude;
+ if((m.phase>=minTurns&&resolved&&m.progress>=m.required)||m.phase>=maxTurns)E.end(s);
+}
+
 return {error:null,report,finished:!!m.finished}
 }
 function choose(s,i){const g=get(s);if(!g)return {error:"尚未進入輪迴世界"};const a=g.actions[i];if(!a)return {error:"沒有這個選擇"};return apply(s,a)}
-function free(s,text){if(s.mission?.world==="custom"&&!s.mission.aiOptions?.[s.mission.phase]?.length)return {error:"AI 正在構築世界，請先等待劇情生成"};let val=String(text||"").trim();if(val.length<2)return {error:"請先輸入想採取的行動"};if(val.length>180)return {error:"請將行動縮短至180字以內"};const g=get(s);if(!g)return {error:"尚未進入輪迴世界"};
+function free(s,text){if((s.mission?.world==="custom"||s.mission?.director)&&!s.mission.aiOptions?.[s.mission.phase]?.length)return {error:"AI 正在構築世界，請先等待劇情生成"};let val=String(text||"").trim();if(val.length<2)return {error:"請先輸入想採取的行動"};if(val.length>180)return {error:"請將行動縮短至180字以內"};const g=get(s);if(!g)return {error:"尚未進入輪迴世界"};
 const checks=[
 [/格擋|重擊|砍|斬|攻擊|射擊|拔刀|戰鬥/, "fight"],
 [/跑|衝|追|逃離|護送|趕往/, "run"],
@@ -186,7 +194,7 @@ if(s.profile.sta<cost)return {error:"體力不足，無法完成這個動作"};
 return apply(s,{id:"free-"+kind,label:val,hint:"自訂行動",kind,cost,progress:kind==="fight"?1:kind==="rest"?0:1,flag:"free-"+kind,reasons:[]},val);
 }
 function skills(s){const m=s.mission;if(!m)return [];let list=s.loadout.active;return list.map(id=>{let sk=E.skill(id),avail=E.availability(s,id);return {id,name:sk?.name||id,sta:sk?.sta||0,mp:sk?.mp||0,desc:sk?.desc||"",ok:avail.ok,reasons:avail.reasons}})}
-function useSkill(s,id){if(s.mission?.world==="custom"&&!s.mission.aiOptions?.[s.mission.phase]?.length)return {error:"AI 世界仍未載入，不可跳過劇情"};const sk=E.skill(id),check=E.availability(s,id);if(!check.ok)return {error:check.reasons.join("、")};let kind=sk?.power?"fight":sk?.effect==="reveal"?"observe":sk?.effect==="persuade"?"talk":sk?.effect==="heal"?"rest":"physical";
+function useSkill(s,id){if((s.mission?.world==="custom"||s.mission?.director)&&!s.mission.aiOptions?.[s.mission.phase]?.length)return {error:"AI 世界仍未載入，不可跳過劇情"};const sk=E.skill(id),check=E.availability(s,id);if(!check.ok)return {error:check.reasons.join("、")};let kind=sk?.power?"fight":sk?.effect==="reveal"?"observe":sk?.effect==="persuade"?"talk":sk?.effect==="heal"?"rest":"physical";
 const r=apply(s,{id:"skill-"+id,label:"施展「"+sk.name+"」",kind,cost:sk.sta||0,progress:sk.effect==="reveal"?2:sk.effect==="persuade"?2:sk.power?1:0,flag:"skill-"+id,reasons:[]}, "施展「"+sk.name+"」");
 if(!r.error){s.profile.mp=Math.max(0,s.profile.mp-(sk.mp||0));if(sk.effect==="heal")s.profile.hp=Math.min(100,s.profile.hp+22);if(sk.effect==="shield"){s.profile.san=Math.min(100,s.profile.san+8);if(s.mission)s.mission.storyState.shield=14}if(sk.effect==="evade"&&s.mission)s.mission.storyState.shield=10;if(sk.cooldown&&s.mission&&!s.mission.finished)s.mission.cooldowns[id]=sk.cooldown+1;
 if(sk.power&&s.mission&&!s.mission.finished){const extra=Math.round(sk.power*.65);s.mission.enemy.hp=Math.max(0,s.mission.enemy.hp-extra);r.report.events.push("招式額外造成 "+extra+" 點傷害。");}}
