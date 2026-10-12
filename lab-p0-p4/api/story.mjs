@@ -145,7 +145,8 @@ const verified=typeof supplied?.url==="string"&&/^https:\/\/(zh|en)\.wikipedia\.
  typeof supplied?.extract==="string"&&supplied.extract.length>80&&supplied.extract.length<5000&&
  ["exact","partial"].includes(supplied.confidence)&&supplied.mediaType===input.mediaType&&normalizeWikiTitle(supplied.title).includes(normalizeWikiTitle(input.world.replace(/(?:19|20)\d{2}/g,"")));
 const canon=input.worldKind==="adaptation"?(verified?{title:clean(supplied.title,90),url:supplied.url,source:"Wikipedia",confidence:supplied.confidence,extract:clean(supplied.extract,input.phase===0?1250:650)}:await lookupCanon(input.world,input.mediaType)):null;
-const cacheId=JSON.stringify({world:input.world,mode:input.mode,kind:input.worldKind,phase:input.phase,history:input.history,scene:input.previousScenes.slice(-2),quest:input.sideQuests,canon:canon?.title||null});
+// Never reuse another game session or original premise as if it were the current story.
+const cacheId=client+"::"+JSON.stringify({...input,sessionKey:clean(body?.sessionKey,90),canonRef:canon?.url||""});
 const hit=recentResponses.get(cacheId);if(hit&&Date.now()-hit.when<120000)return reply(200,{...hit.data,cached:true});
 const longStoryRules=[
 "延續history、previousScenes、npcMemory、worldFacts、priorArc、sideQuests、npcAgency及branchConsequences的實際變化，禁止重置、矛盾、通用重複場景。",
