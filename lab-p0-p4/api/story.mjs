@@ -76,7 +76,7 @@ async function lookupCanon(name,medium){
    try{response=await fetch(url.toString(),{signal:ctrl.signal,headers:{"User-Agent":"Nightwalker/1.0 (https://nightwalker-rpg-web.vercel.app/)","Accept":"application/json"}})}finally{clearTimeout(timeout)}
    if(!response.ok)continue;
    const raw=await response.json();
-   const pages=(raw.query?.pages||[]).filter(x=>x.extract?.length>80);
+   const pages=(raw.query?.pages||[]).filter(x=>x.extract?.length>30);
    for(const p of pages){
     const score=rateWikiPage(p,title,medium);
     if(score>=(best?.score??31))best={score,page:p,lang};
