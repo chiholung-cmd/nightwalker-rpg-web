@@ -36,6 +36,19 @@ try{
  if(s.mission===m&&m.phase===phase&&!m.finished){
  m.aiScenes ||= {};m.aiOptions ||= {};
  m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:m.mode,resolution:obj.resolution||{readyToConclude:false}};if(Array.isArray(obj.options)&&obj.options.length===3)m.aiOptions[phase]=obj.options;if(Array.isArray(obj.missionArc)&&obj.missionArc.length>=3)m.missionArc||=obj.missionArc.slice(0,4);
+m.npcMemory ||= {};
+for(const upd of obj.npcUpdates||[]){if(!upd.name||!upd.memory)continue;
+const prev=m.npcMemory[upd.name]||{trust:0};
+m.npcMemory[upd.name]={trust:Math.max(-10,Math.min(10,(prev.trust||0)+(Number(upd.trustChange)||0))),attitude:upd.attitude||prev.attitude||"",memory:upd.memory,updated:phase};
+}
+m.storyFacts=Array.from(new Set([...(m.storyFacts||[]),...(obj.facts||[]).filter(t=>typeof t==="string"&&t.length<170)])).slice(-70);
+if(obj.canon?.url&&obj.canon.confidence!=="unverified")m.canon=obj.canon;
+s.worldLibrary ||= {};
+const wkey=(m.worldKind||"catalog")+":"+(m.worldName||m.world);
+const saved=s.worldLibrary[wkey]||{name:m.worldName,worldKind:m.worldKind||"catalog",visits:0,npcs:{},facts:[],chapters:[],source:null};
+saved.npcs={...saved.npcs,...m.npcMemory};saved.facts=Array.from(new Set([...(saved.facts||[]),...(m.storyFacts||[])])).slice(-90);
+if(m.canon)saved.source=m.canon;
+s.worldLibrary[wkey]=saved;
  temporary.aiError="";temporary.aiFailedKey="";persist();
  }
 }catch(e){if(s.mission===m&&m.phase===phase){temporary.aiError=String(e.message||e).slice(0,150);temporary.aiFailedKey=key}}
