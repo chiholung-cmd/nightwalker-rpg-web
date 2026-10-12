@@ -82,6 +82,7 @@ function missionUI(){
  const blocks=novel?.blocks||[];
  const prose=blocks.map((b,i)=>{
   if(b.type==="dialogue")return '<div class="novel-dialogue" data-voice="'+i+'"><b>'+esc(b.speaker)+'</b><p>'+esc(b.text)+'</p></div>';
+  if(b.type==="system")return '<div class="novel-system">'+esc(b.text)+'</div>';
   return (b.text||"").split(/\n\n/).filter(Boolean).map(p=>'<p class="'+(b.consequence?"novel-choice-consequence":"")+'">'+esc(p)+'</p>').join("");
  }).join("");
  const notice=scene.exertion?'<span class="narrative-condition">持續'+(scene.exertion==="run"?"奔跑":"潛行")+'中</span>':"";
