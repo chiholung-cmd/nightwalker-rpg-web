@@ -102,7 +102,7 @@ function collectStoryBlocks(scene,protagonist){
   const type=["dialogue","d","對白","对话"].includes(x.type)?"dialogue":"narration";
   const raw=String(x.text??x.content??"").trim();
   const paragraphs=type==="narration"?raw.split(/\n\s*\n/).filter(Boolean):[raw];
-  return paragraphs.map(text=>({type,speaker:clean(x.speaker,40),text:thirdPerson(clean(text,1400),protagonist)}));
+  return paragraphs.map(text=>({type,speaker:clean(x.speaker,40),text:type==="dialogue"?clean(text,1400):thirdPerson(clean(text,1400),protagonist)}));
  });
  if(!blocks.length){
   const prose=clean(scene?.story??scene?.prose??scene?.narration??scene?.content??"",6000);
