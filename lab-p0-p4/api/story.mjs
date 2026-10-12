@@ -16,7 +16,7 @@ const system=[
 ].join("\n");
 function context(v){
 let limited=a=>Array.isArray(a)?a.slice(-8):[];
-return {mode:v?.mode==="custom"?"custom":"known",world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(20,Number(v?.phase)||0)),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history).map(x=>clean(x,180)),base:limited(v?.base).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,600)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),state:v?.state||{}};
+return {mode:v?.mode==="custom"?"custom":"known",world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(20,Number(v?.phase)||0)),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history).map(x=>clean(x,180)),previousScenes:limited(v?.previousScenes).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,650)})),base:limited(v?.base).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,600)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),state:v?.state||{}};
 }
 export default {
 async fetch(request){
@@ -34,7 +34,7 @@ let body;try{body=await request.json()}catch(e){return reply(400,{error:"INVALID
 const input=context(body);if(input.world.length<2||input.task.length<2)return reply(400,{error:"MISSING_CONTEXT"});
 const ctl=new AbortController();const timeout=setTimeout(()=>ctl.abort(),20000);
 let result;
-try{result=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",signal:ctl.signal,headers:{"Authorization":"Bearer "+process.env.GROQ_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,temperature:0.75,max_completion_tokens:1800,stream:false,messages:[{role:"system",content:system},{role:"user",content:JSON.stringify(input)}]})});}catch(e){return reply(504,{error:"AI_TIMEOUT",message:"AI 暫時未能生成，請稍後重試"})}finally{clearTimeout(timeout)}
+try{result=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",signal:ctl.signal,headers:{"Authorization":"Bearer "+process.env.GROQ_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,temperature:0.7,max_completion_tokens:2200,reasoning_effort:"low",reasoning_format:"hidden",response_format:{type:"json_object"},stream:false,messages:[{role:"system",content:system},{role:"user",content:JSON.stringify(input)}]})});}catch(e){return reply(504,{error:"AI_TIMEOUT",message:"AI 暫時未能生成，請稍後重試"})}finally{clearTimeout(timeout)}
 if(!result.ok)return reply(result.status===429?429:502,{error:result.status===429?"AI_RATE_LIMIT":"AI_PROVIDER_ERROR",message:"免費 AI 額度或連線暫時不可用"});
 let data;try{data=await result.json()}catch(e){return reply(502,{error:"INVALID_PROVIDER_RESPONSE"})}
 let raw=clean(data?.choices?.[0]?.message?.content,12000);const ticks=String.fromCharCode(96).repeat(3);if(raw.startsWith(ticks)){raw=raw.slice(raw.indexOf("\n")+1);if(raw.endsWith(ticks))raw=raw.slice(0,-3)}
