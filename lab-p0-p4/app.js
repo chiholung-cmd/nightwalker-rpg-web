@@ -13,6 +13,42 @@ const skill=id=>D.skills.find(x=>x.id===id);
 const world=id=>D.worlds.find(x=>x.id===id);
 const task=id=>D.tasks.find(x=>x.id===id);
 const icon={hub:"◎",profile:"◈",warehouse:"▥",loadout:"⚒",upgrade:"✧",portal:"◌",memory:"▤",settings:"⚙"};
+function aiSceneKey(m){return m?.seed+"-"+m?.world+"-"+m?.phase}
+async function checkAiStatus(){
+if(temporary.aiChecked)return;
+try{const res=await fetch("/api/story",{cache:"no-store"});const info=await res.json();temporary.aiConfigured=!!(res.ok&&info.configured)}
+catch(e){temporary.aiConfigured=false}
+temporary.aiChecked=true;render()
+}
+async function generateAiScene(force){
+const m=s.mission;if(!m||m.finished||!temporary.aiConfigured)return;
+const phase=m.phase,key=aiSceneKey(m);
+if(!force&&m.aiScenes?.[phase])return;
+if(temporary.aiPending)return;
+if(!force&&temporary.aiFailedKey===key)return;
+temporary.aiPending=true;temporary.aiKey=key;temporary.aiError="";render();
+const known=window.NW_NOVEL?.scene(s);
+const scene=N.get(s);const body={mode:m.world==="custom"?"custom":"known",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-8).map(x=>x.action),base:(known?.blocks||[]).slice(0,8),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
+try{
+ const res=await fetch("/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+ const obj=await res.json();if(!res.ok)throw Error(obj.message||obj.error||"AI 劇情暫時無法載入");
+ if(!Array.isArray(obj.blocks)||obj.blocks.length<4)throw Error("AI 劇情格式不完整");
+ if(s.mission===m&&m.phase===phase&&!m.finished){
+ m.aiScenes ||= {};m.aiOptions ||= {};
+ m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:m.mode};
+ if(m.world==="custom")m.aiOptions[phase]=obj.options||[];
+ temporary.aiError="";temporary.aiFailedKey="";persist();
+ }
+}catch(e){if(s.mission===m&&m.phase===phase){temporary.aiError=String(e.message||e).slice(0,150);temporary.aiFailedKey=key}}
+finally{temporary.aiPending=false;temporary.aiKey="";render()}
+}
+function scheduleAiScene(){
+const m=s.mission;if(!m||m.finished||!temporary.aiChecked||!temporary.aiConfigured)return;
+if(m.aiScenes?.[m.phase])return;
+const key=aiSceneKey(m);
+if(temporary.aiPending||temporary.aiFailedKey===key)return;
+Promise.resolve().then(()=>generateAiScene(false))
+}
 function persist(){E.save(s)}
 function notice(text){temporary.notice=text;render();clearTimeout(temporary.noticeTimer);temporary.noticeTimer=setTimeout(()=>{temporary.notice="";render()},3300)}
 function go(screen){s.screen=screen;temporary.panel="";temporary.showItems=false;persist();render()}
@@ -101,7 +137,7 @@ function prettyEffects(action){const parts=N.preview(action);return parts.length
 function missionUI(){
  const m=s.mission;
  if(m.finished)return resultUI();
- const scene=N.get(s),novel=window.NW_NOVEL?.scene(s),w=world(m.world);
+ const scene=N.get(s),novel=m.aiScenes?.[m.phase]||window.NW_NOVEL?.scene(s)||{title:"世界構築中",mood:"system",blocks:[{type:"system",text:"主神正在構築你指定的世界。等待 AI 劇情載入……"}]},w=m.world==="custom"?{name:m.worldName}:world(m.world);
  const choices=scene.actions.map((o,i)=>'<button class="narrative-choice" data-do="act:'+i+'" '+(o.usable?"":"disabled")+'><span class="choice-no">0'+(i+1)+'</span><span class="choice-main"><b>'+esc(o.label)+'</b>'+(o.hint?'<small>'+esc(o.hint)+'</small>':"")+prettyEffects(o)+(o.reasons.length?'<small class="blocked">'+esc(o.reasons.join("、"))+'</small>':"")+'</span></button>').join("");
  const blocks=novel?.blocks||[];
  const prose=blocks.map((b,i)=>{
@@ -119,9 +155,9 @@ function missionUI(){
  if(temporary.showLog)popups.push('<div class="mission-popup"><div class="card-heading">輪迴經歷</div><div class="log-lines">'+m.log.slice(-12).map(x=>'<p>'+esc(x)+'</p>').join("")+'</div>'+a("關閉","logs","small ghost")+'</div>');
  if(temporary.showTask)popups.push('<div class="mission-popup"><div class="card-heading">主神任務</div><p class="popup-note">'+esc(m.title)+' · '+esc(m.worldName)+'</p><p class="popup-note">'+esc(m.objective)+'</p><p class="popup-note">當前進度：'+m.progress+' / '+m.required+'</p>'+(m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
  return '<div class="mission-stage narrative-stage novel-first-stage">'+bar+
- '<div class="scene-prose '+(s.settings.reducedMotion?"motion-off":"")+'" data-mood="'+(novel?.mood||"calm")+'"><div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+(novel?.mode||"主神任務")+'</div>'+prose+'</div>'+
+ '<div class="scene-prose '+(s.settings.reducedMotion?"motion-off":"")+'" data-mood="'+(novel?.mood||"calm")+'"><div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+(novel?.mode||"主神任務")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
  toolbox+'<div class="fixed-choices story-choice-panel">'+notice+choices+
- '<div class="free-row"><input id="free-action" maxlength="180" placeholder="或者，由你來決定……" aria-label="自訂行動">'+a("執行","free","tiny main")+'</div></div>'+
+ '<div class="free-row"><input id="free-action" maxlength="180" placeholder="或者，由你來決定……" aria-label="自訂行動" '+(m.world==="custom"&&!scene.actions.length?"disabled":"")+'>'+a("執行","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
  '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"單人輪迴":m.mode==="team"?"協同任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
 }
 function resultUI(){
@@ -157,7 +193,7 @@ if(mode==="system")body=card("主神規則說明","世界與任務由主神決�
 return section("MAIN GOD ARCHIVE","輪迴記錄","主神會保存重大抉擇與線索；世界居民亦應根據合理身份和記憶作出反應。")+'<div class="tabbar">'+tabs.map(x=>'<button class="'+(mode===x[0]?"on":"")+'" data-do="tab:memory:'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="scroll-content column-gap">'+body+'</div>'}
 function settings(){return section("TERMINAL SETTINGS","系統設定","本機測試資料與閱讀介面。")+'<div class="scroll-content column-gap">'+card("閱讀",piece("減少情緒演出動畫",s.settings.reducedMotion?"已開啟":"已關閉",a("切換","toggleMotion","small")))+card("存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+card("開發版本","P0–P4 整合測試 · 已接通本地規則引擎、主神任務與 AI 隊伍。即時 AI 對話與真人多人未連接。")+'</div>'}
 function screen(){return s.screen==="hub"?hub():s.screen==="profile"?profile():s.screen==="warehouse"?warehouse():s.screen==="loadout"?loadout():s.screen==="upgrade"?upgrade():s.screen==="portal"?missionBoard():s.screen==="mission"?missionUI():s.screen==="memory"?memory():settings()}
-function render(){const inGame=!!(s.mission&&s.screen==="mission");R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+'</div>';persist()}
+function render(){const inGame=!!(s.mission&&s.screen==="mission");R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+'</div>';persist();if(inGame)scheduleAiScene()}
 function handle(cmd){if(!cmd)return;
 if(cmd.startsWith("nav:")){let dest=cmd.slice(4);go(dest==="portal"&&s.mission?"mission":dest);return}
 if(cmd.startsWith("tab:profile:")){temporary.profileTab=cmd.slice(12);render();return}
@@ -176,6 +212,8 @@ if(cmd.startsWith("upsub:")){temporary.upgradeSub=cmd.slice(6);render();return}
 if(cmd==="upback:root"){temporary.upgradeCategory="";temporary.upgradeSub="";render();return}
 if(cmd.startsWith("blood:")){let err=E.buyBloodline(s,cmd.slice(6));if(err)return notice(err);notice("血脈覺醒成功，能力和副作用已生效。");return}
 if(cmd.startsWith("boost:")){let err=E.boost(s,cmd.slice(6));if(err)return notice(err);render();return}
+if(cmd==="aiRetry"){temporary.aiFailedKey="";generateAiScene(true);return}
+if(cmd==="cancelCustom"){let err=E.cancelCustomWorld(s);if(err)return notice(err);temporary.aiError="";go("hub");return}
 if(cmd==="customWorld"){let val=R.querySelector("#custom-world-name")?.value||"";let err=E.assignCustomWorld(s,val,temporary.aiConfigured);if(err)return notice(err);render();return}
 if(cmd==="assign"){let err=E.mainGodAssign(s);if(err)return notice(err);render();return}
 if(cmd.startsWith("coord:")){let err=E.assignReturn(s,cmd.slice(6));if(err)return notice(err);render();return}
@@ -197,4 +235,5 @@ if(cmd==="export"){try{const blob=new Blob([JSON.stringify(s,null,2)],{type:"app
 }
 R.addEventListener("click",ev=>{let t=ev.target.closest("[data-do]");if(!t||t.disabled)return;handle(t.dataset.do)});
 render();
+checkAiStatus();
 })();
