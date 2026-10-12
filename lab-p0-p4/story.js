@@ -163,7 +163,7 @@ for(const id in m.cooldowns)m.cooldowns[id]=Math.max(0,m.cooldowns[id]-1);
 m.turn++;m.phase++;
 m.roundEvents=[st.lastReply,...events.slice(-2)];m.log.push(st.lastReply,...events);
 const report={action:original||o.label,events:[st.lastReply,...events],delta:{hp:p.hp-before.hp,sta:p.sta-before.sta,mp:p.mp-before.mp,san:p.san-before.san,progress:m.progress-before.progress},kind:o.kind};
-m.history.push(report);global.NW_WORLD?.onAction?.(s,o,report);global.NW_WORLD?.recordDirectorAction?.(s,o,report);
+m.history.push(report);global.NW_WORLD?.onAction?.(s,o,report);global.NW_WORLD?.recordDirectorAction?.(s,o,report);global.NW_BIBLE?.recordAction?.(s,report);
 const director=!!m.director;
 if(p.hp<=0)E.end(s);
 else if(!director&&m.phase>=6)E.end(s);
@@ -217,6 +217,21 @@ function parseFreeIntent(text){
  const kind=kinds[0];
  return {kind,cost:INTENT_COST[kind],label:INTENT_LABELS[kind],text:raw};
 }
+function parseFreePlan(text){
+ const raw=String(text||"").trim();
+ if(raw.length<2||raw.length>180)return {error:"請輸入 2 至 180 字的行動計劃"};
+ // Keep each step separate: the game will NEVER auto-execute future steps.
+ const parts=raw.replace(/(?:先)(?=.{1,60}?(?:然後|接著|跟住|之後|再))/g,"")
+  .split(/(?:然後|接著|跟住|之後|隨後|再去|再來|再)(?!次)|[；;。]/).map(t=>t.trim()).filter(Boolean);
+ if(parts.length<2||parts.length>3)return {error:"請以「先……然後……」描述兩至三個獨立步驟"};
+ const steps=[];
+ for(const part of parts){
+  const intent=parseFreeIntent(part);
+  if(intent.error)return {error:"步驟「"+part.slice(0,30)+"」尚未清楚，請分開描述每一步。未扣除任何資源。"};
+  steps.push({text:part,kind:intent.kind,label:intent.label,cost:intent.cost});
+ }
+ return {steps,mode:"review-only",message:"只會執行已確認的第一步；之後每一步必須按新情節重新確認"};
+}
 function analyzeFree(s,text){
  const m=s.mission;
  if(!m||m.finished)return {error:"當前沒有正在進行的任務"};
@@ -267,5 +282,5 @@ if(a.kind==="sneak")p.push("持續潛行每幕 STA −3");
 if(a.kind==="rest")p.push("STA +18");
 if(a.kind==="fight"||a.kind==="risk")p.push("可能受傷");
 return p}
-global.NW_STORY={get,excerpt,choose,free,analyzeFree,parseFreeIntent,skills,useSkill,useItem,preview,ensure};
+global.NW_STORY={get,excerpt,choose,free,analyzeFree,parseFreeIntent,parseFreePlan,skills,useSkill,useItem,preview,ensure};
 })(window);
