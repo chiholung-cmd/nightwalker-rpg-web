@@ -10,7 +10,7 @@ function cancel(){
  active.cancelled=true;
  if(active.frame!=null)caf(active.frame);
  for(const id of active.timers)global.clearTimeout(id);
- for(const item of active.items)if(item.element.isConnected!==false)item.element.textContent=item.full;
+ for(const item of active.items)if(item.element.isConnected!==false){item.element.textContent=item.full;if(item.element.style)item.element.style.minHeight="";item.element.classList?.remove("eplus-typing")}
  active=null;
 }
 function skip(){
@@ -39,6 +39,7 @@ function play(root,settings={}){
    const delay=(isSystem?90:240)+i*(intensity==="strong"?260:120);
    const item={element:el,full,chars,duration,delay,started:null};
    run.items.push(item);
+   if(el.style&&typeof el.getBoundingClientRect==="function")el.style.minHeight=Math.ceil(el.getBoundingClientRect().height)+"px";
    el.textContent="";
    el.classList?.add("eplus-typing");
  }
@@ -52,7 +53,7 @@ function play(root,settings={}){
      const count=Math.floor(item.chars.length*fraction);
      if(count!==item.lastCount){item.element.textContent=item.chars.slice(0,count).join("");item.lastCount=count}
      if(fraction<1)allDone=false;
-     else item.element.classList?.remove("eplus-typing");
+     else {item.element.classList?.remove("eplus-typing");if(item.element.style)item.element.style.minHeight=""}
    }
    if(!allDone)run.frame=raf(step);
    else {active=null;const skipButton=root.querySelector?.('[data-do="skipFx"]');if(skipButton)skipButton.hidden=true;}
