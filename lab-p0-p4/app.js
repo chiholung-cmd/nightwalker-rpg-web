@@ -236,7 +236,7 @@ function missionUI(){
  if(temporary.showTask)popups.push('<div class="mission-popup"><div class="card-heading">主神任務</div><p class="popup-note">'+esc(m.title)+' · '+esc(m.worldName)+'</p><p class="popup-note">'+esc(m.objective)+'</p>'+
 (m.director?'<p class="popup-note">長篇輪迴 · 第 '+(m.phase+1)+' 幕 · '+esc(m.phase<5?"調查":m.phase<10?"人物關係":m.phase<16?"危機升級":m.phase<23?"決戰":"結局")+'</p>'+
 (m.missionArc||[]).map((q,i)=>'<p class="popup-note">階段 '+(i+1)+'：'+esc(q)+'</p>').join(""):'<p class="popup-note">當前進度：'+m.progress+' / '+m.required+'</p>')+
-(m.quests||[]).map(q=>'<p class="popup-note"><b>支線：</b>'+esc(q.title)+' · '+(q.status==="completed"?"已完成":q.progress+"/"+q.required)+' · '+esc(q.objective)+'</p>').join("")+
+(m.quests||[]).map(q=>'<p class="popup-note"><b>支線：</b>'+esc(q.title)+' · '+(q.status==="completed"?"已完成":q.progress+"/"+q.required)+' · '+esc(q.objective)+(q.evidence?.length?' · 有效線索：'+esc(q.evidence.at(-1).action):'')+'</p>').join("")+
 (m.canon?.url?'<p class="popup-note">公開原作資料：<a href="'+esc(m.canon.url)+'" target="_blank" rel="noopener noreferrer">'+esc(m.canon.title)+' ↗</a></p>':"")+
 (m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
  return '<div class="mission-stage narrative-stage novel-first-stage">'+bar+
