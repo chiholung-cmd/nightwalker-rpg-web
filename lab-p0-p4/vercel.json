@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/story.mjs": {
+      "maxDuration": 30
+    }
+  }
+}
