@@ -93,8 +93,62 @@ async function lookupCanon(name,medium){
  canonCache.set(key,unknown);return unknown;
 }
 
+const COMMON_TYPO_TITLES={
+ "尋泰記":"尋秦記","寻泰记":"尋秦記","尋奏記":"尋秦記","寻奏记":"尋秦記",
+ "無限恐懼":"無限恐怖","无限恐惧":"無限恐怖"
+};
+const canonical=x=>String(x||"").normalize("NFKC").replace(/[《》「」『』\s:：\-·（）()]/g,"").toLowerCase()
+.replace(/寻/g,"尋").replace(/记/g,"記").replace(/无/g,"無").replace(/限/g,"限").replace(/秦/g,"秦");
+function distance(a,b){
+ const x=[...canonical(a)],y=[...canonical(b)];
+ let prev=Array.from({length:y.length+1},(_,i)=>i);
+ for(let i=1;i<=x.length;i++){const row=[i];for(let j=1;j<=y.length;j++)row.push(Math.min(row[j-1]+1,prev[j]+1,prev[j-1]+(x[i-1]===y[j-1]?0:1)));prev=row}
+ return prev.at(-1);
+}
+function fuzzyScore(a,b){
+ const aa=canonical(a),bb=canonical(b);if(!aa||!bb)return 0;
+ if(aa===bb)return 1;
+ if(aa.includes(bb)&&bb.length>2||bb.includes(aa)&&aa.length>2)return .89;
+ return Math.max(0,1-distance(aa,bb)/Math.max(aa.length,bb.length));
+}
+async function resolveWorldTitle(title,medium){
+ const raw=clean(title,65),normalized=canonical(raw);
+ if(normalized.length<2)return {status:"invalid",matches:[],message:"請輸入完整作品名稱"};
+ const typo=COMMON_TYPO_TITLES[raw]||COMMON_TYPO_TITLES[normalized];
+ const requested=typo||raw;
+ let result=[];
+ const known=await lookupCanon(requested,medium);
+ if(known.url&&["exact","partial"].includes(known.confidence)){
+  const k=known.title.replace(/\s*[(（](?:電視劇|电视剧|電影|电影|小說|小说)[)）]\s*$/,"");
+  const confidence=fuzzyScore(raw,k);
+  result.push({title:k,mediaType:medium,sourceTitle:known.title,sourceUrl:known.url,
+   confidence:typo?"suggestion":confidence>=.95?"exact":"suggestion",score:typo?.88:confidence,source:"Wikipedia"});
+ }
+ // Try concise search alternatives, but do not treat search hits as proven original timeline.
+ if(!result.length){
+  try{
+   const hint=wikiMedia[medium]||wikiMedia["其他作品"];
+   const url=new URL("https://zh.wikipedia.org/w/api.php");
+   url.search=new URLSearchParams({action:"query",generator:"search",gsrsearch:raw+" "+hint.zh,gsrlimit:"8",prop:"extracts",explaintext:"1",exchars:"450",format:"json",formatversion:"2"}).toString();
+   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),3500);
+   try{
+    const res=await fetch(url.toString(),{signal:ctl.signal,headers:{"Accept":"application/json"}});
+    const rawResult=res.ok?await res.json():{};
+    result=(rawResult.query?.pages||[]).filter(p=>rateWikiPage(p,raw,medium)>-80).map(p=>{
+     const base=p.title.replace(/\s*[(（][^)）]+[)）]\s*$/,"");
+     const score=fuzzyScore(raw,base);
+     return {title:base,mediaType:medium,sourceTitle:p.title,sourceUrl:"https://zh.wikipedia.org/wiki/"+encodeURIComponent(p.title.replace(/ /g,"_")),confidence:score>=.95?"exact":"suggestion",score,source:"Wikipedia"};
+    }).filter(p=>p.score>=.58).sort((a,b)=>b.score-a.score).slice(0,3);
+   }finally{clearTimeout(timer)}
+  }catch(_){}
+ }
+ const unique=[];
+ for(const r of result)if(!unique.some(x=>x.title===r.title&&x.mediaType===r.mediaType))unique.push(r);
+ return {status:unique.length?"needs_confirmation":"unverified",requested:raw,matches:unique,
+  message:unique.length?"請確認作品及媒介版本；未確認之前絕不生成原作世界或扣除積分":"未能核實作品名稱；請檢查錯字或切換媒介類型，不會當原創世界生成"};
+}
 function thirdPerson(text,protagonist){
- const name=clean(protagonist,30)||"夜行者";
+ const name=clean(protagonist,30)||"主角";
  return String(text??"").split(/(「[^」]*」|“[^”]*”|《[^》]*》|『[^』]*』)/g).map((part,i)=>i%2?part:part.replace(/你們的/g,name+"一行人的").replace(/你們/g,name+"一行人").replace(/你的/g,name+"的").replace(/你/g,name)).join("");
 }
 function collectStoryBlocks(scene,protagonist){
@@ -128,7 +182,7 @@ function normalizeStoryOptions(scene,input){
 const recentResponses=new Map();
 let probeCache={at:0,value:null};
 const system=[
-"以成熟中國網絡小說作家的筆法創作連載小說。繁體中文書面語，人物心理、場面調度、因果、衝突與對話要連貫自然。每幕約350至550中文字推進一個完整事件，分成3至6個自然段落。禁止任務報告、HUD、回合制戰報、列表式旁白。",
+"以成熟中國網絡小說作家的筆法創作連載小說。繁體中文書面語，人物心理、場面調度、因果、衝突與對話要連貫自然。每章正文目標 750 至 1100 個中文字（不包括選項），至少六個完整自然段落。必須有完整場景開端、人物互動、局勢變化、可見的行動後果與留下的合理懸念；唔可以每幾句就叫玩家決定。禁止任務報告、HUD、回合制戰報、列表式旁白。",
 "敘事只用第三人稱有限視角：主角姓名為 protagonist，主角的行動、心境、觀察使用其姓名或適當的他／她，嚴禁旁白『你看見』『你發現』『你走向』『你的心』『你決定』。角色對話可以正常使用『你』。主角要有自己的性格與內心掙扎，而不是玩家攝影機。",
 "僅返回合法 JSON：title,mood,blocks:[{type:narration|dialogue,speaker?,text}],options:[{label,hint,kind,cost,progress}]三個,resolution。missionArc,npcUpdates,facts,npcEvents,sideQuests可省略；勿輸出說明。場景與角色對話自然穿插，對話採用「」。",
 "options應包含合乎場面的不同策略（調查／對話／隱瞞／冒險），kind限talk/observe/conceal/sneak/run/hide/physical/risk/fight/rest；非體力行動cost=0，其餘cost<=20。",
@@ -177,13 +231,18 @@ function finaleCheck(v){
 }
 function context(v){
 let limited=(a,n=8)=>Array.isArray(a)?a.slice(-n):[];
-return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),protagonist:clean(v?.protagonist,30)||"夜行者",world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),storyBible:bibleContext(v?.storyBible),endingAudit:finaleCheck(v?.endingAudit),directorBrief:plotContext(v?.directorBrief),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history,5).map(x=>clean(x,105)),previousScenes:limited(v?.previousScenes,3).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,270)})),base:limited(v?.base,4).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,310)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,8).map(([name,x])=>({name:clean(name,40),trust:x?.trust||0,attitude:clean(x?.attitude,65),memory:clean(x?.memory,120)})):[],worldFacts:limited(v?.worldFacts,8).map(x=>clean(x,95)),worldHistory:limited(v?.worldHistory,3).map(x=>clean(x,100)),priorArc:limited(v?.priorArc,4).map(x=>clean(x,75)),sideQuests:limited(v?.sideQuests,5).map(q=>({title:clean(q?.title,60),objective:clean(q?.objective,90),status:clean(q?.status,18),progress:Number(q?.progress)||0})),npcAgency:limited(v?.npcAgency,4).map(x=>({name:clean(x?.name,38),event:clean(x?.event,130),intent:clean(x?.intent,100)})),branchConsequences:limited(v?.branchConsequences,4).map(x=>({npc:clean(x?.npc,35),kind:clean(x?.kind,20),action:clean(x?.action,95),change:Number(x?.change)||0,trust:Number(x?.trust)||0})),state:v?.state||{}};
+return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),protagonist:clean(v?.protagonist,30)||"主角",world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),storyBible:bibleContext(v?.storyBible),endingAudit:finaleCheck(v?.endingAudit),directorBrief:plotContext(v?.directorBrief),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history,5).map(x=>clean(x,105)),previousScenes:limited(v?.previousScenes,3).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,270)})),base:limited(v?.base,4).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,310)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,8).map(([name,x])=>({name:clean(name,40),trust:x?.trust||0,attitude:clean(x?.attitude,65),memory:clean(x?.memory,120)})):[],worldFacts:limited(v?.worldFacts,8).map(x=>clean(x,95)),worldHistory:limited(v?.worldHistory,3).map(x=>clean(x,100)),priorArc:limited(v?.priorArc,4).map(x=>clean(x,75)),sideQuests:limited(v?.sideQuests,5).map(q=>({title:clean(q?.title,60),objective:clean(q?.objective,90),status:clean(q?.status,18),progress:Number(q?.progress)||0})),npcAgency:limited(v?.npcAgency,4).map(x=>({name:clean(x?.name,38),event:clean(x?.event,130),intent:clean(x?.intent,100)})),branchConsequences:limited(v?.branchConsequences,4).map(x=>({npc:clean(x?.npc,35),kind:clean(x?.kind,20),action:clean(x?.action,95),change:Number(x?.change)||0,trust:Number(x?.trust)||0})),state:v?.state||{}};
 }
 export default {
 async fetch(request){
 
 if(request.method==="GET"){
  const url=new URL(request.url);
+ if(url.searchParams.has("resolveWorld")){
+  const name=clean(url.searchParams.get("resolveWorld"),65);
+  const medium=clean(url.searchParams.get("mediaType"),15)||"劇集";
+  return reply(200,await resolveWorldTitle(name,medium));
+ }
  if(url.searchParams.get("probe")!=="1")return reply(200,{service:"Nightwalker AI",configured:!!process.env.GROQ_API_KEY,model:MODEL});
  if(!process.env.GROQ_API_KEY)return reply(503,{ok:false,configured:false,model:MODEL,status:"no_key",message:"伺服器未找到 GROQ_API_KEY"});
  if(probeCache.value&&Date.now()-probeCache.at<(probeCache.value.ok?180000:30000))return reply(probeCache.value.ok?200:503,{...probeCache.value,cached:true});
@@ -219,6 +278,8 @@ const verified=typeof supplied?.url==="string"&&/^https:\/\/(zh|en)\.wikipedia\.
  typeof supplied?.extract==="string"&&supplied.extract.length>80&&supplied.extract.length<5000&&
  ["exact","partial"].includes(supplied.confidence)&&supplied.mediaType===input.mediaType&&normalizeWikiTitle(supplied.title).includes(normalizeWikiTitle(input.world.replace(/(?:19|20)\d{2}/g,"")));
 const canon=input.worldKind==="adaptation"?(verified?{title:clean(supplied.title,90),url:supplied.url,source:"Wikipedia",confidence:supplied.confidence,extract:clean(supplied.extract,input.phase===0?1250:650)}:await lookupCanon(input.world,input.mediaType)):null;
+ if(input.worldKind==="adaptation"&&(!canon||!canon.url||canon.confidence==="unverified"))
+  return reply(422,{error:"CANON_UNVERIFIED",message:"無法核實原作設定，為避免虛構人物及故事已暫停生成；請返回作品頁核實名稱、媒介。"});
 // Never reuse another game session or original premise as if it were the current story.
 const cacheId=client+"::"+JSON.stringify({...input,sessionKey:clean(body?.sessionKey,90),canonRef:canon?.url||""});
 const hit=recentResponses.get(cacheId);if(hit&&Date.now()-hit.when<120000)return reply(200,{...hit.data,cached:true});
@@ -242,7 +303,7 @@ input.canonTimeline=canonEvidence(canon);
 const ctl=new AbortController();const timeout=setTimeout(()=>ctl.abort(),23500);
 let result=null,usedModel=MODEL;
 const endpoint="https://api.groq.com/openai/v1/chat/completions";
-const basePayload={temperature:0.65,max_completion_tokens:input.phase===0?2050:1950,response_format:{type:"json_object"},stream:false,messages:[{role:"system",content:system+"\n"+longStoryRules},{role:"user",content:JSON.stringify(input)}]};
+const basePayload={temperature:0.65,max_completion_tokens:input.phase===0?2950:2750,response_format:{type:"json_object"},stream:false,messages:[{role:"system",content:system+"\n"+longStoryRules},{role:"user",content:JSON.stringify(input)}]};
 async function invoke(model,simplified=false){
  const payload={...basePayload,model};
  if(model.startsWith("openai/gpt-oss")){payload.reasoning_effort="low";payload.include_reasoning=false}
