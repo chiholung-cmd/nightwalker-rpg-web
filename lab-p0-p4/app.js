@@ -57,7 +57,7 @@ const scene=N.get(s);const directorBrief=window.NW_WORLD?.directorContext?.(s)||
 try{
  const res=await fetch("/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
  const obj=await res.json();if(!res.ok){const error=new Error(obj.message||obj.error||"AI 劇情暫時無法載入");error.code=obj.error||"";error.httpStatus=res.status;error.retryAfter=Number(obj.retryAfter)||0;throw error}
- if(!Array.isArray(obj.blocks)||obj.blocks.length<1||!obj.blocks.some(b=>b?.type==="narration"&&String(b.text||"").replace(/\s/g,"").length>=85))throw Error("AI 劇情正文不完整");
+ if(!Array.isArray(obj.blocks)||obj.blocks.filter(b=>b?.type==="narration").reduce((n,b)=>n+String(b.text||"").replace(/\s/g,"").length,0)<100)throw Error("AI 劇情正文不完整");
  if(s.mission===m&&m.phase===phase&&!m.finished){
  temporary.aiDelayUntil=0;clearTimeout(temporary.aiRetryTimer);temporary.aiRetryTimer=0;temporary.aiUsage={model:obj.model||"",...(obj.usage||{}),remainingTokens:obj.quota?.remainingTokens??null};s.aiLastUsage={...temporary.aiUsage,at:Date.now()};
  m.aiScenes ||= {};m.aiOptions ||= {};
