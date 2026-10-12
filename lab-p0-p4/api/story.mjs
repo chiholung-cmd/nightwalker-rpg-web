@@ -241,7 +241,7 @@ let raw=clean(data?.choices?.[0]?.message?.content,12000);const ticks=String.fro
 let scene;try{scene=JSON.parse(raw.trim())}catch(e){return reply(502,{error:"INVALID_AI_JSON",message:"模型回傳格式不正確，請重試目前一幕"})}
 const blocks=collectStoryBlocks(scene,input.protagonist);
 const narrativeLength=blocks.filter(x=>x.type==="narration").reduce((sum,x)=>sum+x.text.replace(/\s/g,"").length,0);
-if(blocks.length<2||narrativeLength<100)return reply(502,{error:"SCENE_INCOMPLETE",message:"模型只返回零碎內容，劇情已保留；可重新生成",detail:{blocks:blocks.length,narrativeLength,finishReason:data?.choices?.[0]?.finish_reason||""}});
+if(blocks.length<1||narrativeLength<110)return reply(502,{error:"SCENE_INCOMPLETE",message:"模型只返回零碎內容，劇情已保留；可重新生成",detail:{blocks:blocks.length,narrativeLength,finishReason:data?.choices?.[0]?.finish_reason||""}});
 const opts=normalizeStoryOptions(scene,input);
 const quota=modelGates.get(usedModel)||{};
 const payload={quota:{remainingTokens:quota.remaining,resetSeconds:quota.reset},usage:{promptTokens:Number(data?.usage?.prompt_tokens)||0,completionTokens:Number(data?.usage?.completion_tokens)||0,totalTokens:Number(data?.usage?.total_tokens)||0},title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:usedModel,
