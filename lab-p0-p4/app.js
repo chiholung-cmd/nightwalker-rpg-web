@@ -28,7 +28,7 @@ if(temporary.aiPending)return;
 if(!force&&temporary.aiFailedKey===key)return;
 temporary.aiPending=true;temporary.aiKey=key;temporary.aiError="";render();
 const known=window.NW_NOVEL?.scene(s);
-const scene=N.get(s);const body={directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],priorArc:m.missionArc||[],mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-8).map(x=>x.action),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-2).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-3).map(b=>({type:b.type,speaker:b.speaker||"",text:b.text||""}))),base:(known?.blocks||[]).slice(0,8),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
+const scene=N.get(s);const body={directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-7),branchConsequences:(m.branchConsequences||[]).slice(-7),returnVisit:!!m.returnVisit,canonCache:m.canon||null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-8).map(x=>x.action),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-2).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-3).map(b=>({type:b.type,speaker:b.speaker||"",text:b.text||""}))),base:(known?.blocks||[]).slice(0,8),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
 try{
  const res=await fetch("/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
  const obj=await res.json();if(!res.ok)throw Error(obj.message||obj.error||"AI 劇情暫時無法載入");
@@ -36,6 +36,7 @@ try{
  if(s.mission===m&&m.phase===phase&&!m.finished){
  m.aiScenes ||= {};m.aiOptions ||= {};
  m.aiScenes[phase]={title:obj.title,mood:obj.mood,blocks:obj.blocks,mode:m.mode,resolution:obj.resolution||{readyToConclude:false}};if(Array.isArray(obj.options)&&obj.options.length===3)m.aiOptions[phase]=obj.options;if(Array.isArray(obj.missionArc)&&obj.missionArc.length>=3)m.missionArc||=obj.missionArc.slice(0,4);
+window.NW_WORLD?.ingest?.(s,obj,phase);
 m.npcMemory ||= {};
 for(const upd of obj.npcUpdates||[]){if(!upd.name||!upd.memory)continue;
 const prev=m.npcMemory[upd.name]||{trust:0};
@@ -180,11 +181,16 @@ function missionUI(){
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
  if(temporary.showSkills)popups.push('<div class="mission-popup"><div class="card-heading">已配置的招式與技能</div><p class="popup-note">招式不會自動取代劇情選項；你可以選擇是否在此刻施展。</p>'+N.skills(s).map(x=>'<button class="button-row story-skill" data-do="cast:'+x.id+'" '+(x.ok?"":"disabled")+'><div><b>'+esc(x.name)+'</b><small>'+esc(x.desc)+'</small><small>'+(x.sta?"STA −"+x.sta+" ":"")+(x.mp?"MP −"+x.mp:"")+(x.reasons.length?" · "+esc(x.reasons.join("、")):"")+'</small></div><span>使用 ›</span></button>').join("")+a("關閉","skills","small ghost")+'</div>');
  if(temporary.showLog)popups.push('<div class="mission-popup"><div class="card-heading">輪迴經歷</div><div class="log-lines">'+m.log.slice(-12).map(x=>'<p>'+esc(x)+'</p>').join("")+'</div>'+a("關閉","logs","small ghost")+'</div>');
- if(temporary.showTask)popups.push('<div class="mission-popup"><div class="card-heading">主神任務</div><p class="popup-note">'+esc(m.title)+' · '+esc(m.worldName)+'</p><p class="popup-note">'+esc(m.objective)+'</p><p class="popup-note">當前進度：'+m.progress+' / '+m.required+'</p>'+(m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
+ if(temporary.showTask)popups.push('<div class="mission-popup"><div class="card-heading">主神任務</div><p class="popup-note">'+esc(m.title)+' · '+esc(m.worldName)+'</p><p class="popup-note">'+esc(m.objective)+'</p>'+
+(m.director?'<p class="popup-note">長篇輪迴 · 第 '+(m.phase+1)+' 幕 · '+esc(m.phase<5?"調查":m.phase<10?"人物關係":m.phase<16?"危機升級":m.phase<23?"決戰":"結局")+'</p>'+
+(m.missionArc||[]).map((q,i)=>'<p class="popup-note">階段 '+(i+1)+'：'+esc(q)+'</p>').join(""):'<p class="popup-note">當前進度：'+m.progress+' / '+m.required+'</p>')+
+(m.quests||[]).map(q=>'<p class="popup-note"><b>支線：</b>'+esc(q.title)+' · '+(q.status==="completed"?"已完成":q.progress+"/"+q.required)+' · '+esc(q.objective)+'</p>').join("")+
+(m.canon?.url?'<p class="popup-note">公開原作資料：<a href="'+esc(m.canon.url)+'" target="_blank" rel="noopener noreferrer">'+esc(m.canon.title)+' ↗</a></p>':"")+
+(m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
  return '<div class="mission-stage narrative-stage novel-first-stage">'+bar+
  '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+(novel?.mode||"主神任務")+'</div>'+prose+'</div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
  toolbox+'<div class="fixed-choices story-choice-panel">'+notice+choices+
- '<div class="free-row"><input id="free-action" maxlength="180" placeholder="或者，由你來決定……" aria-label="自訂行動" '+(m.world==="custom"&&!scene.actions.length?"disabled":"")+'>'+a("執行","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
+ '<div class="free-row"><input id="free-action" maxlength="180" placeholder="或者，由你來決定……" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("執行","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>'+
  '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"單人輪迴":m.mode==="team"?"協同任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
 }
 function resultUI(){
@@ -227,6 +233,7 @@ if(mode==="system")body=card("主神規則說明","世界與任務由主神決�
 return section("MAIN GOD ARCHIVE","輪迴記錄","主神會保存重大抉擇與線索；世界居民亦應根據合理身份和記憶作出反應。")+'<div class="tabbar">'+tabs.map(x=>'<button class="'+(mode===x[0]?"on":"")+'" data-do="tab:memory:'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="scroll-content column-gap">'+body+'</div>'}
 function settings(){
  const mode=eplusMode(),cloud=window.NW_CLOUD?.status?.()||{enabled:false,key:"",revision:0};
+ const groqCard=card("AI 劇情健康檢查",'<p class="minor-meta">以一個非常短嘅真實 Groq 請求檢查模型、權限同免費額度。檢查結果會暫存三分鐘，唔會重複消耗額度。</p>'+a("測試 AI 真實連線","groqProbe","block main")+(temporary.groqStatus?'<p class="minor-meta">'+esc(temporary.groqStatus)+'</p>':""));
  const cloudCard=card("Nightwalker · 雲端存檔",'<p class="minor-meta">本機存檔永遠保留。你可以建立私密恢復代碼，日後喺其他裝置取回存檔。啟用後會喺劇情更新時自動備份；如果雲端有衝突，唔會覆蓋較新版本。</p>'+a(cloud.enabled?"立即雲端備份":"建立恢復代碼並啟用備份","cloudBackup","block main")+
  (cloud.key?'<p class="minor-meta">雲端已關聯 · 版本 '+cloud.revision+'</p>'+a("顯示／隱藏恢復代碼","cloudShow","block ghost"):"")+
  (temporary.cloudShow&&cloud.key?'<div class="cloud-recovery-key">'+esc(cloud.key)+'</div><p class="minor-meta">請將代碼保存喺安全地方；知道代碼的人可以讀取及取代雲端存檔。</p>':"")+
@@ -235,7 +242,7 @@ function settings(){
  (temporary.cloudError?'<p class="negative-note">'+esc(temporary.cloudError)+'</p>':""));
  return section("TERMINAL SETTINGS","系統設定","閱讀效果及本機、雲端輪迴存檔。")+'<div class="scroll-content column-gap">'+
  card("閱讀",piece("E+ 文字演出強度",mode==="strong"?"強烈（逐字對白＋情緒場景）":mode==="standard"?"標準（輕量演出）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small")))+
- cloudCard+card("本機存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+'</div>'
+ groqCard+cloudCard+card("本機存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+'</div>'
 }
 function screen(){return s.screen==="hub"?hub():s.screen==="profile"?profile():s.screen==="warehouse"?warehouse():s.screen==="loadout"?loadout():s.screen==="upgrade"?upgrade():s.screen==="portal"?missionBoard():s.screen==="mission"?missionUI():s.screen==="memory"?memory():settings()}
 function render(){
@@ -300,6 +307,10 @@ if(cmd.startsWith("cast:")){const out=N.useSkill(s,cmd.slice(5));if(out.error)re
 if(cmd.startsWith("use:")){let err=N.useItem(s,cmd.slice(4));if(err)return notice(err);temporary.showItems=false;notice("道具已使用，效果已套用。");return}
 if(cmd==="claim"){let err=E.finish(s);if(err)return notice(err);go("hub");return}
 if(cmd==="rest"){let err=E.rest(s);if(err)return notice(err);notice("主神治療完成。");return}
+if(cmd==="groqProbe"){
+ temporary.groqStatus="正在檢查 Groq 模型連線……";render();
+ fetch("/api/story?probe=1").then(async res=>{const data=await res.json();temporary.groqStatus=(data.message||data.status||"未知狀態")+(data.model?"（模型："+data.model+"）":"");render()}).catch(()=>{temporary.groqStatus="連伺服器檢查接口都無法連接，請檢查 Vercel 網站部署";render()});return
+}
 if(cmd==="cloudShow"){temporary.cloudShow=!temporary.cloudShow;render();return}
 if(cmd==="cloudBackup"){
  if(!window.NW_CLOUD)return notice("雲端存檔模組未載入");
