@@ -1,8 +1,8 @@
 (function(){
 "use strict";
-const D=window.NW_DATA,E=window.NW_ENGINE,R=document.getElementById("app");
+const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElementById("app");
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
-let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false};
+let s=E.load(),temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const q=v=>"'"+esc(v)+"'";
 const num=n=>Number(n||0).toLocaleString("en-US");
@@ -70,31 +70,31 @@ let stages=s.assignment?card("傳送前最後確認",'<div class="summary-lines"
 let returnLinks=s.discovered.length?card("定向返回已去過的世界",s.discovered.map(id=>{let w=world(id),unlocked=s.coord[id];return '<div class="return-row"><div><b>'+esc(w?.name||id)+'</b><small>'+(unlocked?"座標已解鎖":"須先付費解鎖座標")+'</small></div>'+a("查看代價","coord:"+id,"small ghost")+'</div>'}).join("")):"";
 return section("MAIN GOD / WORLD TRANSFER","輪迴傳送終端","主神發佈任務與目標；返回主神空間後 HP、STA、MP、SAN 全部免費恢復，再進入下一個世界。")+'<div class="scroll-content column-gap">'+banner+stages+returnLinks+'</div>'}
 function mood(i,worldId){if(worldId==="deathnote"&&i===5)return "grief";if(worldId==="alice"&&i===2)return "anger";if(worldId==="demon"&&i===0)return "system";return ["calm","suspense","eerie","dialogue","shock","resolve"][i%6]}
-function missionStory(){let m=s.mission,w=world(m.world),t=task(m.task),p=m.phase;let title=p===0?"初入世界":p===5?"最後一幕":"第 "+(p+1)+" 幕";let opening=p===0?w.intro:p<=4?w.beats[Math.min(3,p-1)]:"距離這次輪迴的結束已經不遠。你握緊手中的裝備，重新檢查剩餘的體力與靈力。主神沒有改變任務要求，卻也沒有承諾所有人都能活著離開。";
-let teammate=m.crew[(p||0)%Math.max(1,m.crew.length)];
-let char=teammate?teammate.name:(p%2===0?w.npc:m.mode==="versus"?"敵隊輪迴者":w.npc);
-let speak=teammate?"「不要急著作出結論。」"+teammate.name+"留意著你的動作，「我會負責"+teammate.skill+"，你只需要按照我們的計畫行動。」":p===0?w.talk: (m.mode==="versus"&&m.rival?"「想完成主神任務，就先證明你有資格。」"+m.rival.name+"隱約露出笑意，卻始終沒有放鬆警戒。":"「主神的規則已經說得很清楚。」"+w.npc+"望向你，「但我們能否活著出去，還要看接下來的選擇。」");
-let mode=m.mode==="solo"?"這一次，主神只派遣你一名輪迴者。周圍的世界人物並不知道你真正的來歷。":m.mode==="team"?"腕上的印記傳來第二道訊息：【小隊協同任務。】你的同伴並非固定跟班，他們各自擁有能力、判斷與目的。":"主神在你的視野中標出一道紅色符號：【敵對輪迴者已進入同一區域。】你們將爭奪相同的任務資源，但未必需要互相殺死才能分出勝負。";
-let last=m.roundEvents.length?"<p class='consequence'>"+esc(m.roundEvents.slice(-3).join("　"))+"</p>":"";
-let dynamic=m.phase>0?"你回想起剛才的抉擇，"+esc(m.history.at(-1)?.action||"") +"。這件事已經寫入主神的行動記錄，甚至可能影響你與其他輪迴者日後再會時的態度。":"";
-let objective="<p class='system-line'>【主神主線】"+esc(t.goal)+"<br>【目前進度】"+m.progress+" / "+m.required+(m.hidden?"<br>【隱藏任務】"+esc(t.hidden):"")+"　【對抗類型】"+({solo:"單人",team:"小隊",versus:"敵對輪迴"}[m.mode])+"</p>";
-return {title,opening,mode,speak,char,last,dynamic,objective,ending:"你聽見自己的心跳逐漸加快，卻依然清楚地看見眼前每一條可選的道路。此刻最重要的，不是猜測主神希望你作出甚麼決定，而是利用你真正擁有的裝備與能力，找到能夠承受後果的行動。"}}
-function costChip(x){let n=x>0?"−"+x:"+"+Math.abs(x);return tag(n, x>0?"negative":"positive")}
-function preview(a){let p=[];if(a.sta!==undefined)p.push('<span class="effect '+(a.sta>0?"bad":"good")+'">STA '+(a.sta>0?"−"+a.sta:"+"+(-a.sta))+'</span>');if(a.mp>0)p.push('<span class="effect bad">MP −'+a.mp+'</span>');if(a.damagePreview)p.push('<span class="effect good">敵 HP 約 −'+a.damagePreview.join("～")+'</span>');if(a.progress)p.push('<span class="effect good">任務進度 +'+a.progress+'</span>');
-if(a.hpRisk&&a.hpRisk[1]>0)p.push('<span class="effect bad">HP 估計 −'+a.hpRisk[0]+'～'+a.hpRisk[1]+'</span>');
-if(a.sanPreview)p.push('<span class="effect bad">SAN 約 −'+a.sanPreview+'</span>');
-if(a.bondPreview)p.push('<span class="effect good">隊友信任 +'+a.bondPreview+'</span>');if(a.id==="guard")p.push('<span class="effect good">減傷／SAN 恢復</span>');return p.join("")}
-function missionUI(){const d=E.derived(s),m=s.mission,story=missionStory(),w=d.w;
-if(m.finished)return resultUI();
-let primary=w.id==="demon"?"鬼物動向":"主神監察",foe=d.isFight?'<span class="foe-stat">'+esc(m.enemy.name)+'　'+m.enemy.hp+'/'+m.enemy.max+' HP</span>':"";
-let choices=d.actions.map((o,i)=>'<button class="narrative-choice" data-do="act:'+i+'" '+(o.usable?"":"disabled")+'><span class="choice-no">0'+(i+1)+'</span><span class="choice-main"><b>'+esc(o.name)+'</b><small>'+esc(o.desc)+'</small><span class="effects">'+preview(o)+'</span>'+(o.reasons.length?'<small class="blocked">未解鎖：'+esc(o.reasons.join("、"))+'</small>':"")+'</span></button>').join("");
-let party=m.crew.map(x=>x.name+"（"+x.role+"）").join("、")||"單人行動";
-let menu=temporary.showItems?'<div class="mission-popup"><div class="card-heading">本次隨身行囊</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+'　<span>使用（消耗一回合） ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>':"";
-let log=temporary.showLog?'<div class="mission-popup log-popup"><div class="card-heading">主神即時記錄</div><div class="log-lines">'+m.log.slice(-10).map(x=>'<p>'+esc(x)+'</p>').join("")+'</div>'+a("關閉","logs","small ghost")+'</div>':"";
-return '<div class="mission-stage" id="mission-stage"><div class="mission-top"><div class="mission-world">'+esc(w.name)+' <small>· '+esc(m.title)+'</small></div><div class="mission-bars">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].short+'</span><b>'+Math.round(s.profile[k])+'</b></div>').join("")+'</div><div class="mission-foe">'+foe+'<span>進度 '+m.progress+'/'+m.required+'</span><span>'+esc(d.enemyIntent)+'</span></div></div>'+
-'<div class="scene-prose '+(s.settings.reducedMotion?"motion-off":"")+'" data-mood="'+mood(m.phase,m.world)+'"><div class="scene-eyebrow">SCENARIO '+(m.phase+1)+' / 6 · '+story.title+' · '+primary+'</div>'+story.last+'<p>'+esc(story.opening)+'</p><p class="scene-mode">'+esc(story.mode)+'</p><div class="novel-dialogue"><b>'+esc(story.char)+'</b><p>'+esc(story.speak)+'</p></div>'+(story.dynamic?'<p>'+story.dynamic+'</p>':"")+'<p>'+esc(story.ending)+'</p>'+story.objective+'</div>'+
-'<div class="mission-toolbar"><span>技能槽 03：'+esc(skill(d.selectedSkill)?.name||"無")+'</span><div>'+a("切換招式","cycleSkill","tiny")+a("背包","items","tiny")+a("記錄","logs","tiny")+'</div></div>'+
-'<div class="fixed-choices">'+choices+'<div class="free-row"><input id="free-action" maxlength="180" placeholder="第四個行動：自己輸入……" aria-label="自訂行動">'+a("執行 ›","free","tiny main")+'</div></div><div class="mission-footer">'+a("主神檔案","nav:profile","tiny ghost")+'<span>'+esc(party)+'</span>'+a("任務詳情","nav:memory","tiny ghost")+'</div>'+menu+log+'</div>'}
+
+function missionStory(){return N.excerpt(s)}
+function prettyEffects(action){const parts=N.preview(action);return parts.length?'<div class="story-costs">'+parts.map(x=>'<span>'+esc(x)+'</span>').join("")+'</div>':""}
+function missionUI(){
+ const m=s.mission;
+ if(m.finished)return resultUI();
+ const scene=N.get(s),story=missionStory(),w=world(m.world);
+ const choices=scene.actions.map((o,i)=>'<button class="narrative-choice" data-do="act:'+i+'" '+(o.usable?"":"disabled")+'><span class="choice-no">0'+(i+1)+'</span><span class="choice-main"><b>'+esc(o.label)+'</b><small>'+esc(o.hint)+'</small>'+prettyEffects(o)+(o.reasons.length?'<small class="blocked">'+esc(o.reasons.join("、"))+'</small>':"")+'</span></button>').join("");
+ const paragraphs=[story.story,story.mode,story.continuation].filter(Boolean).map(x=>'<p>'+esc(x)+'</p>').join("");
+ const last=story.prior?'<p class="scene-previous">'+esc(story.prior)+'</p>':"";
+ const dialogue='<div class="novel-dialogue"><b>'+esc(story.person)+'</b><p>'+esc(story.dialogue)+'</p></div>';
+ const notice=scene.exertion?'<span class="narrative-condition">持續'+(scene.exertion==="run"?"奔跑":"潛行")+'中</span>':"";
+ const bar='<div class="story-top"><span>'+esc(w.name)+' <small>· '+esc(m.title)+'</small></span><button data-do="status">狀態 ◈</button></div>';
+ const toolbox='<div class="story-toolbar"><span>主神訊息 · '+esc(story.title)+'</span><div>'+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+'</div></div>';
+ const popups=[];
+ if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只在高消耗行動、靈術或遭受傷害時，才需要特別留意數值。</p>'+a("關閉","status","small ghost")+'</div>');
+ if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
+ if(temporary.showSkills)popups.push('<div class="mission-popup"><div class="card-heading">已配置的招式與技能</div><p class="popup-note">招式不會自動取代劇情選項；你可以選擇是否在此刻施展。</p>'+N.skills(s).map(x=>'<button class="button-row story-skill" data-do="cast:'+x.id+'" '+(x.ok?"":"disabled")+'><div><b>'+esc(x.name)+'</b><small>'+esc(x.desc)+'</small><small>'+(x.sta?"STA −"+x.sta+" ":"")+(x.mp?"MP −"+x.mp:"")+(x.reasons.length?" · "+esc(x.reasons.join("、")):"")+'</small></div><span>使用 ›</span></button>').join("")+a("關閉","skills","small ghost")+'</div>');
+ if(temporary.showLog)popups.push('<div class="mission-popup"><div class="card-heading">世界紀錄</div><div class="log-lines">'+m.log.slice(-12).map(x=>'<p>'+esc(x)+'</p>').join("")+'</div>'+a("關閉","logs","small ghost")+'</div>');
+ return '<div class="mission-stage narrative-stage">'+bar+
+ '<div class="scene-prose '+(s.settings.reducedMotion?"motion-off":"")+'" data-mood="'+story.mood+'"><div class="scene-eyebrow">《'+esc(w.name)+'》　·　'+esc(story.title)+'</div>'+last+paragraphs+dialogue+'<p>'+esc(story.ending)+'</p><div class="narrative-goal">主神主線：'+esc(m.objective)+(m.hidden?'<small>已觸發隱藏線索</small>':"")+'</div></div>'+
+ toolbox+'<div class="fixed-choices story-choice-panel">'+notice+choices+
+ '<div class="free-row"><input id="free-action" maxlength="180" placeholder="或者，自己決定下一步……" aria-label="自訂行動">'+a("執行","free","tiny main")+'</div></div>'+
+ '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"獨自輪迴":m.mode==="team"?"隊伍任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
+}
 function resultUI(){let m=s.mission,g=m.result,report=m.reward;
 return '<div class="mission-result"><div class="eyebrow">MAIN GOD / WORLD EVALUATION</div><div class="rank">'+g+'</div><h1>'+ (g==="A"?"主神任務完成":g==="B"?"存活，部分目標達成":"任務失敗")+'</h1><p>《'+esc(m.worldName)+'》· '+esc(m.title)+'</p><div class="result-panel">'+piece("任務類型",({solo:"單人",team:"團隊合作",versus:"對抗"}[m.mode]))+piece("主線進度",m.progress+" / "+m.required)+piece("主神積分","+"+report.credits)+piece("角色經驗","+"+report.xp)+piece("最終生命",s.profile.hp+" / 100")+(m.loot?piece("世界戰利品",esc(objId(m.loot)?.name||m.loot)):"")+(m.hidden?piece("隱藏任務","已發現 · 額外獎勵"):"")+'</div><div class="result-quote">'+esc(m.log.slice(-3).join("　"))+'</div>'+card("主神恢復協議","完成結算並返回主神空間後，生命 HP、體力 STA、靈力 MP、精神 SAN 均自動恢復至最大值，不消耗主神積分。") + a("領取獎勵並回滿所有資源","claim","block main")+'</div>'}
 function memory(){const mode=temporary.memoryTab, tabs=[["timeline","輪迴記錄"],["worlds","世界情報"],["relations","隊友關係"],["system","主神備忘"]];let body="";
@@ -125,10 +125,13 @@ if(cmd==="assign"){let err=E.mainGodAssign(s);if(err)return notice(err);render()
 if(cmd.startsWith("coord:")){let err=E.assignReturn(s,cmd.slice(6));if(err)return notice(err);render();return}
 if(cmd==="launch"){let err=E.launch(s);if(err)return notice(err);temporary.showItems=false;temporary.showLog=false;render();return}
 if(cmd==="cycleSkill"){E.changeSkill(s,(s.mission?.chosenSkill||0)+1);render();return}
-if(cmd.startsWith("act:")){let out=E.act(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);render();return}
-if(cmd==="free"){let v=R.querySelector("#free-action")?.value||"";let out=E.freeAction(s,v);if(out.error)return notice(out.error);render();return}
-if(cmd==="items"){temporary.showItems=!temporary.showItems;temporary.showLog=false;render();return}
-if(cmd==="logs"){temporary.showLog=!temporary.showLog;temporary.showItems=false;render();return}
+if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);render();return}
+if(cmd==="free"){let v=R.querySelector("#free-action")?.value||"";let out=N.free(s,v);if(out.error)return notice(out.error);render();return}
+if(cmd==="items"){temporary.showItems=!temporary.showItems;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
+if(cmd==="logs"){temporary.showLog=!temporary.showLog;temporary.showItems=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
+if(cmd==="status"){temporary.showStatus=!temporary.showStatus;temporary.showItems=false;temporary.showSkills=false;temporary.showLog=false;render();return}
+if(cmd==="skills"){temporary.showSkills=!temporary.showSkills;temporary.showItems=false;temporary.showStatus=false;temporary.showLog=false;render();return}
+if(cmd.startsWith("cast:")){const out=N.useSkill(s,cmd.slice(5));if(out.error)return notice(out.error);temporary.showSkills=false;render();return}
 if(cmd.startsWith("use:")){let err=E.useItem(s,cmd.slice(4));if(err)return notice(err);temporary.showItems=false;notice("道具已使用，效果已套用。");return}
 if(cmd==="claim"){let err=E.finish(s);if(err)return notice(err);go("hub");return}
 if(cmd==="rest"){let err=E.rest(s);if(err)return notice(err);notice("主神治療完成。");return}
