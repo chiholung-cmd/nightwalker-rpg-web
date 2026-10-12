@@ -210,7 +210,7 @@ const summary={date:new Date().toISOString(),task:m.task,world:m.world,worldName
 s.memory.unshift({world:m.world,text:"在《"+m.worldName+"》完成「"+m.title+"」，評價 "+m.result+"；"+(m.evidence.at(-1)||m.log.at(-2)||"未留下特殊線索"),tag:m.result,at:Date.now()});s.memory=s.memory.slice(0,80);
 // Keep meaningful world and character history for later reincarnations.
 s.worldLibrary ||= {};
-const libraryKey=(m.worldKind||"catalog")+":"+(m.worldName||m.world);
+const libraryKey=global.NW_WORLD?.key?.(m)||(m.worldKind==="original"?"original:":"adaptation:")+(m.worldName||m.world);
 const previous=s.worldLibrary[libraryKey]||{name:m.worldName,worldKind:m.worldKind||"catalog",visits:0,npcs:{},facts:[],chapters:[],source:m.canon||null};
 previous.visits++;
 previous.lastVisited=summary.date;
