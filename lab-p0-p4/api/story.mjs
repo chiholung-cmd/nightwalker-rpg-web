@@ -140,7 +140,7 @@ const input=context(body);if(input.world.length<2||input.task.length<2)return re
 const supplied=body?.canonCache;
 const verified=typeof supplied?.url==="string"&&/^https:\/\/(zh|en)\.wikipedia\.org\/wiki\//.test(supplied.url)&&
  typeof supplied?.extract==="string"&&supplied.extract.length>80&&supplied.extract.length<5000&&
- ["exact","partial"].includes(supplied.confidence);
+ ["exact","partial"].includes(supplied.confidence)&&supplied.mediaType===input.mediaType&&normalizeWikiTitle(supplied.title).includes(normalizeWikiTitle(input.world.replace(/(?:19|20)\d{2}/g,"")));
 const canon=input.worldKind==="adaptation"?(verified?{title:clean(supplied.title,90),url:supplied.url,source:"Wikipedia",confidence:supplied.confidence,extract:clean(supplied.extract,input.phase===0?1250:650)}:await lookupCanon(input.world,input.mediaType)):null;
 const cacheId=JSON.stringify({world:input.world,mode:input.mode,kind:input.worldKind,phase:input.phase,history:input.history,scene:input.previousScenes.slice(-2),quest:input.sideQuests,canon:canon?.title||null});
 const hit=recentResponses.get(cacheId);if(hit&&Date.now()-hit.when<120000)return reply(200,{...hit.data,cached:true});
@@ -192,9 +192,11 @@ if(!result.ok){
  let reason="";try{reason=String((await result.json())?.error?.message||"").slice(0,200)}catch(_){}
  const keyword=reason.toLowerCase();
  const code=status===401?"GROQ_KEY_REJECTED":status===403?"GROQ_FORBIDDEN":status===404?"GROQ_MODEL_NOT_FOUND":status===429?"GROQ_RATE_LIMIT":status===400?"GROQ_BAD_REQUEST":status>=500?"GROQ_SERVER_ERROR":"GROQ_HTTP_"+status;
- const message=status===429?"本輪免費模型暫時限速，已保留存檔；稍後會恢復生成":status===401?"Groq 金鑰驗證失敗":status===403?"Groq 金鑰權限不足":status===404?"目前模型無法使用":status===400?"AI 模型參數不相容":status>=500?"Groq 服務暫時異常":"Groq HTTP "+status;
+ const requestsLeft=Number(result.headers.get("x-ratelimit-remaining-requests"));
+ const daily=status===429&&result.headers.get("x-ratelimit-remaining-requests")!==null&&requestsLeft<=0;
+ const message=status===429?(daily?"Groq 免費每日請求額度已滿，將會保留當前進度":"Groq 免費模型每分鐘 Token 限額暫時用盡，將自動等待冷卻"):status===401?"Groq 金鑰驗證失敗":status===403?"Groq 金鑰權限不足":status===404?"目前模型無法使用":status===400?"AI 模型參數不相容":status>=500?"Groq 服務暫時異常":"Groq HTTP "+status;
  const safeDetail=/reasoning|json|token|model|parameter|temperature|unsupported|rate limit|request too large|invalid_request/i.test(keyword)?reason.replace(/gsk_[a-z0-9_-]+/gi,"[REDACTED]").slice(0,130):"";
- return reply(status===429?429:status===401?401:status===400?400:502,{error:code,providerStatus:status,model:usedModel,message:message+(safeDetail?" · "+safeDetail:""),retryAfter:status===429?Math.max(1,Math.ceil(Math.min(nextAvailableDelay(),seconds(result.headers.get("retry-after"))||86400))):0});
+ return reply(status===429?429:status===401?401:status===400?400:502,{error:code,providerStatus:status,limitType:status===429?(daily?"daily":"minute"):"none",model:usedModel,message:message+(safeDetail?" · "+safeDetail:""),retryAfter:status===429?Math.max(1,Math.ceil(Math.min(nextAvailableDelay(),seconds(result.headers.get("retry-after"))||86400))):0});
 }
 let data;try{data=await result.json()}catch(e){return reply(502,{error:"INVALID_PROVIDER_RESPONSE"})}
 let raw=clean(data?.choices?.[0]?.message?.content,12000);const ticks=String.fromCharCode(96).repeat(3);if(raw.startsWith(ticks)){raw=raw.slice(raw.indexOf("\n")+1);if(raw.endsWith(ticks))raw=raw.slice(0,-3)}
@@ -203,7 +205,8 @@ const blocks=(Array.isArray(scene.blocks)?scene.blocks:[]).slice(0,12).map(x=>({
 if(blocks.length<5||blocks.filter(x=>x.type==="narration").length<3||!blocks.some(x=>x.type==="dialogue")||blocks.some(x=>x.text.length<4))return reply(502,{error:"SCENE_INCOMPLETE",message:"AI 生成內容不足，請重試目前一幕"});
 const opts=(Array.isArray(scene.options)?scene.options:[]).slice(0,3).map((x,i)=>{const k=kinds.has(x.kind)?x.kind:"observe";return {id:"ai-"+i,label:clean(x.label,50),hint:clean(x.hint,60),kind:k,cost:["run","sneak","physical","risk","fight"].includes(k)?Math.max(0,Math.min(20,Number(x.cost)||8)):0,progress:Math.max(0,Math.min(2,Number(x.progress)||1)),flag:"ai-"+i}});
 if(opts.length!==3||opts.some(x=>x.label.length<4))return reply(502,{error:"CHOICES_INCOMPLETE",message:"AI 選項不足三個，請重新生成"});
-const payload={usage:{promptTokens:Number(data?.usage?.prompt_tokens)||0,completionTokens:Number(data?.usage?.completion_tokens)||0,totalTokens:Number(data?.usage?.total_tokens)||0},title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:usedModel,
+const quota=modelGates.get(usedModel)||{};
+const payload={quota:{remainingTokens:quota.remaining,resetSeconds:quota.reset},usage:{promptTokens:Number(data?.usage?.prompt_tokens)||0,completionTokens:Number(data?.usage?.completion_tokens)||0,totalTokens:Number(data?.usage?.total_tokens)||0},title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:usedModel,
 canon:canon&&{title:canon.title,url:canon.url,source:canon.source,confidence:canon.confidence,extract:canon.extract},
 missionArc:(Array.isArray(scene.missionArc)?scene.missionArc:[]).slice(0,4).map(x=>clean(x,85)).filter(Boolean),
 npcUpdates:(Array.isArray(scene.npcUpdates)?scene.npcUpdates:[]).slice(0,3).map(x=>({name:clean(x.name,40),attitude:clean(x.attitude,65),memory:clean(x.memory,170),trustChange:Math.max(-2,Math.min(2,Number(x.trustChange)||0))})).filter(x=>x.name&&x.memory),
