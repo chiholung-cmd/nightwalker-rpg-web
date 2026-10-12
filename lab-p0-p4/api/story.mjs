@@ -95,16 +95,21 @@ const longStoryRules=[
 ].join("\n");
 input.canon=canon;
 const ctl=new AbortController();const timeout=setTimeout(()=>ctl.abort(),26000);
-let result;
+let result,usedModel=MODEL;
 const endpoint="https://api.groq.com/openai/v1/chat/completions";
 const basePayload={model:MODEL,temperature:0.65,max_completion_tokens:1800,response_format:{type:"json_object"},stream:false,messages:[{role:"system",content:system+"\n"+longStoryRules},{role:"user",content:JSON.stringify(input)}]};
 async function invoke(payload){return fetch(endpoint,{method:"POST",signal:ctl.signal,headers:{"Authorization":"Bearer "+process.env.GROQ_API_KEY,"Content-Type":"application/json"},body:JSON.stringify(payload)})}
 try{
  const gptOss=MODEL.startsWith("openai/gpt-oss");
  result=await invoke(gptOss?{...basePayload,reasoning_effort:"low",include_reasoning:false}:basePayload);
+ if((result.status===429||result.status===404)&&MODEL!=="openai/gpt-oss-120b"){
+ // Official Groq free plan uses independent per-model limits. Fallback to an active model, never to retired Llama IDs.
+ usedModel="openai/gpt-oss-120b";
+ result=await invoke({...basePayload,model:usedModel,reasoning_effort:"low",include_reasoning:false});
+}
  if(result.status===400){
     // Retry one time without optional params, for Groq model/version incompatibilities.
-    const simpler={...basePayload};
+    const simpler={...basePayload,model:usedModel};
     const err=await result.clone().json().catch(()=>({}));
     const reason=String(err?.error?.message||"").toLowerCase();
     if(/unsupported|reasoning|parameter|json|temperature|not support|response_format/i.test(reason)){
@@ -118,9 +123,9 @@ if(!result.ok){
  let reason="";try{reason=String((await result.json())?.error?.message||"").slice(0,200)}catch(_){}
  const keyword=reason.toLowerCase();
  const code=status===401?"GROQ_KEY_REJECTED":status===403?"GROQ_FORBIDDEN":status===404?"GROQ_MODEL_NOT_FOUND":status===429?"GROQ_RATE_LIMIT":status===400?"GROQ_BAD_REQUEST":status>=500?"GROQ_SERVER_ERROR":"GROQ_HTTP_"+status;
- let userMessage=status===401?"Groq API Key 已被拒絕（401），請檢查原本專案的金鑰":status===403?"Groq 帳戶權限不足（403）":status===404?"Groq 不認得設定的模型（404："+MODEL+"）":status===429?"Groq 真正觸發速率／免費額度限制（429），請稍後重試":status===400?"Groq 拒絕參數（400），需檢查模型格式及輸出設定":status>=500?"Groq 服務暫時異常（"+status+"）":"Groq HTTP "+status;
+ let userMessage=status===401?"Groq API Key 已被拒絕（401），請檢查原本專案的金鑰":status===403?"Groq 帳戶權限不足（403）":status===404?"Groq 不認得設定的模型（404："+usedModel+"）":status===429?"Groq 真正觸發速率／免費額度限制（429），請稍後重試":status===400?"Groq 拒絕參數（400），需檢查模型格式及輸出設定":status>=500?"Groq 服務暫時異常（"+status+"）":"Groq HTTP "+status;
  const safeDetail=/reasoning|json|token|model|parameter|temperature|unsupported|rate limit|request too large|invalid_request/i.test(keyword)?reason.replace(/gsk_[a-z0-9_-]+/gi,"[REDACTED]").slice(0,130):"";
- return reply(status===429?429:status===401?401:status===400?400:502,{error:code,providerStatus:status,model:MODEL,message:userMessage+(safeDetail?" · "+safeDetail:""),retryAfter:Math.min(180,Number(result.headers?.get?.("retry-after")||0)||0)});
+ return reply(status===429?429:status===401?401:status===400?400:502,{error:code,providerStatus:status,model:usedModel,message:userMessage+(safeDetail?" · "+safeDetail:""),retryAfter:Math.min(180,Number(result.headers?.get?.("retry-after")||0)||0)});
 }
 let data;try{data=await result.json()}catch(e){return reply(502,{error:"INVALID_PROVIDER_RESPONSE"})}
 let raw=clean(data?.choices?.[0]?.message?.content,12000);const ticks=String.fromCharCode(96).repeat(3);if(raw.startsWith(ticks)){raw=raw.slice(raw.indexOf("\n")+1);if(raw.endsWith(ticks))raw=raw.slice(0,-3)}
@@ -129,7 +134,7 @@ const blocks=(Array.isArray(scene.blocks)?scene.blocks:[]).slice(0,12).map(x=>({
 if(blocks.length<5||blocks.filter(x=>x.type==="narration").length<3||!blocks.some(x=>x.type==="dialogue")||blocks.some(x=>x.text.length<4))return reply(502,{error:"SCENE_INCOMPLETE",message:"AI 生成內容不足，請重試目前一幕"});
 const opts=(Array.isArray(scene.options)?scene.options:[]).slice(0,3).map((x,i)=>{const k=kinds.has(x.kind)?x.kind:"observe";return {id:"ai-"+i,label:clean(x.label,50),hint:clean(x.hint,60),kind:k,cost:["run","sneak","physical","risk","fight"].includes(k)?Math.max(0,Math.min(20,Number(x.cost)||8)):0,progress:Math.max(0,Math.min(2,Number(x.progress)||1)),flag:"ai-"+i}});
 if(opts.length!==3||opts.some(x=>x.label.length<4))return reply(502,{error:"CHOICES_INCOMPLETE",message:"AI 選項不足三個，請重新生成"});
-const payload={title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:MODEL,
+const payload={title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:usedModel,
 canon:canon&&{title:canon.title,url:canon.url,source:canon.source,confidence:canon.confidence,extract:canon.extract},
 missionArc:(Array.isArray(scene.missionArc)?scene.missionArc:[]).slice(0,4).map(x=>clean(x,85)).filter(Boolean),
 npcUpdates:(Array.isArray(scene.npcUpdates)?scene.npcUpdates:[]).slice(0,3).map(x=>({name:clean(x.name,40),attitude:clean(x.attitude,65),memory:clean(x.memory,170),trustChange:Math.max(-2,Math.min(2,Number(x.trustChange)||0))})).filter(x=>x.name&&x.memory),
