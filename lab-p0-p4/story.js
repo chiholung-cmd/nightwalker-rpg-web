@@ -176,23 +176,61 @@ else if(director){
 return {error:null,report,finished:!!m.finished}
 }
 function choose(s,i){const g=get(s);if(!g)return {error:"尚未進入輪迴世界"};const a=g.actions[i];if(!a)return {error:"沒有這個選擇"};return apply(s,a)}
-function free(s,text){if((s.mission?.world==="custom"||s.mission?.director)&&!s.mission.aiOptions?.[s.mission.phase]?.length)return {error:"AI 正在構築世界，請先等待劇情生成"};let val=String(text||"").trim();if(val.length<2)return {error:"請先輸入想採取的行動"};if(val.length>180)return {error:"請將行動縮短至180字以內"};const g=get(s);if(!g)return {error:"尚未進入輪迴世界"};
-const checks=[
-[/格擋|重擊|砍|斬|攻擊|射擊|拔刀|戰鬥/, "fight"],
-[/跑|衝|追|逃離|護送|趕往/, "run"],
-[/潛行|偷偷|尾隨|摸索|蹲下/, "sneak"],
-[/休息|喘息|停下|恢復體力/, "rest"],
-[/躲|藏匿|掩藏|閉嘴/, "hide"],
-[/查看|查驗|分析|搜尋|比對|觀察|推理|研究|調查/, "observe"],
-[/交談|聊天|安慰|說服|詢問|問問|問|傾|聊|談|告訴|打聽|商量|請求|交換情報|談判/, "talk"],
-[/隱瞞|假裝|保密|銷毀|偽裝/, "conceal"],
-[/扶起|搬運|推開|守住|堵住|築起/, "physical"]
+const INTENT_RULES=[
+ ["fight",/重擊|砍殺|砍|斬|揮刀|攻擊|射擊|拔刀攻擊|戰鬥|動手打|打架|打(?!聽|听|電話|招呼|算)|擊倒|刺殺|偷襲|揍|開槍|搏鬥/g],
+ ["run",/逃跑|逃離|奔跑|跑開|跑走|快跑|衝出去|衝向|追上|追趕|趕往|撤離|撤退|奔向|衝刺/g],
+ ["sneak",/潛行|悄悄|偷偷|尾隨|跟蹤|躡手躡腳|匿蹤|摸黑/g],
+ ["rest",/休息|喘息|恢復體力|調整呼吸|稍作休整|歇息/g],
+ ["hide",/藏匿|掩藏|躲藏|躲進|躲起來|躲避|隱藏身形/g],
+ ["observe",/查看|查驗|檢查|分析|搜尋|搜查|比對|觀察|推理|研究|調查|細看|仔細看|確認|查看|偵查|偵察|留意|注視|打量|看看|查找/g],
+ ["talk",/交談|聊天|安慰|說服|詢問|問問|問|傾偈|傾|聊|談|告訴|說|講|开口说|說出|開口說|開口問|問候|打聽|商量|請求|交換情報|談判|對話|講|打電話|致電/g],
+ ["conceal",/隱瞞|假裝|保密|偽裝|裝作|藏起情報|不透露|唔透露|保留情報/g],
+ ["physical",/扶起|搬運|推開|守住|堵住|築起|攔住|阻止|制止|攔下|擋住|救出|搬開|舉起|移動障礙|接住/g]
 ];
-let kind=checks.find(([re])=>re.test(val))?.[1];
-if(!kind)return {error:"目前自由文字仍採用規則判定，請具體描述觀察、對話、隱瞞、潛行、移動或戰鬥；AI 生成劇情尚未連線。"};
-let cost={fight:15,run:10,sneak:5,physical:7,observe:0,talk:0,conceal:0,rest:0,hide:0}[kind];
-if(s.profile.sta<cost)return {error:"體力不足，無法完成這個動作"};
-return apply(s,{id:"free-"+kind,label:val,hint:"自訂行動",kind,cost,progress:kind==="fight"?1:kind==="rest"?0:1,flag:"free-"+kind,reasons:[]},val);
+const INTENT_COST={fight:15,run:10,sneak:5,physical:7,observe:0,talk:0,conceal:0,rest:0,hide:0};
+const INTENT_LABELS={fight:"戰鬥",run:"奔跑／逃離",sneak:"潛行",rest:"休息",hide:"躲藏",observe:"觀察／調查",talk:"對話／交涉",conceal:"隱瞞",physical:"實際行動"};
+function isNegated(clause,index){
+ const p=clause.slice(Math.max(0,index-17),index).replace(/\s+/g,"");
+ if(/(?:不|唔|別|别|勿|無|没|沒|未|不想|唔想|不會|唔會|不要|唔好|不打算|拒絕|避免|防止|停止|取消|放棄|不準|先別|先唔)(?:要|想|會|主動|先|去|再|立刻|立即|直接|準備|打算|嘗試|試圖|繼續|進行|選擇|讓|使|被|對方|敵人|他|她|佢){0,6}$/.test(p))return true;
+ return /(?:拒絕|避免|阻止|制止|防止|停止|放棄|不要讓|唔好畀|不讓)(?:.{0,5})$/.test(p);
+}
+function parseFreeIntent(text){
+ const raw=String(text||"").trim();
+ if(raw.length<2)return {error:"請先輸入想採取的行動"};
+ if(raw.length>180)return {error:"請將行動縮短至 180 字以內"};
+ // Dialogue text and titles are not instructions to execute violent acts.
+ const textWithoutQuotes=raw.replace(/「[^」]*」|『[^』]*』|“[^”]*”|"[^"]*"|'[^']*'/g," ");
+ if(/(?:嗎|么|呢|？|\?|能不能|可否|能否|可唔可以|會唔會|能夠嗎|可以嗎)\s*$/.test(textWithoutQuotes))return {error:"呢句係問題而非確定行動；請清楚描述主角下一步要做乜"};
+ const clauses=textWithoutQuotes.split(/[，,。；;！!？?\n]|然後|接著|之後|跟住/).map(x=>x.trim()).filter(Boolean);
+ const hits=[];
+ for(const clause of clauses){
+  for(const [kind,re] of INTENT_RULES){
+   re.lastIndex=0;
+   for(const m of clause.matchAll(re)){
+    if(!isNegated(clause,m.index))hits.push({kind,term:m[0],clause});
+   }
+  }
+ }
+ const kinds=Array.from(new Set(hits.map(h=>h.kind)));
+ if(!kinds.length)return {error:"未能確定具體行動；請寫明想交談、觀察、潛行、撤退或其他單一步驟。未扣除任何資源。"};
+ if(kinds.length>1)return {error:"偵測到多個可能行動（"+kinds.map(k=>INTENT_LABELS[k]).join("、")+"）。請一次只執行一步，避免誤扣體力或錯誤觸發戰鬥。"};
+ const kind=kinds[0];
+ return {kind,cost:INTENT_COST[kind],label:INTENT_LABELS[kind],text:raw};
+}
+function analyzeFree(s,text){
+ const m=s.mission;
+ if(!m||m.finished)return {error:"當前沒有正在進行的任務"};
+ if((m.world==="custom"||m.director)&&!m.aiOptions?.[m.phase]?.length)return {error:"AI 正在續寫本章，請等劇情生成後再行動"};
+ const intent=parseFreeIntent(text);if(intent.error)return intent;
+ if(s.profile.sta<intent.cost)return {error:"體力不足：需要 "+intent.cost+"，目前只有 "+s.profile.sta+"。未執行任何行動。"};
+ const action={id:"free-"+intent.kind,label:intent.text,hint:"玩家自訂行動",kind:intent.kind,cost:intent.cost,progress:intent.kind==="rest"?0:1,flag:"free-"+intent.kind,reasons:[]};
+ return {...intent,action,effects:preview(action),phase:m.phase,missionSeed:m.seed};
+}
+function free(s,text,confirmedKind){
+ const intent=analyzeFree(s,text);
+ if(intent.error)return {error:intent.error};
+ if(confirmedKind!==intent.kind)return {error:"行動分類已更改或未經確認，沒有執行；請重新預覽"};
+ return apply(s,intent.action,intent.text);
 }
 function skills(s){const m=s.mission;if(!m)return [];let list=s.loadout.active;return list.map(id=>{let sk=E.skill(id),avail=E.availability(s,id);return {id,name:sk?.name||id,sta:sk?.sta||0,mp:sk?.mp||0,desc:sk?.desc||"",ok:avail.ok,reasons:avail.reasons}})}
 function useSkill(s,id){if((s.mission?.world==="custom"||s.mission?.director)&&!s.mission.aiOptions?.[s.mission.phase]?.length)return {error:"AI 世界仍未載入，不可跳過劇情"};const sk=E.skill(id),check=E.availability(s,id);if(!check.ok)return {error:check.reasons.join("、")};let kind=sk?.power?"fight":sk?.effect==="reveal"?"observe":sk?.effect==="persuade"?"talk":sk?.effect==="heal"?"rest":"physical";
@@ -229,5 +267,5 @@ if(a.kind==="sneak")p.push("持續潛行每幕 STA −3");
 if(a.kind==="rest")p.push("STA +18");
 if(a.kind==="fight"||a.kind==="risk")p.push("可能受傷");
 return p}
-global.NW_STORY={get,excerpt,choose,free,skills,useSkill,useItem,preview,ensure};
+global.NW_STORY={get,excerpt,choose,free,analyzeFree,parseFreeIntent,skills,useSkill,useItem,preview,ensure};
 })(window);
