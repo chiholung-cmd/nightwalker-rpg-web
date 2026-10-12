@@ -1,3 +1,4 @@
+import {getSharedCooldown,putSharedCooldown} from "./aiGate.mjs";
 const MODEL=process.env.GROQ_MODEL||"openai/gpt-oss-20b";
 const MODEL_POOL=Array.from(new Set([MODEL,"openai/gpt-oss-120b","qwen/qwen3.8-27b"]));
 const modelGates=new Map(); // Per warm function instance only; provider response remains source of truth.
@@ -221,15 +222,22 @@ try{
  const available=readyModels();
  if(!available.length)return reply(429,{error:"GROQ_RATE_LIMIT",message:"免費模型暫時進入冷卻，已保留目前一幕。",retryAfter:nextAvailableDelay(),models:MODEL_POOL.length});
  for(const candidate of available){
+  const sharedUntil=await getSharedCooldown(candidate);
+  if(sharedUntil>Date.now()){
+   modelGates.set(candidate,{...(modelGates.get(candidate)||{}),until:sharedUntil});
+   continue;
+  }
   usedModel=candidate;
   result=await invoke(candidate);
-  updateGate(candidate,result);
+  const gate=updateGate(candidate,result);
+  if(result.status===429||gate.requestsLeft===0)await putSharedCooldown(candidate,gate.until);
   if(result.ok)break;
   if(result.status===400){
    const err=await result.clone().json().catch(()=>({}));
    const reason=String(err?.error?.message||"").toLowerCase();
    if(/unsupported|reasoning|parameter|json|temperature|not support|response_format/i.test(reason)){
-    result=await invoke(candidate,true);updateGate(candidate,result);
+    result=await invoke(candidate,true);const secondGate=updateGate(candidate,result);
+    if(result.status===429||secondGate.requestsLeft===0)await putSharedCooldown(candidate,secondGate.until);
     if(result.ok)break;
    }
   }
@@ -238,7 +246,7 @@ try{
  }
 }catch(e){return reply(504,{error:"AI_TIMEOUT",message:"AI 連線逾時；已保留劇情進度，可於此幕重新嘗試",retryAfter:5})}
 finally{clearTimeout(timeout)}
-if(!result)return reply(503,{error:"AI_PROVIDER_UNAVAILABLE",message:"暫時沒有可用的免費模型，進度已保留",retryAfter:nextAvailableDelay()});
+if(!result)return reply(429,{error:"GROQ_RATE_LIMIT",message:"免費模型仍在共享冷卻期，請稍後再試；進度已保留",retryAfter:nextAvailableDelay()});
 if(!result.ok){
  const status=result.status;
  let reason="";try{reason=String((await result.json())?.error?.message||"").slice(0,200)}catch(_){}
