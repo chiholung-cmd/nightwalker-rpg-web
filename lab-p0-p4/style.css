@@ -137,3 +137,9 @@
   .mission-result-actions{padding-top:8px;padding-bottom:max(11px,env(safe-area-inset-bottom))}
   .mission-result-actions .btn{min-height:49px}
 }
+
+/* Main-God prompts appear only at world entry, like an in-story notification, not a permanent HUD. */
+.novel-first-stage .novel-system{margin:13px 0 19px;padding:12px 13px;border:1px solid #637c8b;border-left:3px solid #c0a779;border-radius:6px;background:linear-gradient(120deg,#263948,#1a2838);color:#eddbc2;white-space:pre-line;font:600 12px/1.9 "Noto Serif TC",serif;text-align:left;letter-spacing:.15px}
+.novel-first-stage .novel-choice-consequence{color:#ddcfb6!important;padding-left:10px;border-left:2px solid #a89271;margin-bottom:20px!important}
+.novel-first-stage .scene-prose{scroll-behavior:smooth}
+@media(max-height:700px){.novel-first-stage .novel-system{margin:8px 0 12px;padding:8px 10px;font-size:11px}}
