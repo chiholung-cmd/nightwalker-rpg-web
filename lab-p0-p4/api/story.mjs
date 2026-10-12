@@ -27,6 +27,7 @@ for(const lang of ["zh","en"]){
 const unknown={title,url:"",source:"unverified",confidence:"unverified",extract:""};
 canonCache.set(key,unknown);return unknown
 }
+const recentResponses=new Map();
 const system=[
 "你是高水平無限流網文作者、互動小說劇情導演。全文繁體中文，使用內地網文書面語，絕不使用廣東話。",
 "每幕約250–420中文字。整個世界係18–28次抉擇構成的長篇互動小說；每幕要有實際事件、具體人物互動，不是單純抒情或空泛旁白。",
@@ -43,7 +44,7 @@ const system=[
 ].join("\n");
 function context(v){
 let limited=a=>Array.isArray(a)?a.slice(-8):[];
-return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history).map(x=>clean(x,180)),previousScenes:limited(v?.previousScenes).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,650)})),base:limited(v?.base).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,600)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,12).map(([name,x])=>({name:clean(name,40),trust:x?.trust||0,attitude:clean(x?.attitude,65),memory:clean(x?.memory,170)})):[],worldFacts:limited(v?.worldFacts).map(x=>clean(x,130)),worldHistory:limited(v?.worldHistory).map(x=>clean(x,160)),priorArc:limited(v?.priorArc).map(x=>clean(x,90)),state:v?.state||{}};
+return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history).map(x=>clean(x,180)),previousScenes:limited(v?.previousScenes).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,650)})),base:limited(v?.base).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,600)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,12).map(([name,x])=>({name:clean(name,40),trust:x?.trust||0,attitude:clean(x?.attitude,65),memory:clean(x?.memory,170)})):[],worldFacts:limited(v?.worldFacts).map(x=>clean(x,130)),worldHistory:limited(v?.worldHistory).map(x=>clean(x,160)),priorArc:limited(v?.priorArc).map(x=>clean(x,90)),sideQuests:limited(v?.sideQuests).map(q=>({title:clean(q?.title,60),objective:clean(q?.objective,90),status:clean(q?.status,18),progress:Number(q?.progress)||0})),npcAgency:limited(v?.npcAgency).map(x=>({name:clean(x?.name,38),event:clean(x?.event,130),intent:clean(x?.intent,100)})),branchConsequences:limited(v?.branchConsequences).map(x=>({npc:clean(x?.npc,35),kind:clean(x?.kind,20),trust:Number(x?.trust)||0})),state:v?.state||{}};
 }
 export default {
 async fetch(request){
@@ -59,11 +60,20 @@ attempts.set(id,count+1);if(attempts.size>750){for(const k of attempts.keys()){a
 if(Number(request.headers.get("content-length")||0)>14000)return reply(413,{error:"INPUT_TOO_LARGE"});
 let body;try{body=await request.json()}catch(e){return reply(400,{error:"INVALID_JSON"})}
 const input=context(body);if(input.world.length<2||input.task.length<2)return reply(400,{error:"MISSING_CONTEXT"});if(input.mode==="custom"&&input.worldKind==="original"&&input.premise.length<12)return reply(400,{error:"ORIGINAL_WORLD_PREMISE_REQUIRED"});
-const canon=input.worldKind==="adaptation"?await lookupCanon(input.world,input.mediaType):null;
+const supplied=body?.canonCache;
+const verified=typeof supplied?.url==="string"&&/^https:\/\/(zh|en)\.wikipedia\.org\/wiki\//.test(supplied.url)&&
+ typeof supplied?.extract==="string"&&supplied.extract.length>80&&supplied.extract.length<5000&&
+ ["exact","partial"].includes(supplied.confidence);
+const canon=input.worldKind==="adaptation"?(verified?{title:clean(supplied.title,90),url:supplied.url,source:"Wikipedia",confidence:supplied.confidence,extract:clean(supplied.extract,4500)}:await lookupCanon(input.world,input.mediaType)):null;
+const cacheId=JSON.stringify({world:input.world,mode:input.mode,kind:input.worldKind,phase:input.phase,history:input.history,scene:input.previousScenes.slice(-2),quest:input.sideQuests,canon:canon?.title||null});
+const hit=recentResponses.get(cacheId);if(hit&&Date.now()-hit.when<120000)return reply(200,{...hit.data,cached:true});
 const longStoryRules=[
 "世界需要18–28次有因果的行動才完結，directorStage 指示目前是調查、關係、危機、決戰或結局；開始18次行動前 resolution.readyToConclude 必須為 false。",
 "在 phase>=17 而任務已解決的情況可以標記 resolution.readyToConclude:true，唔好每幕重複主神任務已完成。接近 phase27 時寫自然收尾。",
-"輸出 JSON 包含 options 恰好3個、missionArc（phase0設定4個不同階段目標）、npcUpdates 最多3個{name,attitude,memory,trustChange}、facts 最多4條、resolution:{readyToConclude,reason}。",
+"輸出 JSON 包含 options 恰好3個、missionArc（phase0設定4個不同階段目標）、npcUpdates 最多3個{name,attitude,memory,trustChange}、facts 最多4條、resolution:{readyToConclude,reason}、npcEvents最多2個{name,event,intent}及 sideQuests最多2個{title,objective,trigger}。",
+"NPC 自主事件必須符合已知身份與目的，可以在玩家不在場時發生，且要留下可見的世界改變。不能突然把原作人物改成陌生性格。",
+"支線任務由具體事件合理觸發，trigger 必須 talk/observe/conceal/run/sneak/physical/risk/fight/hide/rest 之一，完成進度及獎勵由程式判斷，不可輸出積分獎勵。",
+"當出現既有 sideQuests、npcAgency、branchConsequences，要承接已完成的支線、NPC 的計劃與玩家選擇造成的影響。禁止無故清零。",
 "npcMemory 和 worldFacts 是玩家先前經歷，唔可以重置、反駁或令人物無故忘記已作出的選擇。",
 "作品世界必須盡量依照 canon.extract 已核實原作人物、事件先後與背景，主神安排玩家插入原著劇情而唔係憑空改寫原作。",
 "如果 canon.confidence=unverified，禁止假裝原作劇情已核實，只能創作合理支線，請玩家稍後補充原作設定。",
@@ -81,12 +91,16 @@ const blocks=(Array.isArray(scene.blocks)?scene.blocks:[]).slice(0,12).map(x=>({
 if(blocks.length<5||blocks.filter(x=>x.type==="narration").length<3||!blocks.some(x=>x.type==="dialogue")||blocks.some(x=>x.text.length<4))return reply(502,{error:"SCENE_INCOMPLETE"});
 const opts=(Array.isArray(scene.options)?scene.options:[]).slice(0,3).map((x,i)=>{const k=kinds.has(x.kind)?x.kind:"observe";return {id:"ai-"+i,label:clean(x.label,50),hint:clean(x.hint,60),kind:k,cost:["run","sneak","physical","risk","fight"].includes(k)?Math.max(0,Math.min(20,Number(x.cost)||8)):0,progress:Math.max(0,Math.min(2,Number(x.progress)||1)),flag:"ai-"+i}});
 if(opts.length!==3||opts.some(x=>x.label.length<4))return reply(502,{error:"CHOICES_INCOMPLETE"});
-return reply(200,{title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:MODEL,
+const payload={title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:MODEL,
 canon:canon&&{title:canon.title,url:canon.url,source:canon.source,confidence:canon.confidence,extract:canon.extract},
 missionArc:(Array.isArray(scene.missionArc)?scene.missionArc:[]).slice(0,4).map(x=>clean(x,85)).filter(Boolean),
 npcUpdates:(Array.isArray(scene.npcUpdates)?scene.npcUpdates:[]).slice(0,3).map(x=>({name:clean(x.name,40),attitude:clean(x.attitude,65),memory:clean(x.memory,170),trustChange:Math.max(-2,Math.min(2,Number(x.trustChange)||0))})).filter(x=>x.name&&x.memory),
 facts:(Array.isArray(scene.facts)?scene.facts:[]).slice(0,4).map(x=>clean(x,130)).filter(Boolean),
-resolution:{readyToConclude:input.phase>=17&&!!scene.resolution?.readyToConclude,reason:clean(scene.resolution?.reason,110)}
-});
+resolution:{readyToConclude:input.phase>=17&&!!scene.resolution?.readyToConclude,reason:clean(scene.resolution?.reason,110)},
+npcEvents:(Array.isArray(scene.npcEvents)?scene.npcEvents:[]).slice(0,2).map(x=>({name:clean(x.name,45),event:clean(x.event,180),intent:clean(x.intent,120)})).filter(x=>x.name&&x.event),
+sideQuests:(Array.isArray(scene.sideQuests)?scene.sideQuests:[]).slice(0,2).map(x=>({title:clean(x.title,65),objective:clean(x.objective,120),trigger:clean(x.trigger,24)})).filter(x=>x.title&&x.objective)
+};
+recentResponses.set(cacheId,{when:Date.now(),data:payload});if(recentResponses.size>24)recentResponses.delete(recentResponses.keys().next().value);
+return reply(200,payload);
 }
 };
