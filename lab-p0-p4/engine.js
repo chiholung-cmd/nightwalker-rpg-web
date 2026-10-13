@@ -82,7 +82,7 @@ if(kind==="adaptation"){
    if(s.profile.credits<cost)return "需支付 "+cost+" 主神積分";
    s.profile.credits-=cost;
    const t=tasks[Math.floor(Math.random()*tasks.length)];
-   s.assignment={task:t.id,world:t.world,mode:t.mode,targeted:true,customRequested:title,worldKind:kind,mediaType,paidCost:cost,seed:Date.now()%100000000,assignedAt:Date.now()};
+   s.assignment={task:t.id,world:t.world,worldTitle:title,mode:t.mode,targeted:true,customRequested:title,worldKind:kind,mediaType,verifiedSource:String(details.verifiedSource||"").slice(0,350),verifiedSourceTitle:String(details.verifiedSourceTitle||"").slice(0,120),worldSummary:String(details.summary||"").slice(0,900),paidCost:cost,seed:Date.now()%100000000,assignedAt:Date.now()};
    return null
  }
 }
@@ -90,7 +90,7 @@ if(!aiReady)return "AI 劇情暫不可用，不能進入未收錄的世界；並
 const cost=s.settings?.novelMode!==false?0:customWorldCost(title);
 if(s.profile.credits<cost)return "需要 "+cost+" 主神積分";
 s.profile.credits-=cost;
-s.assignment={task:"custom_generated",world:"custom",worldTitle:title,worldKind:kind,mediaType:kind==="adaptation"?mediaType:null,verifiedSource:kind==="adaptation"?String(details.verifiedSource||"").slice(0,350):"",verifiedSourceTitle:kind==="adaptation"?String(details.verifiedSourceTitle||"").slice(0,120):"",premise:kind==="original"?premise:"",mode:"solo",paidCost:cost,targeted:true,customRequested:title,seed:Date.now()%100000000,assignedAt:Date.now()};
+s.assignment={task:"custom_generated",world:"custom",worldTitle:title,worldKind:kind,mediaType:kind==="adaptation"?mediaType:null,verifiedSource:kind==="adaptation"?String(details.verifiedSource||"").slice(0,350):"",verifiedSourceTitle:kind==="adaptation"?String(details.verifiedSourceTitle||"").slice(0,120):"",premise:kind==="original"?premise:"",worldSummary:kind==="original"?premise.slice(0,900):String(details.summary||"").slice(0,900),mode:"solo",paidCost:cost,targeted:true,customRequested:title,seed:Date.now()%100000000,assignedAt:Date.now()};
 return null
 }
 function cancelCustomWorld(s){
