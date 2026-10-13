@@ -92,13 +92,13 @@ function distinct(a){return Array.from(new Set(a))}
 function get(s){
 const m=s.mission;if(!m)return null;
 const st=ensure(m);
-if(m.world==="custom"||m.director){const custom=m.aiOptions?.[m.phase]||[];const opts=custom.map((x,i)=>{let o={id:x.id||"ai-"+i,label:x.label,hint:x.hint,kind:x.kind,cost:Number(x.cost)||0,progress:Number(x.progress)||1,flag:x.flag||"ai-option-"+i,reasons:[]};if(["run","sneak","physical","risk","fight"].includes(o.kind)&&s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length;return o});return {world:{name:m.worldName},section:null,actions:opts,exertion:st.exertion,active:false,phase:m.phase,storyState:st}}
+if(m.world==="custom"||m.director){const custom=m.aiOptions?.[m.phase]||[];const opts=custom.map((x,i)=>{let o={id:x.id||"ai-"+i,label:x.label,hint:x.hint,kind:x.kind,cost:Number(x.cost)||0,progress:Number(x.progress)||1,flag:x.flag||"ai-option-"+i,reasons:[]};if(!m.narrativeMode&&["run","sneak","physical","risk","fight"].includes(o.kind)&&s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length;return o});return {world:{name:m.worldName},section:null,actions:opts,exertion:st.exertion,active:false,phase:m.phase,storyState:st}}
 const data=W[m.world]||W.busan;let idx=Math.min(5,m.phase),section=data.chapters[idx];
 let opts=section.options.map(([id,label,hint,kind,cost,progress,flag,require])=>({id,label,hint,kind,cost,progress,flag,require,reasons:[]}));
 if(m.mode==="team"&&idx===2)opts[1]={id:"coordinate",label:"與隊友商量如何完成主神任務",hint:"共同推進目標，也許改變關係",kind:"talk",cost:0,progress:1,flag:"teamwork",reasons:[]};
 if(m.mode==="versus"&&idx===3)opts[1]={id:"rival",label:"與敵隊接觸，試探他們真正的目的",hint:"可以談判，也可能暴露意圖",kind:"talk",cost:0,progress:1,flag:"parley",reasons:[]};
-if(idx>=3&&s.profile.sta<15){opts[2]={id:"rest",label:"尋找掩護，稍作喘息並整理思路",hint:"結束持續奔跑／潛行，恢復少量體力",kind:"rest",cost:0,progress:0,flag:"breath",reasons:[]}}
-for(const o of opts){if(o.require&&!m.flags.includes(o.require)&&!st.flags.includes(o.require))o.reasons.push("仍未發現相關線索");if(o.kind==="run"||o.kind==="sneak"||o.kind==="physical"||o.kind==="fight"||o.kind==="risk")if(s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length}
+if(!m.narrativeMode&&idx>=3&&s.profile.sta<15){opts[2]={id:"rest",label:"尋找掩護，稍作喘息並整理思路",hint:"結束持續奔跑／潛行，恢復少量體力",kind:"rest",cost:0,progress:0,flag:"breath",reasons:[]}}
+for(const o of opts){if(o.require&&!m.flags.includes(o.require)&&!st.flags.includes(o.require))o.reasons.push("仍未發現相關線索");if(!m.narrativeMode&&["run","sneak","physical","fight","risk"].includes(o.kind)&&s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length}
 const active=!!st.encounter && (m.world==="demon"||m.world==="busan");
 return {world:data,section,actions:opts,exertion:st.exertion,active,phase:idx,storyState:st};
 }
@@ -114,8 +114,33 @@ let continuation=st.exertion==="run"?"你已經連續移動了一段距離，肺
 let prior=st.last&&idx>0?"上一個抉擇的影響尚未散去。"+consequence:"";
 return {title:idx===0?"傳送落點":idx===5?"抉擇前夜":"異變漸深",story,person,dialogue,mode:idx===0?playerText:"",continuation,prior,ending:idx===5?"不論主神會給出怎樣的評價，這個決定都會寫進你的輪迴記錄。":"此時仍有不止一條道路。你可以根據自己的情報和判斷行動，而不是每次都拔出武器。",mood:m.world==="demon"&&idx===3?"shock":m.world==="deathnote"&&idx===2?"eerie":idx===4?"suspense":idx===5?"resolve":"calm"}
 }
+// Story-first actions have consequences only in prose and long-term character memory.
+// Legacy RPG battles stay readable in old saves; new novel worlds never spend HP/STA/MP.
+function applyNovel(s,action,original){
+ const m=s?.mission;if(!m||m.finished)return {error:"當前沒有進行中嘅故事"};
+ if((m.world==="custom"||m.director)&&!m.aiOptions?.[m.phase]?.length)return {error:"請等目前章節完成先繼續"};
+ const choice=String(original||action.label||"").trim();if(!choice)return {error:"請描述下一步"};
+ const phase=m.phase,kind=String(action.kind||"open"),st=ensure(m);
+ const report={action:choice,events:["主角決定："+choice],kind,
+  delta:{hp:0,sta:0,mp:0,san:0,progress:0}};
+ m.history||=[];m.log||=[];m.flags||=[];
+ m.history.push(report);m.log.push("第"+(phase+1)+"章："+choice);
+ st.last=action.id||"free-open";st.lastReply=choice;
+ st.notes.push({choice,kind,reply:choice,at:phase});
+ st.notes=st.notes.slice(-30);
+ if(action.flag&&!m.flags.includes(action.flag))m.flags.push(action.flag);
+ m.phase++;m.turn=(Number(m.turn)||0)+1;
+ m.roundEvents=["主角上一個抉擇："+choice];
+ // Quest evidence and NPC trust are derived from specific actions, not pretend combat rolls.
+ global.NW_WORLD?.onAction?.(s,action,report);
+ global.NW_WORLD?.recordDirectorAction?.(s,action,report);
+ global.NW_BIBLE?.recordAction?.(s,report);
+ if(!m.director&&m.phase>=6)E.end(s);
+ if(m.director&&(m.phase>=28||(m.phase>=23&&global.NW_WORLD?.allowDirectorEnding?.(s))))E.end(s);
+ return {error:null,report,finished:!!m.finished};
+}
 function apply(s,action,original){
-const m=s.mission;if(!m||m.finished)return {error:"當前沒有正在進行的任務"};const st=ensure(m),o=action;
+const m=s.mission;if(!m||m.finished)return {error:"當前沒有正在進行的任務"};if(m.narrativeMode)return applyNovel(s,action,original);const st=ensure(m),o=action;
 if(o.reasons?.length)return {error:o.reasons.join("、")};
 const p=s.profile,weapon=E.item(s.loadout.weapon),before={hp:p.hp,sta:p.sta,mp:p.mp,san:p.san,progress:m.progress};let events=[],visible=o.kind==="run"||o.kind==="sneak"||o.kind==="physical"||o.kind==="risk"||o.kind==="fight";
 if(o.cost>0){p.sta=Math.max(0,p.sta-o.cost);events.push("你為這次行動付出了 "+o.cost+" 點體力。")}
@@ -236,6 +261,14 @@ function analyzeFree(s,text){
  const m=s.mission;
  if(!m||m.finished)return {error:"當前沒有正在進行的任務"};
  if((m.world==="custom"||m.director)&&!m.aiOptions?.[m.phase]?.length)return {error:"AI 正在續寫本章，請等劇情生成後再行動"};
+ if(m.narrativeMode){
+  const raw=String(text||"").trim();if(raw.length<2)return {error:"請輸入你想主角採取嘅行動"};
+  if(raw.length>350)return {error:"行動描述最多 350 字；可以先寫最重要嘅決定"};
+  const recognized=parseFreeIntent(raw),kind=recognized.error?"open":recognized.kind;
+  const intent={kind,cost:0,label:recognized.error?"自由行動":recognized.label,text:raw};
+  const action={id:"free-"+kind,label:raw,hint:"主角自由決定",kind,cost:0,progress:0,flag:"free-"+kind,reasons:[]};
+  return {...intent,action,effects:[],phase:m.phase,missionSeed:m.seed}
+ }
  const intent=parseFreeIntent(text);if(intent.error)return intent;
  if(s.profile.sta<intent.cost)return {error:"體力不足：需要 "+intent.cost+"，目前只有 "+s.profile.sta+"。未執行任何行動。"};
  const action={id:"free-"+intent.kind,label:intent.text,hint:"玩家自訂行動",kind:intent.kind,cost:intent.cost,progress:intent.kind==="rest"?0:1,flag:"free-"+intent.kind,reasons:[]};
