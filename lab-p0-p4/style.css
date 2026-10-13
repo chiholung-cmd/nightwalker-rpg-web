@@ -422,3 +422,57 @@ animation:none!important;transition:none!important;
 .reading-focused .story-footer{flex:0 0 30px}
 @media(max-height:740px){.reading-focused .story-choice-panel.collapsed{flex-basis:52px!important;min-height:52px!important}.reading-focused .scene-prose p{font-size:16px;line-height:1.95}}
 @media(prefers-reduced-motion:no-preference){.reading-focused .scene-prose:not(.fx-strong) .novel-beat{animation:none!important}}
+
+
+/* NOVEL MODE v2: full-screen reading experience, zero RPG HUD or stat bars */
+.book-nav{grid-template-columns:repeat(4,minmax(0,1fr));padding-inline:14px;box-shadow:0 -10px 28px #04091022}
+.book-nav button{min-height:45px}.book-nav span{font-size:19px}.book-nav small{font-size:11px;letter-spacing:.06em}
+.library-home,.story-ending{flex:1;min-height:0;overflow-y:auto;padding:clamp(28px,7dvh,64px) clamp(23px,6vw,44px);background:radial-gradient(ellipse at 75% 8%,#3b394035,transparent 56%),linear-gradient(180deg,#101c28,#0d1620);color:#f0eadd}
+.library-kicker{font:600 11px/1.8 ui-monospace,monospace;letter-spacing:2.2px;color:#bfa779;text-transform:uppercase}
+.library-home h1,.story-ending h1{font:550 clamp(32px,8vw,46px)/1.5 "Noto Serif TC","Source Han Serif TC",serif;letter-spacing:1px;margin:28px 0 18px;color:#f1e7d4}
+.library-desc,.ending-note{font:400 15px/2 "Noto Serif TC",serif;color:#b8c4cb;max-width:38ch}
+.library-hero-action{margin:34px 0 44px}.library-hero-action .btn{min-height:53px;font-size:14px;margin-top:12px}
+.library-shelf{margin-top:38px;border-top:1px solid #67706a58;padding-top:22px}
+.library-shelf h2{font:600 18px "Noto Serif TC",serif;margin:0 0 12px;color:#e6d4b1}
+.library-shelf p{font:400 13px/1.9 "Noto Serif TC",serif;color:#aabdc5}
+.library-shelf .btn{margin-top:18px}
+.literary-top{background:#101923!important;border-bottom-color:#34404a!important;padding-inline:16px!important;min-height:50px!important;flex-basis:50px!important}
+.literary-top>span{font:550 13px/1.4 "Noto Serif TC",serif!important;color:#dac7a5!important}
+.literary-top small{font-size:11px!important;color:#b1b7ba!important}
+.literary-top .story-leave{border:1px solid #716b66;background:transparent;color:#e3caba;font:500 12px/1.6 "Noto Serif TC",serif;min-height:35px;padding:6px 12px;border-radius:9px}
+.literary-top .story-leave:focus-visible{outline:2px solid #ebcba0}
+.reading-focused .scene-prose{background:#111b26!important;padding-top:26px;padding-bottom:36px}
+.reading-focused .scene-prose p{line-height:2.12!important;letter-spacing:.28px;max-width:41em;margin-bottom:1.48em!important}
+.reading-focused .novel-dialogue{margin-bottom:1.6em!important;position:relative}
+.reading-focused .novel-dialogue b{font:600 12px/1.6 "Noto Serif TC",serif!important;margin-bottom:6px;color:#cfb88d}
+.reading-focused .novel-dialogue p{color:#e9e1d5;line-height:2.05!important}
+.reading-focused .scene-eyebrow{font:550 13px/1.8 "Noto Serif TC",serif;margin-bottom:27px;letter-spacing:1.1px}
+.reading-focused .literary-toolbar{flex:0 0 34px;min-height:34px;padding:4px 12px;border-top-color:#303a42;background:#121d29;gap:8px}
+.reading-focused .literary-toolbar>span{font-size:11px;color:#c9b58d;font-weight:500}
+.reading-focused .literary-toolbar .btn{min-height:29px;border:0;font-size:11px}
+.reading-focused .story-choice-panel.expanded{max-height:min(50dvh,435px);background:#121e29!important;gap:9px}
+.reading-focused .narrative-choice{font:400 14px/1.7 "Noto Serif TC",serif;background:#1d2c39;border:1px solid #515f67;text-align:left;padding:13px 15px!important;border-radius:10px;min-height:58px}
+.reading-focused .narrative-choice .choice-main b{font:550 14px/1.65 "Noto Serif TC",serif}
+.reading-focused .narrative-choice .choice-main small{font:400 11px/1.6 "Noto Serif TC",serif;margin-top:6px}
+.reading-focused .choice-arrow{font-size:20px;color:#ccb589;margin-left:12px;flex:0 0 auto}
+.reading-focused .story-choice-panel.collapsed{background:#141f2a!important}
+.reading-focused .story-unfold{background:#273340;border-color:#74736d;font-size:13px}
+.reading-focused .story-footer.literary-footer{height:32px;min-height:32px;background:#0e1722;border-top-color:#3a454e;justify-content:space-between}
+.reading-focused .literary-footer>button{font-size:11px;padding:4px 6px;color:#cdb692}
+.reading-focused .literary-footer>span{font-size:10px;color:#8d9ea9}
+.literary-free-row{display:flex;align-items:stretch;min-height:84px!important;flex:0 0 auto!important;gap:8px;margin-top:7px}
+.literary-free-row textarea{resize:vertical;min-width:0;flex:1;min-height:78px;background:#0e1c28;color:#ede4d6;border:1px solid #5e737b;border-radius:10px;padding:12px;font:400 13px/1.7 "Noto Serif TC",serif}
+.literary-free-row textarea:focus-visible{outline:2px solid #b9a67f;outline-offset:1px}
+.literary-free-row .btn{flex:0 0 auto;min-width:72px;min-height:56px;padding:8px;font-size:12px;white-space:normal}
+.story-exit-overlay{position:absolute;inset:0;background:#03080bcc;z-index:100;display:flex;justify-content:center;align-items:center;padding:22px;backdrop-filter:blur(3px)}
+.story-exit-card{width:min(100%,400px);padding:26px 22px;border:1px solid #8b826f;border-radius:16px;background:#172431;box-shadow:0 26px 85px #000a;color:#f3ebdb}
+.story-exit-card h2{font:600 24px/1.55 "Noto Serif TC",serif;margin:0 0 14px}
+.story-exit-card p{font:400 14px/1.9 "Noto Serif TC",serif;color:#bbcbd0}
+.story-exit-actions{display:grid;gap:9px;margin-top:24px}
+.story-exit-actions .btn{min-height:45px;font-size:14px}
+.literary-dialog,.literary-info{border-color:#766f62!important}
+.story-ending .ending-recall{border-left:2px solid #a89c82;color:#d2c5ae;margin:32px 0;padding:13px 18px;background:#182532;font:400 16px/2 "Noto Serif TC",serif}
+.story-ending .btn{min-height:50px;font-size:14px;margin-top:12px}
+.story-ending .ending-note{margin:27px 0}
+@media (max-width:400px){.literary-top>span{font-size:12px!important}.literary-top .story-leave{font-size:11px;padding:6px 9px}.library-home,.story-ending{padding-inline:22px}.reading-focused .scene-prose p{font-size:16.2px}}
+@media(prefers-reduced-motion:reduce){.reading-focused .scene-prose,.reading-focused .scene-prose *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
