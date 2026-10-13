@@ -50,12 +50,12 @@ function npcs(s,m){
  btn("與佢互動",action("npc",n.name))+'</div>').join("")||'<p>故事中尚未遇到重要人物。</p>')+
  (others.length?'<h3>其他輪迴者</h3>'+others.map(n=>'<p class="codex-memory">'+esc(n.name)+' · '+esc(n.temper||n.role||"")+'（未同行）</p>').join(""):"")+'</div>';
 }
-function render(s,m,tab){
+function render(s,m,tab,{page=false}={}){
  if(!m)return "";
  const tabs=[["character","人物"],["skills","技能"],["gear","武器與道具"],["npcs","NPC"]];
  const body=tab==="skills"?skills(s):tab==="gear"?equipment(s,m):tab==="npcs"?npcs(s,m):character(s,m);
- return '<div class="mission-popup literary-codex" role="dialog" aria-label="角色與世界手冊">'+
- '<div class="codex-heading"><h2>人物與世界</h2>'+btn("關閉","codexClose")+'</div>'+
+ return '<div class="'+(page?"literary-codex codex-page":"mission-popup literary-codex")+'" role="'+(page?"region":"dialog")+'" aria-label="角色與世界手冊">'+
+ '<div class="codex-heading"><h2>人物與世界</h2>'+(page?"":btn("關閉","codexClose"))+'</div>'+
  '<nav class="codex-tabs">'+tabs.map(([id,label])=>'<button data-do="codexTab:'+id+'" class="'+(tab===id?"active":"")+'">'+label+'</button>').join("")+'</nav>'+
  '<div class="codex-body">'+body+'</div><p class="codex-hint">選「用在下一步」只會幫你準備一段行動文字，唔會代你執行。你可以自己修改，再確認。</p></div>';
 }
