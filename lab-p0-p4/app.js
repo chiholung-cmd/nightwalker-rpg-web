@@ -142,13 +142,12 @@ function hub(){
  (saved?a("繼續閱讀《"+esc(s.mission.worldName)+"》","nav:mission","block main")+a("放下這個故事 · 開始新故事","leaveStory","block ghost"):a("開始一個新故事","nav:portal","block main"))+
  '</div><div class="library-shelf"><h2>你的經歷</h2><p>'+(recent?'上次離開《'+esc(recent.worldName||"未知世界")+'》 · 第 '+esc(recent.chapter)+' 章':'故事尚未開始。你可以揀一部作品進入其中，或者建立自己的世界。')+'</p>'+a("打開故事紀錄","nav:memory","small ghost")+'</div></section>'
 }
-function profile(){const p=s.profile,t=temporary.profileTab;let tabs=[["overview","總覽"],["attributes","能力"],["gear","裝備"],["relations","關係"],["records","輪迴"]];let content="";
-if(t==="overview")content='<div class="profile-art"><div class="profile-seal"><span>∞</span></div><div><div class="eyebrow">REINCARNATOR · NO.0000</div><h2>'+esc(playerName()||"尚未設定主角姓名")+'</h2><p>'+esc(p.title)+'</p><span class="chip warm">LV.'+p.level+' · 生存觀察者</span></div></div>'+pillRow()+'<div class="two-cols">'+statCard("基礎強度",p.attrs.str+p.attrs.agi+p.attrs.con)+statCard("精神感知",p.attrs.per+p.attrs.wil)+'</div>'+card('主神判定','已完成輪迴：'+p.missions+' 次。'+(s.records.length?"最近世界《"+world(s.records[0].world)?.name+"》。":"尚未取得完整輪迴紀錄。"))+card("血脈／異能",s.profile.bloodline?esc(D.bloodlines.find(x=>x.id===s.profile.bloodline)?.name||"未知血脈"):"未覺醒（主神強化 Lv.5 起可解鎖）")+card("命運標籤","觀察者 · 未歸之人 · 記憶重置疑雲");
-if(t==="attributes")content=card("五維基礎屬性",D.attributes.map(([id,name])=>piece(name,"影響技能判定與可用裝備",'<b class="num">'+p.attrs[id]+'</b>')).join(""))+card("衍生能力","行囊負重上限 "+E.capacity(s)+"，目前 "+E.weight(s)+"；已學習技能 "+s.learned.length+" 項。");
-if(t==="gear")content=card("當前攜帶裝備",["weapon","offhand","armor","accessory"].map(x=>piece({weapon:"主武器",offhand:"副武器",armor:"防具",accessory:"飾品"}[x],objId(s.loadout[x])?.name||"未裝備")).join(""))+card("戰技配置",s.loadout.active.map(id=>piece(skill(id)?.name||id,skill(id)?.desc||"")).join(""))+a("前往戰前配置","nav:loadout","main block");
-if(t==="relations")content=card("輪迴者關係網",D.companions.map(c=>piece(c.name,c.role+" · "+c.temper,tag("關係 "+(s.bonds[c.id]||0),(s.bonds[c.id]||0)>=2?"gold":""))).join(""))+card("故事規則","隊友只有被分派到同一任務時才會登場；單人輪迴不會固定攜帶林霧。");
-if(t==="records")content=card("已完成的世界",s.discovered.length?s.discovered.map(id=>piece(world(id)?.name||id,"可用積分解鎖定向座標")).join(""):"尚未完成正式輪迴。")+card("主神檔案",s.memory.length?s.memory.slice(0,5).map(x=>piece(x.text,new Date(x.at).toLocaleDateString("zh-HK"))).join(""):"仍未恢復失落的記憶。");
-return section("個人登錄資料","輪迴者檔案","所有裝備、技能、傷勢與關係都屬於同一名角色。")+'<div class="tabbar">'+tabs.map(x=>'<button class="'+(t===x[0]?"on":"")+'" data-do="tab:profile:'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="scroll-content column-gap">'+content+'</div>'}
+function profile(){
+ const m=s.mission||{phase:0,history:[],crew:[],npcMemory:{},storyBible:{characters:{}}};
+ return section("CHARACTER DOSSIER","人物與世界","主角、已學技能、武器、物品與 NPC 都會留在故事之中，直接影響可用行動。")+
+ '<div class="scroll-content story-codex-page">'+(window.NW_CODEX?.render?.(s,m,temporary.codexTab,{page:true})||"")+
+ a(s.mission?"返回故事":"返回主神空間",s.mission?"nav:mission":"nav:portal","block ghost")+'</div>'
+}
 function statCard(title,value){return '<div class="card little"><div class="eyebrow">'+esc(title)+'</div><strong class="big-number">'+value+'</strong></div>'}
 function card(title,body,cl=""){return '<div class="card '+cl+'"><div class="card-heading">'+title+'</div><div class="card-body">'+body+'</div></div>'}
 function warehouse(){const mode=temporary.warehouseMode,filter=temporary.filter;const tabs=[["storage","永久倉庫"],["shop","主神商店"]];let catalog=mode==="storage"?D.items.filter(x=>(s.warehouse[x.id]||0)>0):D.shop.map(([id,price])=>({...objId(id),price})),items=catalog.filter(x=>filter==="all"||x.type===filter);
@@ -431,6 +430,11 @@ if(cmd.startsWith("insert:")){
  const addition=kind==="skill"?"嘗試運用「"+item.name+"」，":
   kind==="item"?"拿出「"+item.name+"」，":"走向「"+id+"」，";
  if(!addition)return;
+ if(!s.mission){
+  temporary.openingDraft=window.NW_DRAFTS?.save?.("opening","next-world",
+   (temporary.openingDraft.trim()?temporary.openingDraft.trim()+"\n":"")+addition)||addition;
+  go("portal");return
+ }
  const scope=temporary.draftScope||window.NW_DRAFTS?.storyKey?.(s.mission)||"new-story";
  temporary.freeDraft=window.NW_DRAFTS?.save?.("free",scope,(temporary.freeDraft.trim()?temporary.freeDraft.trim()+"\n":"")+addition)||addition;
  temporary.codexOpen=false;temporary.choicesOpen=true;render();
