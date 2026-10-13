@@ -576,3 +576,182 @@ animation:none!important;transition:none!important;
   animation:none!important;transform:none!important;opacity:1!important;filter:none!important;
  }
 }
+
+
+/* Nightwalker Emotion E+: actual typographic acting, rather than uniform fade-in.
+   Focus effects apply to phrases already present in the prose, never invented UI text. */
+.reading-focused .scene-prose .novel-beat .emotion-focus{
+  display:inline;
+  color:inherit;
+  font:inherit;
+  letter-spacing:inherit;
+  text-decoration:none;
+  white-space:normal;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-fear,
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-panic{
+  animation:nwEmotionUneasy .7s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-anger,
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-shock{
+  animation:nwEmotionStrike .52s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-grief,
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-dread{
+  animation:nwEmotionFade .9s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-revelation,
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-relief{
+  animation:nwEmotionReveal .8s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-fear{
+  animation:nwEmotionFear 1.15s steps(8,end) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-panic{
+  animation:nwEmotionPanic .78s steps(9,end) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-anger{
+  animation:nwEmotionRage .79s cubic-bezier(.2,.8,.27,1) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-shock{
+  animation:nwEmotionShock .87s cubic-bezier(.19,1,.38,1) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-grief{
+  animation:nwEmotionGrief 1.5s ease both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-dread{
+  animation:nwEmotionDread 1.4s ease both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-revelation{
+  animation:nwEmotionTruth 1.12s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-relief{
+  animation:nwEmotionRelease 1.2s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-fear .emotion-focus,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-panic .emotion-focus{
+  display:inline-block;animation:nwEmotionWordTremble .8s steps(7,end) both!important;
+  color:#f4d6d5;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-anger .emotion-focus,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-shock .emotion-focus{
+  display:inline-block;animation:nwEmotionWordImpact .68s ease-out both!important;
+  color:#f6b9aa;font-weight:650;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-grief .emotion-focus{
+  display:inline-block;animation:nwEmotionWordDissolve 1.38s ease-out both!important;
+  color:#a7bbc8;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-revelation .emotion-focus{
+  display:inline-block;animation:nwEmotionWordIlluminate 1.35s ease-out both!important;
+  color:#edce8b;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-dread .emotion-focus{
+  animation:nwEmotionWhisper 1.2s ease both!important;color:#c3d3d9;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-relief .emotion-focus{
+  animation:nwEmotionWordIlluminate 1.2s ease both!important;color:#bcdccc;
+}
+@keyframes nwEmotionUneasy{
+  from{opacity:.6;filter:blur(2px);transform:translateY(3px)}
+  to{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionStrike{
+  0%{opacity:.55;transform:translateX(5px)}
+  45%{opacity:1;transform:translateX(-2px)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionFade{
+  from{opacity:.55;filter:grayscale(.5) blur(1px)}
+  to{opacity:1;filter:none}
+}
+@keyframes nwEmotionReveal{
+  from{opacity:.5;letter-spacing:.5px;filter:blur(2px)}
+  to{opacity:1;letter-spacing:normal;filter:none}
+}
+@keyframes nwEmotionFear{
+  0%{opacity:.48;filter:blur(3px);transform:translateX(2px)}
+  16%{opacity:.7;transform:translateX(-2px)}
+  32%{opacity:.85;transform:translateX(1px)}
+  48%{opacity:.7;transform:translateX(-1px)}
+  64%{opacity:1;transform:translateX(1px)}
+  82%{opacity:1;filter:none;transform:translateX(-1px)}
+  100%{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionPanic{
+  0%{opacity:.3;transform:translateX(10px)}
+  20%{opacity:.92;transform:translateX(-4px)}
+  35%{opacity:.8;transform:translateX(3px)}
+  55%{opacity:1;transform:translateX(-2px)}
+  75%{opacity:1;transform:translateX(1px)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionRage{
+  0%{opacity:.3;filter:blur(3px);transform:scale(1.022) translateX(-6px)}
+  40%{opacity:1;filter:none;transform:scale(1.007) translateX(2px)}
+  75%{transform:translateX(-1px)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionShock{
+  0%{opacity:.25;filter:brightness(1.7) blur(5px);transform:translateY(-8px)}
+  43%{opacity:1;filter:brightness(1.25);transform:translateY(2px)}
+  100%{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionGrief{
+  0%{opacity:.25;filter:grayscale(1) blur(2px);transform:translateY(4px)}
+  60%{opacity:.65;filter:grayscale(.8);transform:translateY(1px)}
+  100%{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionDread{
+  0%{opacity:.3;filter:blur(5px);letter-spacing:1.4px}
+  62%{opacity:.83;filter:blur(.8px);letter-spacing:.5px}
+  100%{opacity:1;filter:none;letter-spacing:normal}
+}
+@keyframes nwEmotionTruth{
+  0%{opacity:.45;filter:blur(5px) brightness(1.3);letter-spacing:2px}
+  65%{opacity:1;filter:blur(.4px);letter-spacing:.4px}
+  100%{opacity:1;filter:none;letter-spacing:normal}
+}
+@keyframes nwEmotionRelease{
+  0%{opacity:.3;filter:blur(2px);transform:translateY(8px)}
+  68%{opacity:.9;transform:translateY(-1px)}
+  100%{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionWordTremble{
+  0%{opacity:.55;transform:translateX(0)}
+  20%{transform:translateX(-1.5px)}
+  40%{transform:translateX(1.5px)}
+  60%{transform:translateX(-1px)}
+  80%{transform:translateX(1px)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionWordImpact{
+  0%{opacity:.4;transform:translateX(4px) scale(1.14)}
+  55%{opacity:1;transform:translateX(-1px) scale(1.03)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionWordDissolve{
+  0%{opacity:.25;filter:blur(3px)}
+  55%{opacity:.78;filter:blur(1px)}
+  100%{opacity:1;filter:none}
+}
+@keyframes nwEmotionWordIlluminate{
+  0%{opacity:.45;letter-spacing:3px;text-shadow:0 0 13px #f3d48d;color:#fff5c4}
+  65%{opacity:1;letter-spacing:.4px;text-shadow:0 0 4px #ddbf8e}
+  100%{opacity:1;letter-spacing:normal;text-shadow:none}
+}
+@keyframes nwEmotionWhisper{
+  0%{opacity:.3;filter:blur(2px)}
+  55%{opacity:.7;filter:blur(1px)}
+  100%{opacity:1;filter:none}
+}
+.reading-focused .scene-prose.motion-off .novel-beat .emotion-focus,
+.reading-focused .scene-prose.fx-static .novel-beat .emotion-focus{
+  animation:none!important;filter:none!important;transform:none!important;opacity:1!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .reading-focused .scene-prose .novel-beat[class*="emotion-"],
+ .reading-focused .scene-prose .novel-beat .emotion-focus{
+   animation:none!important;filter:none!important;transform:none!important;opacity:1!important;
+ }
+}
