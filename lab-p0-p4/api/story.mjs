@@ -198,7 +198,7 @@ function normalizeStoryOptions(scene,input){
   {label:"暫時保留心中的疑問，觀察眾人的反應",hint:"不要暴露已掌握的情報",kind:"conceal"}
  ];
  for(const x of fallbacks)if(safe.length<3&&!safe.some(y=>y.label===x.label))safe.push(x);
- return safe.slice(0,3).map((x,i)=>{const k=kinds.has(x.kind)?x.kind:"observe";return {id:"ai-"+i,label:clean(x.label,50),hint:clean(x.hint,60),kind:k,cost:["run","sneak","physical","risk","fight"].includes(k)?Math.max(0,Math.min(20,Number(x.cost)||8)):0,progress:Math.max(0,Math.min(2,Number(x.progress)||1)),flag:"ai-"+i,requires:clean(x.requires,65)}});
+ return safe.slice(0,3).map((x,i)=>{const k=kinds.has(x.kind)?x.kind:"observe";return {id:"ai-"+i,label:clean(x.label,50),hint:clean(x.hint,60),kind:k,cost:0,progress:0,flag:"ai-"+i,requires:clean(x.requires,65)}});
 }
 const recentResponses=new Map();
 let probeCache={at:0,value:null};
@@ -259,7 +259,7 @@ return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="origi
  narrativeCapabilities:v?.narrativeCapabilities&&typeof v.narrativeCapabilities==="object"?
  {skills:Array.isArray(v.narrativeCapabilities.skills)?v.narrativeCapabilities.skills.slice(0,15).map(x=>({id:clean(x?.id,35),name:clean(x?.name,45)})):[],
  items:Array.isArray(v.narrativeCapabilities.items)?v.narrativeCapabilities.items.slice(0,12).map(x=>({id:clean(x?.id,35),name:clean(x?.name,45)})):[],
- bloodline:clean(v.narrativeCapabilities.bloodline,35)}:null,storyBible:bibleContext(v?.storyBible),endingAudit:finaleCheck(v?.endingAudit),directorBrief:plotContext(v?.directorBrief),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history,5).map(x=>clean(x,105)),previousScenes:limited(v?.previousScenes,3).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,270)})),base:limited(v?.base,4).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,310)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,8).map(([name,x])=>({name:clean(name,40),trust:x?.trust||0,attitude:clean(x?.attitude,65),memory:clean(x?.memory,120)})):[],worldFacts:limited(v?.worldFacts,8).map(x=>clean(x,95)),worldHistory:limited(v?.worldHistory,3).map(x=>clean(x,100)),priorArc:limited(v?.priorArc,4).map(x=>clean(x,75)),sideQuests:limited(v?.sideQuests,5).map(q=>({title:clean(q?.title,60),objective:clean(q?.objective,90),status:clean(q?.status,18),progress:Number(q?.progress)||0})),npcAgency:limited(v?.npcAgency,4).map(x=>({name:clean(x?.name,38),event:clean(x?.event,130),intent:clean(x?.intent,100)})),branchConsequences:limited(v?.branchConsequences,4).map(x=>({npc:clean(x?.npc,35),kind:clean(x?.kind,20),action:clean(x?.action,95),change:Number(x?.change)||0,trust:Number(x?.trust)||0})),state:{mode:"story",noNumericStats:true}};
+ bloodline:clean(v.narrativeCapabilities.bloodline,35)}:null,storyBible:bibleContext(v?.storyBible),endingAudit:finaleCheck(v?.endingAudit),directorBrief:plotContext(v?.directorBrief),directorStage:clean(v?.directorStage,50),cast:limited(v?.cast).map(x=>clean(x,45)),flags:limited(v?.flags).map(x=>clean(x,45)),history:limited(v?.history,5).map(x=>clean(x,105)),previousScenes:limited(v?.previousScenes,3).map(x=>({type:clean(x?.type,16),speaker:clean(x?.speaker,35),text:clean(x?.text,270)})),base:limited(v?.base,4).map(x=>({type:clean(x?.type,15),speaker:clean(x?.speaker,35),text:clean(x?.text,310)})),choices:limited(v?.choices).map(x=>({label:clean(x?.label,40),kind:clean(x?.kind,16)})),npcMemory:v?.npcMemory&&typeof v.npcMemory==="object"?Object.entries(v.npcMemory).slice(0,8).map(([name,x])=>({name:clean(name,40),attitude:clean(x?.attitude,65),memory:clean(x?.memory,120)})):[],worldFacts:limited(v?.worldFacts,8).map(x=>clean(x,95)),worldHistory:limited(v?.worldHistory,3).map(x=>clean(x,100)),priorArc:limited(v?.priorArc,4).map(x=>clean(x,75)),sideQuests:limited(v?.sideQuests,5).map(q=>({title:clean(q?.title,60),objective:clean(q?.objective,90),status:clean(q?.status,18)})),npcAgency:limited(v?.npcAgency,4).map(x=>({name:clean(x?.name,38),event:clean(x?.event,130),intent:clean(x?.intent,100)})),branchConsequences:limited(v?.branchConsequences,4).map(x=>({npc:clean(x?.npc,35),kind:clean(x?.kind,20),action:clean(x?.action,95)})),state:{mode:"story",noNumericStats:true}};
 }
 export default {
 async fetch(request){
@@ -324,7 +324,7 @@ const longStoryRules=[
 "phase<23不可以 readyToConclude；phase 23至27先進入高潮與收束。phase>=27必須在本章實際寫出完整結局與主要角色去向，不能以懸念或選項取代結局。",
 "npcUpdates至多3人；facts至多4條；npcEvents至多2項{name,event,intent}；sideQuests至多2項{title,objective,trigger}。只回報發生的變化，無變化用空陣列。",
 "作品世界：canon.extract僅代表可核實公開資料；保持重要人物關係、事件前後與媒介版本一致。當canon.confidence=unverified，唔可以聲稱劇情已核實；不得逐段複製原作。",
-"精簡JSON欄位，但不能減少正文品質與三條可操作選項。如果 rewriteAttempt>0，代表上一版正文太短或太像戰報，今次必須擴展成完整場景，不要重用上一版相同的精簡段落。"
+"JSON 字段可以精简，但不能牺牲场景完整性。对白应当融入动作与环境描写，不要写成角色名标签式的剧本台词。如果 rewriteAttempt>0，说明上一版正文过短或过度像战报，必须重写完整场景，人物性格和因果保持一致。"
 ].join("\n");
 if(canon?.extract)canon.extract=clean(canon.extract,input.phase===0?1250:650);
 input.canon=canon;
