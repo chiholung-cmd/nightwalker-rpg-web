@@ -489,3 +489,10 @@ animation:none!important;transition:none!important;
 .archive-excerpt{border-left:2px solid #8a816f;padding:5px 0 5px 12px;color:#bbc8c8}
 .archive-tabs button{font-size:12px!important}
 @media(max-width:370px){.reading-focused .scene-prose p,.reading-focused .novel-dialogue-prose{font-size:16.2px!important;line-height:2.06!important}.literary-free-row textarea{font-size:12px}}
+
+
+.rewrite-notes{box-sizing:border-box;display:block;width:100%;min-height:116px;margin:17px 0 8px;background:#0d1b26;color:#ebe4da;border:1px solid #7a827d;border-radius:10px;padding:12px;font:400 14px/1.8 "Noto Serif SC","Noto Serif TC",serif;resize:vertical}
+.rewrite-notes:focus-visible{outline:2px solid #e2c894;outline-offset:1px}
+.literary-toolbar .btn{color:#e1cda9!important}
+.story-exit-actions .btn{white-space:normal;text-align:center}
+@media(max-height:690px){.story-exit-card{padding:18px;max-height:92dvh;overflow-y:auto}.story-exit-card h2{font-size:20px}}
