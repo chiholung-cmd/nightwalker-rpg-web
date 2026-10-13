@@ -2,7 +2,7 @@
 "use strict";
 const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElementById("app");
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
-let s=E.load();if(s.mission&&!s.mission.finished)s.mission.narrativeMode=true;let temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,aiRewriteAttempts:{},rewriteDialog:false,rewriteNote:"",codexOpen:false,codexTab:"character",draftScope:"",openingDraft:"",leaveDialog:false,freeDraft:"",freeReview:null,choicesOpen:false,worldMatches:[],worldLookupQuery:"",worldLookupMedia:"",worldLookupPending:false,worldLookupError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",novelGenre:"全部",novelQuery:"",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
+let s=E.load();if(s.mission&&!s.mission.finished)s.mission.narrativeMode=true;let temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,aiRewriteAttempts:{},rewriteDialog:false,rewriteNote:"",emotionDemo:false,codexOpen:false,codexTab:"character",draftScope:"",openingDraft:"",leaveDialog:false,freeDraft:"",freeReview:null,choicesOpen:false,worldMatches:[],worldLookupQuery:"",worldLookupMedia:"",worldLookupPending:false,worldLookupError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",novelGenre:"全部",novelQuery:"",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
 temporary.originalPremiseDraft=window.NW_DRAFTS?.get?.("premise","new-world")||temporary.originalPremiseDraft;
 temporary.mediaWorldDraft=window.NW_DRAFTS?.get?.("world","media-title")||"";
 temporary.originalWorldDraft=window.NW_DRAFTS?.get?.("world","original-title")||"";
@@ -318,7 +318,7 @@ function missionUI(){
  const renderBeat=(text,kind="narration",consequence=false,hint="")=>{
    const raw=String(text||"").trim();if(!raw)return "";
    const index=beatIndex++;
-   const allowed=emotionalBeats<4||kind==="system";
+   const allowed=emotionalBeats<8||kind==="system";
    const emotion=allowed?window.NW_EMOTION?.classify?.(raw,{
      mood:novel?.mood||"suspense",
      hint,
@@ -437,10 +437,30 @@ function settings(){
  a("從雲端恢復（取代當前遊戲）","cloudRestore","block ghost")+
  (temporary.cloudError?'<p class="negative-note">'+esc(temporary.cloudError)+'</p>':""));
  return section("TERMINAL SETTINGS","系統設定","閱讀效果及本機、雲端輪迴存檔。")+'<div class="scroll-content column-gap">'+
- card("閱讀",piece("E+ 文字演出強度",mode==="strong"?"強烈（情緒轉折、線索、主神文字）":mode==="standard"?"柔和（閱讀時段落自然浮現）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small")))+
+ card("閱讀",piece("E+ 文字演出強度",mode==="strong"?"強烈（八種情緒文字演出）":mode==="standard"?"柔和（低動態演出）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small"))+a("預覽原版八種情緒演出","emotionDemo","block ghost"))+
  musicCard+groqCard+usageCard+cloudCard+card("本機存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+'</div>'
 }
 function screen(){return s.screen==="hub"?hub():s.screen==="profile"?profile():s.screen==="warehouse"?warehouse():s.screen==="loadout"?loadout():s.screen==="upgrade"?upgrade():s.screen==="portal"?missionBoard():s.screen==="mission"?missionUI():s.screen==="memory"?memory():settings()}
+function emotionDemoMarkup(){
+ const samples=[
+  ["fear","恐懼","他不敢回頭，指尖控制不住地顫抖。","顫抖"],
+  ["panic","驚慌","「快跑！已經來不及了！」","快跑"],
+  ["anger","憤怒","他終於忍不住怒吼，將門狠狠踢開。","怒吼"],
+  ["grief","悲傷","她死了。沒有人再聽得見最後那句道別。","死了"],
+  ["revelation","真相","他終於明白，所有證據都指向那名同伴。","終於明白"],
+  ["shock","衝擊","砰的一聲槍響，整條走廊瞬間陷入混亂。","槍響"],
+  ["dread","詭異","黑暗深處傳來低語，像有人貼著耳邊說話。","低語"],
+  ["relief","釋然","確認大家都還活著，他終於鬆了一口氣。","鬆了一口氣"]
+ ];
+ return '<div class="emotion-demo-overlay" role="dialog" aria-modal="true" aria-label="八種情緒文字演出示範">'+
+ '<div class="emotion-demo-card reading-focused"><div class="emotion-demo-head"><h2>E+ · 八種情緒演出</h2>'+a("關閉","emotionDemoClose","small ghost")+'</div>'+
+ '<p class="emotion-demo-note">示範文字係繁體字；實際遊戲會按段落情緒觸發，而唔係每句都加特效。系統的減少動態效果設定仍然有效。</p>'+
+ '<div class="scene-prose fx-strong emotion-demo-prose">'+samples.map(([id,label,text,token])=>{
+  const at=text.indexOf(token),sentence=at>=0?esc(text.slice(0,at))+'<span class="emotion-focus">'+esc(token)+'</span>'+esc(text.slice(at+token.length)):esc(text);
+  return '<div class="emotion-demo-row"><label>'+esc(label)+'</label><div class="novel-beat fx-revealed emotion-'+id+'"><p>'+sentence+'</p></div></div>';
+ }).join("")+'</div>'+
+ '<div class="emotion-demo-bottom">'+a("重新播放八種效果","emotionDemoReplay","block main")+a("完成","emotionDemoClose","block ghost")+'</div></div></div>'
+}
 function render(){
  const inGame=!!(s.mission&&s.screen==="mission");
  const m=inGame?s.mission:null;
@@ -454,8 +474,9 @@ function render(){
  temporary.fxSceneKey=fxKey;
  temporary.fxPerform=fresh?mode:"static";
  const rewriteOverlay=temporary.rewriteDialog?'<div class="story-exit-overlay" role="dialog" aria-modal="true" aria-label="改善本章文筆"><div class="story-exit-card"><h2>重新寫呢一章</h2><p>話俾 AI 知要改進嘅地方，例如節奏、對白、描寫或者人物性格。需要再用一次免費 AI 生成額度。</p><textarea class="rewrite-notes" id="rewrite-note" maxlength="700" rows="4" placeholder="例如：少啲空泛比喻，角色對話自然啲，唔好每三句就停……">'+esc(temporary.rewriteNote)+'</textarea><div class="story-exit-actions">'+a("保留原文","cancelRewrite","block ghost")+a("按意見重新寫","rewriteChapter","block main")+'</div></div></div>':"";
+ const emotionOverlay=temporary.emotionDemo?emotionDemoMarkup():"";
  const leaveOverlay=temporary.leaveDialog?'<div class="story-exit-overlay" role="dialog" aria-modal="true" aria-label="退出故事"><div class="story-exit-card"><h2>離開呢個故事？</h2><p>你可以隨時開始新故事。之前嘅章節與選擇會保留喺經歷紀錄；主角姓名同其他存檔唔會被刪除。</p><div class="story-exit-actions">'+a("繼續閱讀","cancelLeave","block ghost")+a("退出並選新故事","confirmLeave","block main")+'</div></div></div>':"";
- R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+leaveOverlay+rewriteOverlay+'</div>';
+ R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+leaveOverlay+rewriteOverlay+emotionOverlay+'</div>';
  if(same&&oldY>0){const pane=R.querySelector?.(".scene-prose");if(pane)pane.scrollTop=oldY}
  window.NW_MUSIC?.sync?.({mood:soundtrackMood(),volume:Number(s.settings?.musicVolume??.22)});
  window.NW_EFFECTS?.cancel?.();
@@ -695,6 +716,9 @@ if(cmd==="musicToggle"){
  }
  render();return
 }
+if(cmd==="emotionDemo"){temporary.emotionDemo=true;render();return}
+if(cmd==="emotionDemoReplay"){temporary.emotionDemo=true;render();return}
+if(cmd==="emotionDemoClose"){temporary.emotionDemo=false;render();return}
 if(cmd==="toggleMotion"){const next=eplusMode()==="standard"?"strong":eplusMode()==="strong"?"off":"standard";s.settings.eplusMode=next;s.settings.reducedMotion=next==="off";temporary.fxSeen="";temporary.fxSkippedFor="";render();return}
 if(cmd==="skipFx"){temporary.fxSkippedFor=temporary.fxSceneKey;window.NW_EFFECTS?.skip?.();const pane=R.querySelector?.(".scene-prose");pane?.classList?.add("fx-static");pane?.classList?.remove("fx-strong","fx-standard");const skip=R.querySelector?.(".eplus-skip");if(skip)skip.hidden=true;return}
 if(cmd==="export"){try{const blob=new Blob([JSON.stringify(s,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nightwalker-save.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}catch(_){notice("此瀏覽器暫不支援匯出。")}return}
