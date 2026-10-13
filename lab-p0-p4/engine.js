@@ -12,7 +12,7 @@ warehouse:{ironrod:1,shortblade:1,jacket:1,charm:1,medkit:3,energy:2,ether:1,san
 learned:["strike","guard","observe","focus"],
 loadout:{weapon:"ironrod",armor:"jacket",accessory:"charm",offhand:null,backpack:["medkit","medkit","energy","sanity","recorder"],active:["strike","guard","observe"],passive:["focus"]},
 assignment:null,mission:null,records:[],memory:[],bonds:{linwu:0,shenyuan:0,chuling:0,weixun:0},discovered:[],coord:{},perk:[],ui:{selectedSkill:2,filter:"all",category:"weapon",alert:"",page:0},
-settings:{reducedMotion:true,novelSize:"normal",novelMode:true},lastReward:null
+settings:{reducedMotion:false,eplusMode:"standard",novelSize:"normal",novelMode:true},lastReward:null
 });
 function load(storage){const st=storage||global.localStorage;
 try{if(st.getItem(RESET_MARK)!=="1"){
@@ -20,7 +20,12 @@ try{if(st.getItem(RESET_MARK)!=="1"){
   ["nightwalker_p0p4_integrated_v1",OLD,"nightwalker_p0p4_fresh_v2_20261012"].forEach(k=>{if(st.removeItem)st.removeItem(k)});
   st.setItem(RESET_MARK,"1");
 }}catch(_){}
-let raw;try{raw=st.getItem(KEY)}catch(_){}if(raw){try{let a=JSON.parse(raw);if(a&&a.version===1&&a.profile&&a.loadout){if(!a.profile.nameCustomized&&a.profile.name==="夜行者")a.profile.name="";else if(!a.profile.nameCustomized&&String(a.profile.name||"").trim())a.profile.nameCustomized=true;if(!a.mission)restoreAllResources(a);return a}}catch(_){}}let s=defaultState();
+let raw;try{raw=st.getItem(KEY)}catch(_){}if(raw){try{let a=JSON.parse(raw);if(a&&a.version===1&&a.profile&&a.loadout){a.settings ||= {};
+if(!["off","standard","strong"].includes(a.settings.eplusMode)){
+  a.settings.eplusMode="standard";
+  a.settings.reducedMotion=false; // V6 had accidentally shipped motion disabled by default.
+}
+if(!a.profile.nameCustomized&&a.profile.name==="夜行者")a.profile.name="";else if(!a.profile.nameCustomized&&String(a.profile.name||"").trim())a.profile.nameCustomized=true;if(!a.mission)restoreAllResources(a);return a}}catch(_){}}let s=defaultState();
 if(!s.mission)restoreAllResources(s);return s}
 function save(s,storage){try{(storage||global.localStorage).setItem(KEY,JSON.stringify(s))}catch(_){}}
 function restoreAllResources(s){
