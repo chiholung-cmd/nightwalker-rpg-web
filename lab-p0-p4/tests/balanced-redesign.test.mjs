@@ -76,3 +76,11 @@ test("all eight emotionally distinctive motion types are accessible and replayab
  assert.match(app,/emotionalBeats<8/);
  assert.match(css,/prefers-reduced-motion:reduce/);
 });
+
+test("actual OpenCC dependency converts mainland Simplified wording into Traditional Chinese",async()=>{
+ const {Converter}=await import("opencc-js");
+ const traditional=Converter({from:"cn",to:"tw"})("无限恐怖里的战斗和伙伴");
+ assert.match(traditional,/無限恐怖/);
+ assert.match(traditional,/戰鬥/);
+ assert.ok(!traditional.includes("战斗"));
+});
