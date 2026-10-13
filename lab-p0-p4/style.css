@@ -755,3 +755,23 @@ animation:none!important;transition:none!important;
    animation:none!important;filter:none!important;transform:none!important;opacity:1!important;
  }
 }
+
+
+/* Restore the old E+ atmospheric mood palette in the new uncluttered reader. */
+.reading-focused .scene-prose.fx-strong[data-mood="suspense"],
+.reading-focused .scene-prose.fx-strong[data-mood="eerie"]{
+  background:radial-gradient(ellipse at 75% 26%,rgba(79,91,109,.15),transparent 63%),#0e1824!important;
+}
+.reading-focused .scene-prose.fx-strong[data-mood="shock"],
+.reading-focused .scene-prose.fx-strong[data-mood="anger"]{
+  background:radial-gradient(ellipse at 20% 24%,rgba(114,63,60,.18),transparent 56%),#141b27!important;
+}
+.reading-focused .scene-prose.fx-strong[data-mood="grief"]{
+  background:radial-gradient(ellipse at 50% 18%,rgba(90,104,118,.14),transparent 75%),#101822!important;
+}
+.reading-focused .scene-prose.fx-strong[data-mood="resolve"]{
+  background:radial-gradient(ellipse at 65% 15%,rgba(112,105,72,.13),transparent 72%),#121d28!important;
+}
+.reading-focused .scene-prose.fx-strong[data-mood="system"]{
+  background:radial-gradient(ellipse at 40% 20%,rgba(57,100,116,.15),transparent 67%),#101c27!important;
+}
