@@ -476,3 +476,16 @@ animation:none!important;transition:none!important;
 .story-ending .ending-note{margin:27px 0}
 @media (max-width:400px){.literary-top>span{font-size:12px!important}.literary-top .story-leave{font-size:11px;padding:6px 9px}.library-home,.story-ending{padding-inline:22px}.reading-focused .scene-prose p{font-size:16.2px}}
 @media(prefers-reduced-motion:reduce){.reading-focused .scene-prose,.reading-focused .scene-prose *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+
+/* Natural novel paragraphs, not screenplay dialogue cards. */
+.library-mast .mast-user strong{font:550 12px/1.5 "Noto Serif SC","Noto Serif TC",serif;color:#e1d7c6}
+.library-mast .mast-user small{font:400 9px/1.5 system-ui,sans-serif;color:#9fadb2}
+.reading-focused .scene-prose p,.reading-focused .novel-dialogue-prose{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","Noto Serif TC","SimSun",serif!important}
+.reading-focused .novel-dialogue-prose{display:block;margin:0 0 1.48em!important;padding:0;text-indent:0;font-size:clamp(16.5px,3.9vw,19px);font-weight:400;line-height:2.12;letter-spacing:.26px;color:#ede5dc;background:transparent;border:0;box-shadow:none}
+.story-archive{padding-top:16px}
+.archive-story-meta{font:400 11px/1.7 "Noto Serif SC","Noto Serif TC",serif;color:#9eacb5;margin-bottom:14px}
+.archive-choice,.archive-excerpt{font:400 13px/1.92 "Noto Serif SC","Noto Serif TC",serif;color:#dedbd3;margin:12px 0}
+.archive-excerpt{border-left:2px solid #8a816f;padding:5px 0 5px 12px;color:#bbc8c8}
+.archive-tabs button{font-size:12px!important}
+@media(max-width:370px){.reading-focused .scene-prose p,.reading-focused .novel-dialogue-prose{font-size:16.2px!important;line-height:2.06!important}.literary-free-row textarea{font-size:12px}}
