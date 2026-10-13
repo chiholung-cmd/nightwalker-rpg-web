@@ -93,7 +93,7 @@ function get(s){
 const m=s.mission;if(!m)return null;
 const st=ensure(m);
 if(m.world==="custom"||m.director){const custom=m.aiOptions?.[m.phase]||[];const opts=custom.map((x,i)=>{
- const caps=m.narrativeCapabilities||{};
+ const caps={skills:(s.learned||[]).map(id=>({id})),items:[...(s.loadout?.backpack||[]),s.loadout?.weapon,s.loadout?.offhand,s.loadout?.accessory].filter(Boolean).map(id=>({id})),bloodline:s.profile?.bloodline||""};
  const active=new Set([...(caps.skills||[]).map(z=>"skill:"+z.id),...(caps.items||[]).map(z=>"item:"+z.id),...(caps.bloodline?["bloodline:"+caps.bloodline]:[])]);
  let o={id:x.id||"ai-"+i,label:x.label,hint:x.hint,kind:x.kind,cost:m.narrativeMode?0:Number(x.cost)||0,progress:m.narrativeMode?0:Number(x.progress)||1,flag:x.flag||"ai-option-"+i,requires:x.requires||"",reasons:[]};
  if(m.narrativeMode&&o.requires&&!active.has(o.requires))o.reasons.push("當前人物未掌握所需能力");if(!m.narrativeMode&&["run","sneak","physical","risk","fight"].includes(o.kind)&&s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length;return o});return {world:{name:m.worldName},section:null,actions:opts,exertion:st.exertion,active:false,phase:m.phase,storyState:st}}
@@ -125,10 +125,18 @@ function applyNovel(s,action,original){
  if((m.world==="custom"||m.director)&&!m.aiOptions?.[m.phase]?.length)return {error:"請等目前章節完成先繼續"};
  const choice=String(original||action.label||"").trim();if(!choice)return {error:"請描述下一步"};
  const phase=m.phase,kind=String(action.kind||"open"),st=ensure(m);
- const report={action:choice,events:["主角決定："+choice],kind,
+ const skills=(s.learned||[]).filter(id=>choice.includes(global.NW_DATA?.skills?.find?.(x=>x.id===id)?.name||"\u0000"));
+ const items=[...(s.loadout?.backpack||[]),s.loadout?.weapon,s.loadout?.offhand].filter(Boolean)
+  .filter(id=>choice.includes(global.NW_DATA?.items?.find?.(x=>x.id===id)?.name||"\u0000"));
+ const contacts=Object.keys(m.npcMemory||{}).filter(name=>choice.includes(name));
+ const report={action:choice,events:["主角決定："+choice],kind,skills,items,contacts,
   delta:{hp:0,sta:0,mp:0,san:0,progress:0}};
  m.history||=[];m.log||=[];m.flags||=[];
  m.history.push(report);m.log.push("第"+(phase+1)+"章："+choice);
+ m.playerAgency ||= {skillsUsed:[],itemsUsed:[],contacts:[]};
+ const remember=(name,values)=>{m.playerAgency[name]=Array.from(new Set([...(m.playerAgency[name]||[]),...values])).slice(-20)};
+ remember("skillsUsed",skills);remember("itemsUsed",items);remember("contacts",contacts);
+ m.pendingAction={text:choice,kind,skills,items,contacts,fromChapter:phase+1};
  st.last=action.id||"free-open";st.lastReply=choice;
  st.notes.push({choice,kind,reply:choice,at:phase});
  st.notes=st.notes.slice(-30);
@@ -267,7 +275,7 @@ function analyzeFree(s,text){
  if((m.world==="custom"||m.director)&&!m.aiOptions?.[m.phase]?.length)return {error:"AI 正在續寫本章，請等劇情生成後再行動"};
  if(m.narrativeMode){
   const raw=String(text||"").trim();if(raw.length<2)return {error:"請輸入你想主角採取嘅行動"};
-  if(raw.length>350)return {error:"行動描述最多 350 字；可以先寫最重要嘅決定"};
+  if(raw.length>3000)return {error:"行動最多 3,000 字；原文草稿仍會保留，請縮短後再提交"};
   const recognized=parseFreeIntent(raw),kind=recognized.error?"open":recognized.kind;
   const intent={kind,cost:0,label:recognized.error?"自由行動":recognized.label,text:raw};
   const action={id:"free-"+kind,label:raw,hint:"主角自由決定",kind,cost:0,progress:0,flag:"free-"+kind,reasons:[]};
