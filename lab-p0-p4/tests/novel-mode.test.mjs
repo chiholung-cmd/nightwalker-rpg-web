@@ -100,3 +100,38 @@ test("novel UI has an accessible leave-story button and no loadout/stats in chap
  assert.match(css,/\.literary-top/);
  assert.match(html,/app\.js/);
 });
+
+test("new original worlds are free in novel mode even without RPG credits or gear preparation",()=>{
+ const {E}=game(),s=E.defaultState();
+ s.profile.name="林燁";s.profile.nameCustomized=true;s.profile.credits=0;
+ s.loadout.weapon=null;
+ const err=E.assignCustomWorld(s,"零號月台",true,{kind:"original",premise:"月台上每晚都有一班不載人的末班車，失蹤者的名字會出現在玻璃上"});
+ assert.equal(err,null);
+ assert.equal(s.assignment.paidCost,0);
+ assert.equal(E.launch(s),null);
+ assert.equal(s.mission.narrativeMode,true);
+});
+test("canceling a new chapter-one novel does not duplicate backpack inventory",()=>{
+ const {E}=game(),s=E.defaultState();
+ s.mission={...mission(),paidCost:0,history:[],phase:0};
+ s.assignment={world:"custom",paidCost:0};
+ s.warehouse.ironrod=2;
+ assert.equal(E.cancelCustomWorld(s),null);
+ assert.equal(s.warehouse.ironrod,2);
+});
+test("reader feedback prompts optional rewrite without repeating NPC/world updates",()=>{
+ const app=code("app.js"),api=code("api/story.mjs");
+ assert.match(app,/rewriteDialog/);
+ assert.match(app,/rewriteFeedback/);
+ assert.match(app,/if\(!rewritingExisting\)/);
+ assert.match(app,/id="rewrite-note"/);
+ assert.match(api,/rewriteFeedback/);
+ assert.match(api,/underlength:narrativeLength<750/);
+});
+test("no game stats appear in novel chapter chrome or live model state",()=>{
+ const app=code("app.js"),api=code("api/story.mjs");
+ assert.match(app,/const bar='<div class="story-top literary-top"/);
+ assert.match(app,/const toolbox='<div class="story-toolbar literary-toolbar"/);
+ assert.match(app,/state:\{mode:"story",noNumericStats:true\}/);
+ assert.match(api,/state:\{mode:"story",noNumericStats:true\}/);
+});
