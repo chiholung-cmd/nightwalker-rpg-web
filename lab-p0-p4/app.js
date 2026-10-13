@@ -241,7 +241,7 @@ function missionUI(){
  }).join("");
  const notice="";
  const bar='<div class="story-top literary-top"><span>'+esc(w.name)+' <small>· 第 '+(m.phase+1)+' 章</small></span><button class="story-leave" data-do="leaveStory" aria-label="退出當前故事並開始新故事">退出 · 新故事</button></div>';
- const toolbox='<div class="story-toolbar literary-toolbar"><span>《'+esc(m.worldName)+'》 · '+esc(novel?.title||"本章")+'</span><div>'+a("故事線索","taskinfo","tiny ghost")+'</div></div>';
+ const toolbox='<div class="story-toolbar literary-toolbar"><span>《'+esc(m.worldName)+'》 · '+esc(novel?.title||"本章")+'</span><div>'+a("重寫","rewriteOpen","tiny ghost")+a("線索","taskinfo","tiny ghost")+'</div></div>';
   const popups=[];
  if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只有發生體力消耗、施展術式或受到傷害時，才需要特別注意數值。</p>'+a("關閉","status","small ghost")+'</div>');
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
@@ -334,15 +334,18 @@ function render(){
  const fresh=!!fxKey&&fxKey!==temporary.fxSeen&&temporary.fxSkippedFor!==fxKey&&mode!=="off"&&!reduced;
  temporary.fxSceneKey=fxKey;
  temporary.fxPerform=fresh?mode:"static";
+ const rewriteOverlay=temporary.rewriteDialog?'<div class="story-exit-overlay" role="dialog" aria-modal="true" aria-label="改善本章文筆"><div class="story-exit-card"><h2>重新寫呢一章</h2><p>話俾 AI 知要改進嘅地方，例如節奏、對白、描寫或者人物性格。需要再用一次免費 AI 生成額度。</p><textarea class="rewrite-notes" id="rewrite-note" maxlength="240" rows="4" placeholder="例如：少啲空泛比喻，角色對話自然啲，唔好每三句就停……">'+esc(temporary.rewriteNote)+'</textarea><div class="story-exit-actions">'+a("保留原文","cancelRewrite","block ghost")+a("按意見重新寫","rewriteChapter","block main")+'</div></div></div>':"";
  const leaveOverlay=temporary.leaveDialog?'<div class="story-exit-overlay" role="dialog" aria-modal="true" aria-label="退出故事"><div class="story-exit-card"><h2>離開呢個故事？</h2><p>你可以隨時開始新故事。之前嘅章節與選擇會保留喺經歷紀錄；主角姓名同其他存檔唔會被刪除。</p><div class="story-exit-actions">'+a("繼續閱讀","cancelLeave","block ghost")+a("退出並選新故事","confirmLeave","block main")+'</div></div></div>':"";
- R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+leaveOverlay+'</div>';
+ R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+leaveOverlay+rewriteOverlay+'</div>';
  if(same&&oldY>0){const pane=R.querySelector?.(".scene-prose");if(pane)pane.scrollTop=oldY}
  window.NW_EFFECTS?.cancel?.();
  if(fresh){temporary.fxSeen=fxKey;window.NW_EFFECTS?.play?.(R,{mode})}
  persist();if(inGame)scheduleAiScene()
 }
 function handle(cmd){if(!cmd)return;
-if(cmd==="leaveStory"){temporary.leaveDialog=true;render();return}
+if(cmd==="rewriteOpen"){temporary.rewriteDialog=true;render();return}
+if(cmd==="cancelRewrite"){temporary.rewriteDialog=false;render();return}
+if(cmd==="leaveStory"){temporary.rewriteDialog=false;temporary.leaveDialog=true;render();return}
 if(cmd==="cancelLeave"){temporary.leaveDialog=false;render();return}
 if(cmd==="confirmLeave"){
  temporary.leaveDialog=false;
@@ -370,6 +373,7 @@ if(cmd==="upback:root"){temporary.upgradeCategory="";temporary.upgradeSub="";ren
 if(cmd.startsWith("blood:")){let err=E.buyBloodline(s,cmd.slice(6));if(err)return notice(err);notice("血脈覺醒成功，能力和副作用已生效。");return}
 if(cmd.startsWith("boost:")){let err=E.boost(s,cmd.slice(6));if(err)return notice(err);render();return}
 if(cmd==="rewriteChapter"){
+ temporary.rewriteDialog=false;
  const m=s.mission;if(!m||m.finished)return;
  if(temporary.aiPending)return notice("AI 正在寫作，請勿重複提交");
  if(temporary.aiDelayUntil>Date.now())return notice("免費模型冷卻中，請稍後再試");
@@ -490,7 +494,7 @@ if(cmd==="toggleMotion"){const next=eplusMode()==="strong"?"standard":eplusMode(
 if(cmd==="skipFx"){temporary.fxSkippedFor=temporary.fxSceneKey;window.NW_EFFECTS?.skip?.();const pane=R.querySelector?.(".scene-prose");pane?.classList?.add("fx-static");pane?.classList?.remove("fx-strong","fx-standard");const skip=R.querySelector?.(".eplus-skip");if(skip)skip.hidden=true;return}
 if(cmd==="export"){try{const blob=new Blob([JSON.stringify(s,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nightwalker-save.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}catch(_){notice("此瀏覽器暫不支援匯出。")}return}
 }
-R.addEventListener("input",ev=>{const el=ev.target;if(el.id==="free-action")temporary.freeDraft=el.value.slice(0,180);if(el.id==="media-world-name"){temporary.mediaWorldDraft=el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=el.value.slice(0,450)});
+R.addEventListener("input",ev=>{const el=ev.target;if(el.id==="free-action")temporary.freeDraft=el.value.slice(0,180);if(el.id==="media-world-name"){temporary.mediaWorldDraft=el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="rewrite-note")temporary.rewriteNote=el.value.slice(0,240);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=el.value.slice(0,450)});
 R.addEventListener("click",ev=>{let t=ev.target.closest("[data-do]");if(!t||t.disabled)return;handle(t.dataset.do)});
 render();
 checkAiStatus();
