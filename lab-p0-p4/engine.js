@@ -140,7 +140,7 @@ function validateLoadout(s){let errors=[];if(!s.loadout.weapon)errors.push("必�
 function launch(s){if(!s.assignment)return "尚未獲得主神任務";if(s.mission)return "任務已在進行";const literary=s.settings?.novelMode!==false;let errors=literary?[]:validateLoadout(s);if(errors.length)return errors.join("、");let bag={};for(const id of s.loadout.backpack){bag[id]=(bag[id]||0)+1}for(const id in bag)if(!literary&&(s.warehouse[id]||0)<bag[id])return "倉庫物資不足："+item(id)?.name;
 for(const id in bag)if(!literary)s.warehouse[id]-=bag[id];
 restoreAllResources(s);
-const taskObj=s.assignment.world==="custom"?{id:"custom_generated",name:"自選世界·主神試煉",mode:s.assignment.mode==="team"?"team":"solo",goal:"探索「"+s.assignment.worldTitle+"」，完成主神委派的調查與生存目標",required:3,desc:s.assignment.worldKind==="original"?"主神已按照你的設定構築原創世界":"主神已定位指定作品世界"}:task(s.assignment.task),
+const taskObj=s.assignment.world==="custom"?{id:"custom_generated",name:"自選世界·主神試煉",mode:s.assignment.mode==="team"?"team":"solo",goal:"探索「"+s.assignment.worldTitle+"」，完成主神委派的調查與生存目標",required:3,desc:s.assignment.worldKind==="original"?"主神已按照你的設定構築原創世界":"主神已定位指定作品世界"}:{...task(s.assignment.task),mode:s.assignment.mode||task(s.assignment.task).mode},
 w=s.assignment.world==="custom"?{id:"custom",name:s.assignment.worldTitle,enemy:"未知威脅",foeHp:100,dmg:12,intents:["試探","逼近","擾亂"],tone:"未知劇情"}:world(s.assignment.world);
 if(s.profile.bloodline==="wolf")s.profile.sta=clamp(s.profile.sta+15,0,100);
 if(s.profile.bloodline==="blank")s.profile.san=clamp(s.profile.san-10,0,100);let seed=s.assignment.seed;
