@@ -82,12 +82,12 @@ test("legacy RPG mission exit returns only genuinely withdrawn inventory, does n
  assert.equal(s.warehouse.ironrod,1);
  assert.equal(s.records[0].worldName,"旧世界");
 });
-test("novel-ending path has no XP or credits payout",()=>{
+test("novel-ending path returns lasting RPG experience and Main God credits",()=>{
  const {E}=game(),s=E.defaultState();s.mission=mission();s.mission.phase=28;
  E.end(s);
  assert.equal(s.mission.finished,true);
- assert.equal(s.mission.reward.credits,0);
- assert.equal(s.mission.reward.xp,0);
+ assert.ok(s.mission.reward.credits>0);
+ assert.ok(s.mission.reward.xp>0);
 });
 test("novel UI has an accessible leave-story button and no loadout/stats in chapter controls",()=>{
  const app=code("app.js"),css=code("style.css"),html=code("index.html");
@@ -95,7 +95,7 @@ test("novel UI has an accessible leave-story button and no loadout/stats in chap
  assert.match(app,/if\(cmd==="confirmLeave"\)/);
  assert.match(app,/E\.abandonStory\(s\)/);
  assert.match(app,/story-exit-overlay/);
- assert.match(app,/library-home/);
+ assert.match(app,/command-dashboard/);
  assert.match(css,/\.story-exit-overlay/);
  assert.match(css,/\.literary-top/);
  assert.match(html,/app\.js/);
