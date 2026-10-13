@@ -521,8 +521,7 @@ if(cmd==="customWorld"){
  if(!playerName())return notice("請先保存主角姓名");
  if(original){
   const premise=R.querySelector("#original-world-premise")?.value||temporary.originalPremiseDraft||"";
-  const commit=()=>{const err=E.assignCustomWorld(s,title,temporary.aiConfigured,{kind:"original",premise});if(err)return notice(err);render()};
-  if(!temporary.aiConfigured){checkAiStatus(true).then(ok=>ok?commit():notice("AI 未連線，未扣積分"));return}commit();return
+  const err=E.assignCustomWorld(s,title,true,{kind:"original",premise});if(err)return notice(err);render();return
  }
  if(title.length<2)return notice("請輸入完整作品名稱");
  temporary.worldLookupQuery=title;temporary.worldLookupMedia=temporary.worldMedia;
@@ -548,10 +547,10 @@ if(cmd.startsWith("worldPick:")){
   render();return
  }
  const commit=()=>{
-  const err=E.assignCustomWorld(s,choice.title,temporary.aiConfigured,{kind:"adaptation",mediaType:choice.mediaType,verifiedTitle:choice.title,verifiedSource:choice.sourceUrl,verifiedSourceTitle:choice.sourceTitle,summary:choice.summary||""});
+  const err=E.assignCustomWorld(s,choice.title,true,{kind:"adaptation",mediaType:choice.mediaType,verifiedTitle:choice.title,verifiedSource:choice.sourceUrl,verifiedSourceTitle:choice.sourceTitle,summary:choice.summary||""});
   if(err)return notice(err);temporary.worldMatches=[];render()
  };
- if(!temporary.aiConfigured){checkAiStatus(true).then(ok=>ok?commit():notice("AI 無法連線，未扣積分"));return}commit();return
+ commit();return
 }
 if(cmd==="assign"){let err=E.mainGodAssign(s);if(err)return notice(err);render();return}
 if(cmd.startsWith("coord:")){let err=E.assignReturn(s,cmd.slice(6));if(err)return notice(err);render();return}
