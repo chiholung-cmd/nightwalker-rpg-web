@@ -332,7 +332,7 @@ function settings(){
  a("從雲端恢復（取代當前遊戲）","cloudRestore","block ghost")+
  (temporary.cloudError?'<p class="negative-note">'+esc(temporary.cloudError)+'</p>':""));
  return section("TERMINAL SETTINGS","系統設定","閱讀效果及本機、雲端輪迴存檔。")+'<div class="scroll-content column-gap">'+
- card("閱讀",piece("E+ 文字演出強度",mode==="strong"?"強烈（逐字對白＋情緒場景）":mode==="standard"?"標準（輕量演出）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small")))+
+ card("閱讀",piece("E+ 文字演出強度",mode==="strong"?"強烈（情緒轉折、線索、主神文字）":mode==="standard"?"柔和（閱讀時段落自然浮現）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small")))+
  groqCard+usageCard+cloudCard+card("本機存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+'</div>'
 }
 function screen(){return s.screen==="hub"?hub():s.screen==="profile"?profile():s.screen==="warehouse"?warehouse():s.screen==="loadout"?loadout():s.screen==="upgrade"?upgrade():s.screen==="portal"?missionBoard():s.screen==="mission"?missionUI():s.screen==="memory"?memory():settings()}
