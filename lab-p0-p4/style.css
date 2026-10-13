@@ -775,3 +775,46 @@ animation:none!important;transition:none!important;
 .reading-focused .scene-prose.fx-strong[data-mood="system"]{
   background:radial-gradient(ellipse at 40% 20%,rgba(57,100,116,.15),transparent 67%),#101c27!important;
 }
+
+
+/* Infinite-flow fiction: pre-entry synopsis, world correction and playable codex. */
+.world-suggestion{border:1px solid #4b5f65;border-radius:11px;padding:10px;margin:10px 0;background:#142936}
+.world-suggestion .world-candidate{width:100%;margin:0;padding:10px;border-color:#7b795f}
+.world-synopsis,.world-verify-note{font:400 13px/1.95 "Noto Serif SC","Noto Serif TC",serif;color:#cbd5d3;padding:8px 4px 0;margin:4px 0}
+.world-synopsis{max-height:260px;overflow-y:auto;white-space:pre-wrap}
+.entry-world-intro{border:1px solid #77806c;background:linear-gradient(180deg,#1d3140,#142431);border-radius:14px;padding:20px 18px;margin-bottom:20px}
+.entry-world-intro h3{font:600 clamp(21px,5.2vw,27px)/1.55 "Noto Serif SC","Noto Serif TC",serif;color:#f0e4cf;margin:11px 0 4px}
+.entry-world-category{font:400 12px/1.75 system-ui,sans-serif;color:#e0c48c;margin:0 0 14px}
+.entry-world-summary{font:400 15px/2 "Noto Serif SC","Noto Serif TC",serif;color:#ede8dd;white-space:pre-wrap;max-height:340px;overflow-y:auto;overscroll-behavior:contain}
+.entry-source{display:inline-block;font:500 12px/1.6 system-ui,sans-serif;color:#d9bf86;margin:12px 0}
+.entry-world-rules{border-top:1px solid #626d66;margin-top:12px;padding-top:15px}
+.entry-world-rules b{font:600 14px "Noto Serif SC","Noto Serif TC",serif;color:#e8cda1}
+.entry-world-rules p{font:400 13px/1.95 "Noto Serif SC","Noto Serif TC",serif;color:#bdcacc;margin:10px 0 0}
+.world-mode-choice{padding:13px 0}
+.world-mode-choice p{color:#d9c8aa;font:550 13px/1.6 "Noto Serif SC","Noto Serif TC",serif}
+.world-mode-choice button{display:inline-flex;align-items:center;min-height:42px;border:1px solid #536873;color:#d2d9d6;background:#142331;border-radius:9px;padding:9px 14px;margin-right:8px;font:500 13px "Noto Serif SC",serif;cursor:pointer}
+.world-mode-choice button.chosen{color:#f5e1b8;border-color:#b09a72;background:#304050}
+.literary-codex{display:flex;flex-direction:column;gap:10px;max-height:min(84dvh,720px);min-height:240px;overflow:hidden;border:1px solid #657b78;background:#132432;color:#eae5db;z-index:80}
+.literary-codex .codex-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-shrink:0}
+.literary-codex .codex-heading h2{font:600 20px/1.6 "Noto Serif SC",serif;color:#f0dfbc;margin:0}
+.codex-heading button,.codex-action{border:1px solid #7e836c;border-radius:8px;color:#eed8ab;background:#223948;padding:9px 12px;font:500 12px/1.45 "Noto Serif SC","Noto Serif TC",serif;cursor:pointer;min-height:38px}
+.codex-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;flex-shrink:0}
+.codex-tabs button{font:500 12px/1.5 "Noto Serif SC","Noto Serif TC",serif;color:#c3ccd0;border:1px solid #425b68;background:#1b2e3e;padding:9px 5px;border-radius:6px;cursor:pointer;min-height:40px}
+.codex-tabs button.active{color:#f1ddaf;background:#35424b;border-color:#af986d}
+.codex-body{overflow-y:auto;overscroll-behavior:contain;min-height:100px;flex:1}
+.codex-section{padding:8px 2px 16px}
+.codex-section h3{font:600 16px/1.65 "Noto Serif SC","Noto Serif TC",serif;color:#e7d4af;margin:8px 0 12px}
+.codex-section>p,.codex-row p{font:400 12px/1.9 "Noto Serif SC","Noto Serif TC",serif;color:#aebdc4;margin:3px 0}
+.codex-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #3b4c55}
+.codex-row strong{font:550 14px/1.65 "Noto Serif SC","Noto Serif TC",serif;color:#ede5d3}
+.codex-row>div:first-child{min-width:0;flex:1}
+.codex-row .codex-action{flex-shrink:0}
+.codex-hint{color:#9fb7c0;font:400 11px/1.75 system-ui,sans-serif;margin:2px 0;flex-shrink:0}
+.codex-memory{border-left:2px solid #998b6c;padding:8px 10px;margin:10px 0;color:#d7d4cc!important}
+.story-codex-page{padding:12px 14px 24px;min-height:0}
+.codex-page{max-height:none;height:auto;overflow:visible;background:#142536;padding:15px 14px;border-radius:12px}
+.codex-page .codex-body{overflow:visible}
+.codex-page .codex-row{flex-wrap:wrap}
+.world-premise-input{line-height:1.9!important;resize:vertical;min-height:108px}
+#free-action{line-height:1.85;resize:vertical;min-height:104px!important}
+@media(max-width:390px){.literary-codex{max-height:85dvh}.codex-row{align-items:flex-start;flex-wrap:wrap}.codex-row .codex-action{margin-top:5px}.world-mode-choice button{margin:4px 3px;padding:10px 12px}.entry-world-intro{padding:16px 13px}.entry-world-summary{font-size:14px}}
