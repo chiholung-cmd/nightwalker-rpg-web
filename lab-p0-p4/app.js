@@ -226,7 +226,7 @@ if(c.id==="power"||c.id==="companion")content=card(label,"此系統已細分好�
 return head+menu+'<div class="scroll-content column-gap">'+content+'</div>'
 }
 function missionBoard(){if(s.mission)return missionUI();
-let banner=s.assignment?(()=>{let t=s.assignment.world==="custom"?{name:s.assignment.worldKind==="original"?"自創世界·主神試煉":"作品世界·主神試煉",mode:"solo",goal:"探索「"+s.assignment.worldTitle+"」並完成主神委派的目標",desc:s.assignment.worldKind==="original"?"原創世界構築":"AI 作品世界"}:task(s.assignment.task),w=s.assignment.world==="custom"?{name:s.assignment.worldTitle,tone:"AI 創作世界"}:world(t.world);return '<div class="assigned"><div class="eyebrow">MAIN GOD / ASSIGNED SCENARIO</div><span class="mode-label">'+({solo:"單人任務",team:"團隊任務",versus:"對抗任務"}[t.mode])+'</span><h2>'+esc(t.name)+'</h2><p>《'+w.name+'》 · '+esc(w.tone)+'</p><div class="rule"></div><h3>主線目標</h3><p>'+esc(t.goal)+'</p><div class="assigned-desc">'+esc(t.desc)+'</div><small>隱藏任務：尚未公開。世界及模式已鎖定，無法免費重抽。</small></div>'})():'<div class="unassigned"><div class="main-god-eye">◌</div><div class="eyebrow">DESTINY LOCKED / UNKNOWN</div><h2>主神尚未公布你的下一個世界</h2><p>可能進入電影、動畫或劇集世界。每次任務可為單人、合作小隊或對抗任務，主神將決定你的入場位置與身份。</p></div>';
+let banner=s.assignment?(()=>{let t=s.assignment.world==="custom"?{name:s.assignment.worldKind==="original"?"自創世界·主神試煉":"作品世界·主神試煉",mode:s.assignment.mode||"solo",goal:"探索「"+s.assignment.worldTitle+"」並完成主神委派的目標",desc:s.assignment.worldKind==="original"?"原創世界構築":"AI 作品世界"}:task(s.assignment.task),w=s.assignment.world==="custom"?{name:s.assignment.worldTitle,tone:"AI 創作世界"}:world(t.world);return '<div class="assigned"><div class="eyebrow">MAIN GOD / ASSIGNED SCENARIO</div><span class="mode-label">'+({solo:"單人任務",team:"團隊任務",versus:"對抗任務"}[t.mode])+'</span><h2>'+esc(t.name)+'</h2><p>《'+w.name+'》 · '+esc(w.tone)+'</p><div class="rule"></div><h3>主線目標</h3><p>'+esc(t.goal)+'</p><div class="assigned-desc">'+esc(t.desc)+'</div><small>隱藏任務：尚未公開。世界及模式已鎖定，無法免費重抽。</small></div>'})():'<div class="unassigned"><div class="main-god-eye">◌</div><div class="eyebrow">DESTINY LOCKED / UNKNOWN</div><h2>主神尚未公布你的下一個世界</h2><p>可能進入電影、動畫或劇集世界。每次任務可為單人、合作小隊或對抗任務，主神將決定你的入場位置與身份。</p></div>';
 const protagonistSetup=playerName()?'<div class="identity-confirmed">輪迴者：<strong>'+esc(playerName())+'</strong><span>人物資料已保存，所有世界沿用同一身份。</span>'+a("改名","editName","tiny ghost")+'</div>':'<div class="identity-entry"><label for="protagonist-name">第一次建立主角姓名</label><div class="identity-entry-row"><input id="protagonist-name" maxlength="20" placeholder="建立一次，此後所有輪迴沿用" value="'+esc(temporary.nameDraft??"")+'">'+a("建立身份","saveName","small main")+'</div><small>呢個名字只需要設定一次；之後可以自行改名，唔會每次選世界都再問。</small></div>';
 const worldIntro=s.assignment?
  '<div class="entry-world-intro"><div class="eyebrow">WORLD INTRODUCTION / 世界簡介</div>'+
@@ -239,12 +239,12 @@ const worldIntro=s.assignment?
 let stages=s.assignment?card("主神空間 · 進入世界之前",
  worldIntro+
  '<p class="minor-meta">主角會帶住已學技能、武器同已有經歷進入世界；新故事會由主神空間同入場前嘅人物互動慢慢展開，而唔係一開始就結束事件。</p>'+
- '<div class="world-mode-choice"><p>進入世界嘅方式</p>'+
- '<button data-do="entryMode:solo" class="'+(s.assignment.mode==="team"?"":"chosen")+'">單獨進入</button>'+
- '<button data-do="entryMode:team" class="'+(s.assignment.mode==="team"?"chosen":"")+'">與輪迴者同行</button></div>'+
+ '<div class="main-god-decree"><div class="library-kicker">主神指派 · 不可更改</div><h3>'+
+ esc(({solo:"單人輪迴",team:"團隊輪迴",versus:"對抗輪迴"}[s.assignment.mode]||"主神特殊任務"))+
+ '</h3><p>'+(s.assignment.mode==="team"?"主神已安排輪迴者同行。隊友各有立場，唔會由玩家直接操控。":s.assignment.mode==="versus"?"主神已設置對抗關係，你可能遇到其他輪迴者或敵對小隊。":"主神裁定由主角獨自進入，世界內仍可結識人物及建立關係。")+'</p></div>'+
  '<label class="world-input-label" for="opening-intent">入場前主角想做甚麼？（可選，會自動儲存）</label>'+
  '<textarea id="opening-intent" class="world-premise-input" rows="4" maxlength="1200" placeholder="例如：先同林霧討論任務，再檢查加固鐵棍；傳送時盡量觀察隊友有冇可疑舉動……">'+esc(temporary.openingDraft||"")+'</textarea>'+
- a("檢查角色、技能與武器","nav:profile","block ghost")+
+ a("查看人物與成長","nav:profile","block ghost")+a("配置裝備與技能","nav:loadout","block ghost")+a("主神強化","nav:upgrade","block ghost")+
  a("確認準備，進入序章","launch","block main")+a("取消呢個世界","leaveStory","block ghost")):
  a("由主神安排未知世界","assign","block ghost");
 let customCard="";
@@ -463,10 +463,6 @@ function render(){
  persist();if(inGame)scheduleAiScene()
 }
 function handle(cmd){if(!cmd)return;
-if(cmd.startsWith("entryMode:")){
- const mode=cmd.slice("entryMode:".length);
- if(s.assignment&&["solo","team"].includes(mode)){s.assignment.mode=mode;render()}return
-}
 if(cmd==="codexOpen"){temporary.codexOpen=true;temporary.codexTab="character";render();return}
 if(cmd==="codexClose"){temporary.codexOpen=false;render();return}
 if(cmd.startsWith("codexTab:")){const tab=cmd.slice(9);if(["character","skills","gear","npcs"].includes(tab))temporary.codexTab=tab;render();return}
