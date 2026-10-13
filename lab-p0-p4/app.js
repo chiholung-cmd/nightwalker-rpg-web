@@ -234,25 +234,36 @@ function missionUI(){
  const choices=scene.actions.map((o,i)=>({o,i})).filter(x=>x.o.usable).map(({o,i})=>'<button class="narrative-choice" data-do="act:'+i+'"><span class="choice-main"><b>'+esc(o.label)+'</b>'+(o.hint?'<small>'+esc(o.hint)+'</small>':"")+'</span><span class="choice-arrow">→</span></button>').join("");
  const blocks=novel?.blocks||[];
  let beatIndex=0, emotionalBeats=0;
- const renderBeat=(text,kind="narration",consequence=false)=>{
+ const renderBeat=(text,kind="narration",consequence=false,hint="")=>{
    const raw=String(text||"").trim();if(!raw)return "";
-   let effect="";
-   if(emotionalBeats<2&&kind==="narration"){
-     if(/警报|警報|警告|危急|危险|危險|尖叫|枪声|槍聲|爆炸|遭到袭击|遭到襲擊/.test(raw))effect="fx-alert";
-     else if(/突然明白|終於明白|终于明白|真相|谜底|謎底|关键线索|關鍵線索|原来如此|原來如此/.test(raw))effect="fx-reveal";
-     else if(/停止呼吸|失去呼吸|斷氣|断气|死在|死去|當場死亡|当场死亡/.test(raw))effect="fx-death";
-     if(effect)emotionalBeats++;
-   }
    const index=beatIndex++;
+   const allowed=emotionalBeats<4||kind==="system";
+   const emotion=allowed?window.NW_EMOTION?.classify?.(raw,{
+     mood:novel?.mood||"suspense",
+     hint,
+     type:kind,
+     allowMood:kind==="narration"&&emotionalBeats===0&&index===0
+   }):null;
+   if(emotion&&kind!=="system")emotionalBeats++;
+   const name=emotion?.name||"";
+   const legacyClass=["panic","anger","shock"].includes(name)?"fx-alert":
+     name==="grief"?"fx-death":name==="revelation"?"fx-reveal":"";
    const cls=kind==="dialogue"?"novel-dialogue-prose":kind==="system"?"novel-system":"";
    const classNames=[cls,consequence?"novel-choice-consequence":""].filter(Boolean).join(" ");
-   const inner=kind==="system"?'<div class="'+classNames+'">'+esc(raw)+'</div>':'<p'+(classNames?' class="'+classNames+'"':"")+'>'+esc(raw)+'</p>';
-   return '<div class="novel-beat '+effect+'" data-beat="'+index+'">'+inner+'</div>';
+   const token=emotion?.token||"";
+   const at=token?raw.indexOf(token):-1;
+   const formatted=at<0?esc(raw):esc(raw.slice(0,at))+
+     '<span class="emotion-focus">'+esc(token)+'</span>'+esc(raw.slice(at+token.length));
+   const inner=kind==="system"?'<div class="'+classNames+'">'+formatted+'</div>':
+     '<p'+(classNames?' class="'+classNames+'"':"")+'>'+formatted+'</p>';
+   return '<div class="novel-beat '+legacyClass+(name?' emotion-'+name:"")+
+     '" data-beat="'+index+'"'+(name?' data-emotion="'+name+'"':"")+'>'+inner+'</div>';
  };
  const prose=blocks.map(b=>{
-   if(b.type==="system")return renderBeat(b.text,"system");
-   if(b.type==="dialogue")return renderBeat(b.text,"dialogue");
-   return literaryProse(b.text||"").split(/\n\s*\n/).filter(Boolean).map(p=>renderBeat(p,"narration",!!b.consequence)).join("");
+   if(b.type==="system")return renderBeat(b.text,"system",false,b.emotion);
+   if(b.type==="dialogue")return renderBeat(b.text,"dialogue",false,b.emotion);
+   return literaryProse(b.text||"").split(/\n\s*\n/).filter(Boolean)
+     .map(p=>renderBeat(p,"narration",!!b.consequence,b.emotion)).join("");
  }).join("");
  const notice="";
  const bar='<div class="story-top literary-top"><span>'+esc(w.name)+' <small>· 第 '+(m.phase+1)+' 章</small></span><button class="story-leave" data-do="leaveStory" aria-label="退出當前故事並開始新故事">退出 · 新故事</button></div>';
