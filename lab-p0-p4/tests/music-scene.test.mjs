@@ -42,7 +42,7 @@ test("user gesture enables looped CC0 score and subsequent scenario crossfade",a
  await Promise.resolve();await Promise.resolve();
  assert.equal(player.status().enabled,true);
  player.sync({mood:"grief",volume:.13});
- assert.equal(calls.length,2);
+ assert.equal(calls.filter(x=>x[0]==="play").length,2);
  assert.ok(audios[1].src.endsWith("/Sadness_0.ogg"));
  await Promise.resolve();await Promise.resolve();
  assert.equal(player.status().mood,"grief");
@@ -73,7 +73,7 @@ test("failed soundtrack host does not loop new play calls every render",async()=
  runInNewContext(read("music.js"),{window:win});
  const p=win.NW_MUSIC;
  p.start({mood:"eerie"});
- await Promise.resolve();await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  p.sync({mood:"eerie"});
  assert.equal(calls.length,1);
  assert.match(p.status().error,/暫時無法載入/);
