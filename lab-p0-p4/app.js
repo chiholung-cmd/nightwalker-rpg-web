@@ -58,7 +58,11 @@ const known=window.NW_NOVEL?.scene(s);
 const scene=N.get(s);const directorBrief=window.NW_WORLD?.directorContext?.(s)||null;
 const storyBible=window.NW_BIBLE?.context?.(s)||null;
 const endingAudit=m.phase>=19?(window.NW_BIBLE?.endingAudit?.(s)||null):null;
-const body={rewriteAttempt:Number(temporary.aiRewriteAttempts[key]||0),directorBrief,storyBible,endingAudit,verifiedSource:m.verifiedSource||"",verifiedSourceTitle:m.verifiedSourceTitle||"",canonTimeline:(m.canonTimeline||[]).slice(0,6),protagonist:literaryName().slice(0,30),sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,90)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
+const narrativeCapabilities={skills:(s.learned||[]).slice(0,20).map(id=>({id,name:skill(id)?.name||id})),
+ items:Array.from(new Set([...(s.loadout?.backpack||[]),...(s.loadout?.weapon?[s.loadout.weapon]:[]),...(s.loadout?.accessory?[s.loadout.accessory]:[])])).slice(0,15).map(id=>({id,name:objId(id)?.name||id})),
+ bloodline:s.profile?.bloodline||""};
+m.narrativeCapabilities=narrativeCapabilities;
+const body={narrativeCapabilities,rewriteAttempt:Number(temporary.aiRewriteAttempts[key]||0),directorBrief,storyBible,endingAudit,verifiedSource:m.verifiedSource||"",verifiedSourceTitle:m.verifiedSourceTitle||"",canonTimeline:(m.canonTimeline||[]).slice(0,6),protagonist:literaryName().slice(0,30),sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,90)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{hp:s.profile.hp,sta:s.profile.sta,mp:s.profile.mp,san:s.profile.san}};
 try{
  const res=await fetch("/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
  const obj=await res.json();if(!res.ok){const error=new Error(obj.message||obj.error||"AI 劇情暫時無法載入");error.code=obj.error||"";error.httpStatus=res.status;error.retryAfter=Number(obj.retryAfter)||0;throw error}
@@ -260,29 +264,15 @@ function missionUI(){
   '<div class="story-footer literary-footer"><button data-do="nav:memory">過往經歷</button><span>每個抉擇，都會留下痕跡</span><button data-do="leaveStory">新故事</button></div>'+popups.join("")+'</div>'
 }
 function resultUI(){
-const m=s.mission,g=m.result,report=m.reward;
-const ranking=g==="A"?"主神任務完成":g==="B"?"存活，部分目標達成":"任務失敗";
-const rows=piece("任務類型",({solo:"單人",team:"團隊合作",versus:"對抗"}[m.mode]))+
-piece("主線進度",m.progress+" / "+m.required)+
-piece("主神積分","+"+report.credits)+
-piece("角色經驗","+"+report.xp)+
-piece("最終生命",s.profile.hp+" / 100")+
-(m.loot?piece("世界戰利品",esc(objId(m.loot)?.name||m.loot)):"")+
-(m.hidden?piece("隱藏任務","已發現 · 額外獎勵"):"");
-return '<div class="mission-result-screen">'+
-'<div class="mission-result-scroll" role="region" aria-label="任務結算詳情" tabindex="0">'+
-'<div class="mission-result-content">'+
-'<div class="eyebrow">MAIN GOD / WORLD EVALUATION</div>'+
-'<div class="rank">'+g+'</div><h1>'+ranking+'</h1>'+
-'<p>《'+esc(m.worldName)+'》· '+esc(m.title)+'</p>'+
-'<div class="result-panel">'+rows+'</div>'+
-'<div class="result-quote">'+esc(m.log.slice(-3).join("　"))+'</div>'+
-card("主神恢復協議","返回主神空間後，生命 HP、體力 STA、靈力 MP、精神 SAN 均自動回滿，不消耗主神積分。")+
-'</div></div>'+
-'<div class="mission-result-actions">'+
-'<p>獎勵已計算 · 確認後保存輪迴紀錄</p>'+
-a("領取獎勵並返回主神空間　›","claim","block main")+
-'</div></div>'
+ const m=s.mission,chapters=(m.directorPlan?.chapters||[]);
+ const recent=chapters.at(-1);
+ return '<section class="story-ending"><div class="library-kicker">THE END · 一個世界的終點</div>'+
+ '<h1>這段故事，<br>終於有了自己的結尾。</h1>'+
+ '<p>《'+esc(m.worldName)+'》</p>'+
+ (recent?'<blockquote class="ending-recall">'+esc(recent.summary||"")+'</blockquote>':"")+
+ '<p class="ending-note">曾經作出的選擇會留喺故事記憶之中。唔需要結算戰鬥分數，亦唔需要升級先可以再開始。</p>'+
+ a("保存經歷，返回故事書架","claim","block main")+
+ a("立即開始另一段故事","claimNew","block ghost")+'</section>'
 }
 function memory(){const mode=temporary.memoryTab, tabs=[["timeline","輪迴記錄"],["worlds","世界情報"],["relations","隊友關係"],["system","主神備忘"]];let body="";
 if(mode==="timeline")body=s.records.length?s.records.map(r=>card("《"+esc(r.worldName||world(r.world)?.name||r.world)+"》 · "+r.result,esc(task(r.task)?.name||r.task)+" · "+({solo:"單人",team:"團隊",versus:"對抗"}[r.mode])+'<div class="rule"></div>'+r.choices.map(x=>'<p class="record-choice">'+esc(x)+'</p>').join("")+'<div class="minor-meta">'+new Date(r.date).toLocaleString("zh-HK")+'</div>')).join(""):card("尚未有輪迴記錄","正式完成第一個世界後，所有重大選擇會留在這裡。");
@@ -458,6 +448,10 @@ if(cmd==="status"){temporary.showStatus=!temporary.showStatus;temporary.showItem
 if(cmd==="skills"){temporary.showSkills=!temporary.showSkills;temporary.showItems=false;temporary.showStatus=false;temporary.showLog=false;render();return}
 if(cmd.startsWith("cast:")){const out=N.useSkill(s,cmd.slice(5));if(out.error)return notice(out.error);temporary.showSkills=false;render();return}
 if(cmd.startsWith("use:")){let err=N.useItem(s,cmd.slice(4));if(err)return notice(err);temporary.showItems=false;notice("道具已使用，效果已套用。");return}
+if(cmd==="claimNew"){
+ const err=E.finish(s);if(err)return notice(err);
+ go("portal");return
+}
 if(cmd==="claim"){let err=E.finish(s);if(err)return notice(err);go("hub");return}
 if(cmd==="rest"){let err=E.rest(s);if(err)return notice(err);notice("主神治療完成。");return}
 if(cmd==="groqProbe"){checkAiStatus(true);return}
