@@ -2,7 +2,10 @@
 "use strict";
 const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElementById("app");
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
-let s=E.load();if(s.mission&&!s.mission.finished)s.mission.narrativeMode=true;let temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,aiRewriteAttempts:{},rewriteDialog:false,rewriteNote:"",leaveDialog:false,freeDraft:"",freeReview:null,choicesOpen:false,worldMatches:[],worldLookupQuery:"",worldLookupMedia:"",worldLookupPending:false,worldLookupError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
+let s=E.load();if(s.mission&&!s.mission.finished)s.mission.narrativeMode=true;let temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,aiRewriteAttempts:{},rewriteDialog:false,rewriteNote:"",codexOpen:false,codexTab:"character",draftScope:"",openingDraft:"",leaveDialog:false,freeDraft:"",freeReview:null,choicesOpen:false,worldMatches:[],worldLookupQuery:"",worldLookupMedia:"",worldLookupPending:false,worldLookupError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
+temporary.originalPremiseDraft=window.NW_DRAFTS?.get?.("premise","new-world")||temporary.originalPremiseDraft;
+temporary.openingDraft=window.NW_DRAFTS?.get?.("opening","next-world")||"";
+temporary.rewriteNote=window.NW_DRAFTS?.get?.("rewrite","chapter")||"";
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const q=v=>"'"+esc(v)+"'";
 const num=n=>Number(n||0).toLocaleString("en-US");
@@ -205,7 +208,7 @@ if(!s.assignment){
  const status='<p class="minor-meta">AI 創作狀態：'+aiStatusText()+'。原作會先核對，再由你確認。</p>';
  const mediaVerify=temporary.worldLookupPending?'<div class="world-verify">正在核對原作資料，未扣積分……</div>':temporary.worldLookupError?'<div class="world-verify problem">'+esc(temporary.worldLookupError)+'</div>':temporary.worldMatches.length?'<div class="world-verify"><b>請確認正確作品及版本</b><p>發現可能嘅作品；唔會自行當成新世界生成。</p>'+temporary.worldMatches.map((x,i)=>'<button class="world-candidate" data-do="worldPick:'+i+'"><strong>《'+esc(x.title)+'》 · '+esc(x.mediaType)+'</strong><small>核對來源：'+esc(x.sourceTitle)+' · '+(x.confidence==="exact"?"作品名吻合":"可能係輸入錯字")+'</small><span>確認使用此作品 →</span></button>').join("")+'</div>':"";
  const mediaForm='<p>選擇現有電影、劇集、動畫、小說或遊戲嘅世界，由你親自加入故事。主神仍會發佈任務，唔會直接重演原作劇情。</p><div class="world-mediums">'+media.map(x=>'<button class="'+(temporary.worldMedia===x?"selected":"")+'" data-do="worldMedia:'+x+'">'+x+'</button>').join("")+'</div><label for="media-world-name" class="world-input-label">作品名稱</label><input id="media-world-name" class="custom-world-input" value="'+esc(temporary.mediaWorldDraft)+'" maxlength="50" placeholder="例如：死亡筆記、進擊的巨人" aria-label="作品世界名稱"><p class="minor-meta">作品名稱會先核對，確認作品及媒介版本後才開始。原作人物與設定會盡量維持，但衍生劇情並非官方內容。</p>';
- const originalForm='<p>完全由你構思世界。可以係規則怪談、末日、仙俠、懸疑或者任何原創背景；AI 會根據你嘅規則設計人物、危機同故事。</p><label for="original-world-name" class="world-input-label">原創世界名稱</label><input id="original-world-name" class="custom-world-input" value="'+esc(temporary.originalWorldDraft)+'" maxlength="50" placeholder="例如：零號月台、深海第七城" aria-label="原創世界名稱"><label for="original-world-premise" class="world-input-label">世界背景與核心規則</label><textarea id="original-world-premise" class="world-premise-input" maxlength="450" rows="4" placeholder="例如：每晚十二點，失蹤者會收到一張沒有終點站的車票。車上有三條禁忌規則，每個人都在隱瞞自己的目的……" aria-label="原創世界背景與規則">'+esc(temporary.originalPremiseDraft)+'</textarea><p class="minor-meta">背景最少 12 字。AI 會以你提供嘅規則建立世界；開場唔理想亦可以退出重新開始。</p>';
+ const originalForm='<p>完全由你構思世界。可以係規則怪談、末日、仙俠、懸疑或者任何原創背景；AI 會根據你嘅規則設計人物、危機同故事。</p><label for="original-world-name" class="world-input-label">原創世界名稱</label><input id="original-world-name" class="custom-world-input" value="'+esc(temporary.originalWorldDraft)+'" maxlength="50" placeholder="例如：零號月台、深海第七城" aria-label="原創世界名稱"><label for="original-world-premise" class="world-input-label">世界背景與核心規則</label><textarea id="original-world-premise" class="world-premise-input" maxlength="2000" rows="7" placeholder="例如：每晚十二點，失蹤者會收到一張沒有終點站的車票。車上有三條禁忌規則，每個人都在隱瞞自己的目的……" aria-label="原創世界背景與規則">'+esc(temporary.originalPremiseDraft)+'</textarea><p class="minor-meta">背景最少 12 字。AI 會以你提供嘅規則建立世界；開場唔理想亦可以退出重新開始。</p>';
  customCard=card("額外權限 · 自選世界",types+'<div class="world-form">'+(original?originalForm:mediaForm)+(!original?mediaVerify:"")+a(original?"建立原創故事":"核對作品名稱","customWorld","block main")+status+'</div>');
 }
 let returnLinks=false&&s.discovered.length?card("定向返回已去過的世界",s.discovered.map(id=>{let w=world(id),unlocked=s.coord[id];return '<div class="return-row"><div><b>'+esc(w?.name||id)+'</b><small>'+(unlocked?"座標已解鎖":"須先付費解鎖座標")+'</small></div>'+a("查看代價","coord:"+id,"small ghost")+'</div>'}).join("")):"";
@@ -241,6 +244,8 @@ function missionUI(){
  const m=s.mission;
  if(m.finished)return resultUI();
  if(temporary.lastChoiceScene!==aiSceneKey(m)){temporary.lastChoiceScene=aiSceneKey(m);temporary.choicesOpen=false;}
+ const currentScope=window.NW_DRAFTS?.storyKey?.(m)||aiSceneKey(m);
+ if(temporary.draftScope!==currentScope){temporary.draftScope=currentScope;temporary.freeDraft=window.NW_DRAFTS?.get?.("free",currentScope)||"";}
  const scene=N.get(s),novel=m.aiScenes?.[m.phase]||(m.director?null:window.NW_NOVEL?.scene(s))||{title:"世界構築中",mood:"system",blocks:[{type:"system",text:"主神正在續寫輪迴世界。本幕尚未生成，請等待或重試……"}]},w=m.world==="custom"?{name:m.worldName}:world(m.world);
  const choices=scene.actions.map((o,i)=>({o,i})).filter(x=>x.o.usable).map(({o,i})=>'<button class="narrative-choice" data-do="act:'+i+'"><span class="choice-main"><b>'+esc(o.label)+'</b>'+(o.hint?'<small>'+esc(o.hint)+'</small>':"")+'</span><span class="choice-arrow">→</span></button>').join("");
  const blocks=novel?.blocks||[];
@@ -296,7 +301,7 @@ function missionUI(){
  '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[novel?.mode]||novel?.mode||"輪迴篇")+'</div>'+prose+'<div class="read-end"><button data-do="toggleChoices">'+(temporary.choicesOpen?"收起行動，繼續閱讀":"已讀完本章 · 選擇下一步")+'</button></div></div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+a("檢查 AI","nav:settings","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
  toolbox+
  (temporary.choicesOpen?'<div class="fixed-choices story-choice-panel expanded">'+notice+choices+
- '<div class="free-row literary-free-row"><textarea id="free-action" maxlength="350" rows="2" placeholder="自由寫下主角下一步會點做……" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+esc(temporary.freeDraft)+'</textarea>'+a("預覽行動","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>':
+ '<div class="free-row literary-free-row"><textarea id="free-action" maxlength="3000" rows="4" placeholder="寫下主角想做嘅事，亦可以用武器、技能或者同 NPC 交流……（自動儲存草稿）" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+esc(temporary.freeDraft)+'</textarea>'+a("預覽行動","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>':
  '<div class="fixed-choices story-choice-panel collapsed"><button class="story-unfold" data-do="toggleChoices">讀完先揀 · 展開本章選擇 ↓</button></div>')+
   '<div class="story-footer literary-footer"><button data-do="nav:memory">過往經歷</button><span>每個抉擇，都會留下痕跡</span><button data-do="leaveStory">新故事</button></div>'+popups.join("")+'</div>'
 }
@@ -382,7 +387,7 @@ function render(){
  const fresh=!!fxKey&&fxKey!==temporary.fxSeen&&temporary.fxSkippedFor!==fxKey&&mode!=="off"&&!reduced;
  temporary.fxSceneKey=fxKey;
  temporary.fxPerform=fresh?mode:"static";
- const rewriteOverlay=temporary.rewriteDialog?'<div class="story-exit-overlay" role="dialog" aria-modal="true" aria-label="改善本章文筆"><div class="story-exit-card"><h2>重新寫呢一章</h2><p>話俾 AI 知要改進嘅地方，例如節奏、對白、描寫或者人物性格。需要再用一次免費 AI 生成額度。</p><textarea class="rewrite-notes" id="rewrite-note" maxlength="240" rows="4" placeholder="例如：少啲空泛比喻，角色對話自然啲，唔好每三句就停……">'+esc(temporary.rewriteNote)+'</textarea><div class="story-exit-actions">'+a("保留原文","cancelRewrite","block ghost")+a("按意見重新寫","rewriteChapter","block main")+'</div></div></div>':"";
+ const rewriteOverlay=temporary.rewriteDialog?'<div class="story-exit-overlay" role="dialog" aria-modal="true" aria-label="改善本章文筆"><div class="story-exit-card"><h2>重新寫呢一章</h2><p>話俾 AI 知要改進嘅地方，例如節奏、對白、描寫或者人物性格。需要再用一次免費 AI 生成額度。</p><textarea class="rewrite-notes" id="rewrite-note" maxlength="700" rows="4" placeholder="例如：少啲空泛比喻，角色對話自然啲，唔好每三句就停……">'+esc(temporary.rewriteNote)+'</textarea><div class="story-exit-actions">'+a("保留原文","cancelRewrite","block ghost")+a("按意見重新寫","rewriteChapter","block main")+'</div></div></div>':"";
  const leaveOverlay=temporary.leaveDialog?'<div class="story-exit-overlay" role="dialog" aria-modal="true" aria-label="退出故事"><div class="story-exit-card"><h2>離開呢個故事？</h2><p>你可以隨時開始新故事。之前嘅章節與選擇會保留喺經歷紀錄；主角姓名同其他存檔唔會被刪除。</p><div class="story-exit-actions">'+a("繼續閱讀","cancelLeave","block ghost")+a("退出並選新故事","confirmLeave","block main")+'</div></div></div>':"";
  R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+leaveOverlay+rewriteOverlay+'</div>';
  if(same&&oldY>0){const pane=R.querySelector?.(".scene-prose");if(pane)pane.scrollTop=oldY}
@@ -450,7 +455,7 @@ if(cmd==="customWorld"){
  const title=(R.querySelector(original?"#original-world-name":"#media-world-name")?.value||"").trim();
  if(!playerName())return notice("請先保存主角姓名");
  if(original){
-  const premise=R.querySelector("#original-world-premise")?.value||"";
+  const premise=R.querySelector("#original-world-premise")?.value||temporary.originalPremiseDraft||"";
   const commit=()=>{const err=E.assignCustomWorld(s,title,temporary.aiConfigured,{kind:"original",premise});if(err)return notice(err);render()};
   if(!temporary.aiConfigured){checkAiStatus(true).then(ok=>ok?commit():notice("AI 未連線，未扣積分"));return}commit();return
  }
@@ -490,11 +495,12 @@ if(cmd==="launch"){
  startNovel();return
 }
 if(cmd==="cycleSkill"){E.changeSkill(s,(s.mission?.chosenSkill||0)+1);render();return}
-if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);temporary.freeReview=null;temporary.freeDraft="";render();return}
+if(cmd.startsWith("act:")){let out=N.choose(s,Number(cmd.slice(4)));if(out.error)return notice(out.error);temporary.freeReview=null;render();return}
 if(cmd==="toggleChoices"){temporary.choicesOpen=!temporary.choicesOpen;render();return}
 if(cmd==="free"){
  const value=R.querySelector("#free-action")?.value??temporary.freeDraft;
  temporary.freeDraft=value;
+ window.NW_DRAFTS?.save?.("free",temporary.draftScope,value);
  const out=N.analyzeFree(s,value);
  if(out.error){temporary.freeReview=null;return notice(out.error)}
  temporary.freeReview={value,kind:out.kind,label:out.label,effects:out.effects,phase:out.phase,key:aiSceneKey(s.mission)};
@@ -508,7 +514,8 @@ if(cmd==="freeConfirm"){
  }
  const out=N.free(s,review.value,review.kind);
  if(out.error){temporary.freeReview=null;return notice(out.error)}
- temporary.freeReview=null;temporary.freeDraft="";render();return
+ window.NW_DRAFTS?.clear?.("free",temporary.draftScope);
+ temporary.freeReview=null;temporary.freeDraft="";temporary.draftScope="";render();return
 }
 if(cmd==="items"){temporary.showItems=!temporary.showItems;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
 if(cmd==="logs"){temporary.showLog=!temporary.showLog;temporary.showItems=false;temporary.showSkills=false;temporary.showStatus=false;render();return}
@@ -561,7 +568,7 @@ if(el.id==="bgm-volume"){
  window.NW_MUSIC?.setVolume?.(s.settings.musicVolume);
  const label=R.querySelector("#bgm-volume-value");if(label)label.textContent=value+"%";
  E.save(s);return
-}if(el.id==="free-action")temporary.freeDraft=el.value.slice(0,350);if(el.id==="media-world-name"){temporary.mediaWorldDraft=el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="rewrite-note")temporary.rewriteNote=el.value.slice(0,240);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=el.value.slice(0,450)});
+}if(el.id==="free-action"){temporary.freeDraft=el.value.slice(0,3000);window.NW_DRAFTS?.save?.("free",temporary.draftScope,temporary.freeDraft)}if(el.id==="media-world-name"){temporary.mediaWorldDraft=el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="rewrite-note")temporary.rewriteNote=window.NW_DRAFTS?.save?.("rewrite","chapter",el.value.slice(0,700))||el.value.slice(0,700);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=window.NW_DRAFTS?.save?.("premise","new-world",el.value.slice(0,2000))||el.value.slice(0,2000)});
 R.addEventListener("click",ev=>{let t=ev.target.closest("[data-do]");if(!t||t.disabled)return;handle(t.dataset.do)});
 render();
 checkAiStatus();
