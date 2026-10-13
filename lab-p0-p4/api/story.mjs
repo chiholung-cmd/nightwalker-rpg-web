@@ -95,8 +95,12 @@ async function lookupCanon(name,medium){
 
 const COMMON_TYPO_TITLES={
  "尋泰記":"尋秦記","寻泰记":"尋秦記","尋奏記":"尋秦記","寻奏记":"尋秦記",
- "無限恐懼":"無限恐怖","无限恐惧":"無限恐怖"
+ "無限恐懼":"無限恐怖","无限恐惧":"無限恐怖",
+ "無限恐佈":"無限恐怖","无限恐布":"無限恐怖","進擊的巨人":"進擊的巨人",
+ "进击的巨人":"進擊的巨人","風雲":"風雲","风云":"風雲",
+ "生化危機":"生化危機","生化危机":"生化危機"
 };
+const RECOGNIZABLE_TITLES=["尋秦記","無限恐怖","生化危機","死亡筆記","進擊的巨人","風雲","咒怨","無間道","鬼滅之刃","東京喰種","殭屍先生","釜山行","三體","盜墓筆記"];
 const canonical=x=>String(x||"").normalize("NFKC").replace(/[《》「」『』\s:：\-·（）()]/g,"").toLowerCase()
 .replace(/寻/g,"尋").replace(/记/g,"記").replace(/无/g,"無").replace(/限/g,"限").replace(/秦/g,"秦");
 function distance(a,b){
@@ -122,7 +126,7 @@ async function resolveWorldTitle(title,medium){
   const k=known.title.replace(/\s*[(（](?:電視劇|电视剧|電影|电影|小說|小说)[)）]\s*$/,"");
   const confidence=fuzzyScore(raw,k);
   result.push({title:k,mediaType:medium,sourceTitle:known.title,sourceUrl:known.url,
-   confidence:typo?"suggestion":confidence>=.95?"exact":"suggestion",score:typo?.88:confidence,source:"Wikipedia"});
+   confidence:typo?"suggestion":confidence>=.95?"exact":"suggestion",score:typo?.88:confidence,source:"Wikipedia",summary:clean(known.extract,850)});
  }
  // Try concise search alternatives, but do not treat search hits as proven original timeline.
  if(!result.length){
@@ -137,15 +141,26 @@ async function resolveWorldTitle(title,medium){
     result=(rawResult.query?.pages||[]).filter(p=>rateWikiPage(p,raw,medium)>-80).map(p=>{
      const base=p.title.replace(/\s*[(（][^)）]+[)）]\s*$/,"");
      const score=fuzzyScore(raw,base);
-     return {title:base,mediaType:medium,sourceTitle:p.title,sourceUrl:"https://zh.wikipedia.org/wiki/"+encodeURIComponent(p.title.replace(/ /g,"_")),confidence:score>=.95?"exact":"suggestion",score,source:"Wikipedia"};
+     return {title:base,mediaType:medium,sourceTitle:p.title,sourceUrl:"https://zh.wikipedia.org/wiki/"+encodeURIComponent(p.title.replace(/ /g,"_")),confidence:score>=.95?"exact":"suggestion",score,source:"Wikipedia",summary:clean(p.extract,850)};
     }).filter(p=>p.score>=.58).sort((a,b)=>b.score-a.score).slice(0,3);
    }finally{clearTimeout(timer)}
   }catch(_){}
  }
+ // An unavailable public lookup must never erase the user's input. Offer a
+ // title correction separately and perform another verification upon selection.
+ if(!result.length){
+  const alternatives=RECOGNIZABLE_TITLES.map(name=>({title:name,score:fuzzyScore(raw,name)}))
+   .filter(x=>x.score>=.52||canonical(x.title)===canonical(requested))
+   .sort((a,b)=>b.score-a.score).slice(0,3);
+  if(typo&&!alternatives.some(x=>canonical(x.title)===canonical(typo)))
+   alternatives.unshift({title:typo,score:.9});
+  result=alternatives.map(x=>({title:x.title,mediaType:medium,sourceTitle:"",
+    sourceUrl:"",confidence:"suggestion",score:x.score,source:"title_suggestion",summary:""}));
+ }
  const unique=[];
  for(const r of result)if(!unique.some(x=>x.title===r.title&&x.mediaType===r.mediaType))unique.push(r);
  return {status:unique.length?"needs_confirmation":"unverified",requested:raw,matches:unique,
-  message:unique.length?"請確認作品及媒介版本；未確認之前絕不生成原作世界或扣除積分":"未能核實作品名稱；請檢查錯字或切換媒介類型，不會當原創世界生成"};
+  message:unique.length?"請確認作品名稱；未有可核實來源嘅候選只能用作修正拼字，不能直接生成原作":"未能核實作品名稱；已保留你輸入嘅文字，請檢查字眼或切換媒介類型"};
 }
 async function selectedCanon(source,title,medium){
  try{
