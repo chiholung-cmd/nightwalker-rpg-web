@@ -112,7 +112,7 @@ function abandonStory(s){
   s.abandonedStories.unshift({worldName:m.worldName,at:Date.now(),chapter:m.phase+1,
    reason:"player_restarted",snapshots,choices:(m.history||[]).slice(-8).map(x=>String(x.action||"").slice(0,120))});
   s.abandonedStories=s.abandonedStories.slice(0,12);
-  for(const [id,count] of Object.entries(m.bag||{}))s.warehouse[id]=(s.warehouse[id]||0)+Number(count||0);
+  if(!m.narrativeMode)for(const [id,count] of Object.entries(m.bag||{}))s.warehouse[id]=(s.warehouse[id]||0)+Number(count||0);
  }
  const paid=Number(m?.paidCost??s.assignment?.paidCost??0);
  if(paid>0)s.profile.credits+=paid; // legacy refundable assignment cost
@@ -218,7 +218,7 @@ return {error:null,report,finished:!!m.finished}}
 function freeAction(s,text,random=Math.random){let n=(text||"").trim();if(n.length<2)return {error:"請描述至少兩個字的行動"};if(/治療|急救包|包紮|補血/.test(n)&&s.mission?.bag.medkit>0){let err=useItem(s,"medkit");return {error:err,report:{events:["使用急救包，恢復生命。"]}}}if(/靈液|回復靈力/.test(n)&&s.mission?.bag.ether>0){let err=useItem(s,"ether");return {error:err,report:{events:["使用靈液，恢復靈力。"]}}}
 const q=derived(s);if(!q)return {error:"尚未進入任務"};let matched=/格擋|防守|休息|調息|恢復體力|閃避/.test(n)?1:/技能|法術|靈刃|影步|術式|治療術/.test(n)?2:/調查|觀察|線索|推理|交換|交談|說服|保護|合作/.test(n)?q.isFight?2:0:/攻擊|擊打|斬|砍|武器|戰鬥|衝/.test(n)?0:-1;
 if(matched<0)return {error:"自由行動尚未接入生成式 AI。可以描述觀察、交涉、防守、攻擊或已裝備的技能。"};let r=act(s,matched,random);if(!r.error&&s.mission){s.mission.history.at(-1).freeText=n;s.mission.log.push("自由行動描述："+n)}return r}
-function end(s){let m=s.mission;if(!m||m.finished)return;let success=m.progress>=m.required,defeat=s.profile.hp<=0,rivalWin=m.rival&&m.progress<=m.rival.progress;let foeDown=m.enemy.hp<=0;let result=defeat?"D":(m.world==="demon"?(foeDown||m.progress>=3?"A":m.enemy.hp<=75?"B":"D"):rivalWin?"D":success?"A":m.progress>=2?"B":"D");
+function end(s){let m=s.mission;if(!m||m.finished)return;if(m.narrativeMode){m.finished=true;m.result="A";m.reward={credits:0,xp:0};m.loot=null;m.log.push("故事已告一段落；人物作出的決定將留在紀錄內。");m.phase=Math.min(m.phase,28);return;}let success=m.progress>=m.required,defeat=s.profile.hp<=0,rivalWin=m.rival&&m.progress<=m.rival.progress;let foeDown=m.enemy.hp<=0;let result=defeat?"D":(m.world==="demon"?(foeDown||m.progress>=3?"A":m.enemy.hp<=75?"B":"D"):rivalWin?"D":success?"A":m.progress>=2?"B":"D");
 m.finished=true;m.result=result;m.reward=copy({A:{credits:370,xp:220},B:{credits:190,xp:110},D:{credits:40,xp:35}}[result]);m.reward.credits+=(m.quests||[]).filter(q=>q.status==="completed").reduce((v,q)=>v+(q.reward||0),0);
 if(m.hidden&&result!=="D"){m.reward.credits+=80;m.log.push("隱藏任務完成獎勵：+80 主神積分。")}
 m.loot=result==="A"?{demon:"sunsteel",busan:"flare",alice:"badge",deathnote:"recorder"}[m.world]:result==="B"?"medkit":null;
@@ -226,7 +226,7 @@ if(m.loot)m.log.push("獲得戰利品："+item(m.loot).name);m.log.push(result==
 function finish(s){const m=s.mission;if(!m||!m.finished)return "任務仍未結束";if(m.claimed)return "結算已經領取";m.claimed=true;
 s.profile.credits+=m.reward.credits;s.profile.xp+=m.reward.xp;while(s.profile.xp>=220){s.profile.xp-=220;s.profile.level++}
 s.profile.missions++;if(m.world!=="custom"&&!s.discovered.includes(m.world))s.discovered.push(m.world);
-for(const id in m.bag)s.warehouse[id]=(s.warehouse[id]||0)+m.bag[id];
+if(!m.narrativeMode)for(const id in m.bag)s.warehouse[id]=(s.warehouse[id]||0)+m.bag[id];
 if(m.loot)s.warehouse[m.loot]=(s.warehouse[m.loot]||0)+1;
 const summary={date:new Date().toISOString(),task:m.task,world:m.world,worldName:m.worldName,npcMemory:m.npcMemory||{},sideQuests:m.quests||[],agencyEvents:m.agencyEvents||[],missionArc:m.missionArc||[],directorPlan:m.directorPlan?{chapters:(m.directorPlan.chapters||[]).slice(-28),decisions:(m.directorPlan.decisions||[]).slice(-28),threads:(m.directorPlan.threads||[]).slice(-5),finale:m.directorPlan.finale||null}:null,worldFacts:m.storyFacts||[],worldKind:m.worldKind||null,mediaType:m.mediaType||null,worldPremise:m.worldKind==="original"?m.premise||"":null,mode:m.mode,result:m.result,loot:m.loot,hidden:m.hidden,choices:m.history.map(x=>x.action),events:m.log.slice(-12),points:m.reward.credits,crew:m.crew.map(x=>x.name),rival:m.rival?.name||null};s.records.unshift(summary);s.records=s.records.slice(0,100);
 s.memory.unshift({world:m.world,text:"在《"+m.worldName+"》完成「"+m.title+"」，評價 "+m.result+"；"+(m.evidence.at(-1)||m.log.at(-2)||"未留下特殊線索"),tag:m.result,at:Date.now()});s.memory=s.memory.slice(0,80);
