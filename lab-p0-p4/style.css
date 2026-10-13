@@ -818,3 +818,25 @@ animation:none!important;transition:none!important;
 .world-premise-input{line-height:1.9!important;resize:vertical;min-height:108px}
 #free-action{line-height:1.85;resize:vertical;min-height:104px!important}
 @media(max-width:390px){.literary-codex{max-height:85dvh}.codex-row{align-items:flex-start;flex-wrap:wrap}.codex-row .codex-action{margin-top:5px}.world-mode-choice button{margin:4px 3px;padding:10px 12px}.entry-world-intro{padding:16px 13px}.entry-world-summary{font-size:14px}}
+
+
+/* Actual selectable mainland-webnovel worlds: searchable bookshelf, not a hidden text prompt */
+.world-kind-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.world-kind-tabs>button{min-width:0;overflow-wrap:anywhere;font-size:12px;line-height:1.45;padding:12px 7px}
+.world-kind-tabs>button small{display:block;margin-top:3px;font-size:10px;opacity:.72}
+.cn-novel-library{width:100%;min-width:0;padding:6px 1px 15px}
+.cn-novel-library>h2{color:#eed9b1;font:600 22px/1.5 "Noto Serif SC","Noto Serif TC",serif;margin:9px 0}
+.cn-novel-library>p{color:#b6c7cc;font:400 13px/1.85 "Noto Serif SC","Noto Serif TC",serif;margin:8px 0 17px}
+.cn-novel-library>label{display:block;color:#e5d6b7;font:500 13px/1.6 "Noto Serif SC","Noto Serif TC",serif;margin:14px 0 7px}
+.cn-novel-library .custom-world-input{width:100%;box-sizing:border-box;margin-bottom:12px}
+.cn-novel-genres{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.cn-novel-genres button{min-height:36px;background:#162d3a;color:#c5d0d3;border:1px solid #455f68;border-radius:7px;padding:7px 11px;font:500 12px/1.35 "Noto Serif SC","Noto Serif TC",serif;cursor:pointer}
+.cn-novel-genres button.on{background:#3a4b4f;border-color:#c2a779;color:#f1dab0}
+.cn-novel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(235px,100%),1fr));gap:12px;min-width:0}
+.cn-novel-card{display:flex;flex-direction:column;min-height:210px;min-width:0;background:linear-gradient(140deg,#233749,#112330 78%);border:1px solid #50646d;border-radius:13px;padding:17px 16px 15px;box-sizing:border-box;box-shadow:0 9px 30px #050e191b}
+.cn-novel-category{color:#cfb47d;font:500 11px/1.5 system-ui,sans-serif;letter-spacing:.045em;margin-bottom:10px}
+.cn-novel-card h3{color:#f1e6d0;font:600 clamp(19px,3.8vw,23px)/1.4 "Noto Serif SC","Noto Serif TC",serif;margin:0 0 5px}
+.cn-novel-card .cn-novel-author{color:#9fb1bb;font:400 12px/1.7 "Noto Serif SC","Noto Serif TC",serif;margin:0 0 10px}
+.cn-novel-summary{color:#cbd8d7;font:400 13px/1.9 "Noto Serif SC","Noto Serif TC",serif;flex:1;margin:0 0 16px}
+.cn-novel-card .btn{margin-top:auto;min-height:43px;font:550 13px/1.55 "Noto Serif SC","Noto Serif TC",serif}
+@media(max-width:470px){.world-kind-tabs{gap:4px}.world-kind-tabs>button{padding:10px 4px;font-size:11px}.world-kind-tabs>button small{font-size:9px}.cn-novel-grid{grid-template-columns:1fr}.cn-novel-card{min-height:0}.cn-novel-genres button{font-size:11px;padding:7px 9px}}
