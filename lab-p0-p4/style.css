@@ -384,3 +384,518 @@ animation:none!important;transition:none!important;
 .free-confirm-actions .btn{flex:1 1 130px;min-height:38px}
 .mission-popup[aria-label="確認自由文字行動"]{border-color:#d0b989}
 .mission-popup[aria-label="確認自由文字行動"] .popup-note{line-height:1.7;overflow-wrap:anywhere}
+
+
+/* V6 editorial reading experience: novel first, controls second. */
+.app-shell{max-width:660px}
+.identity-entry{border:1px solid #506e7d;border-radius:12px;padding:14px;background:#182b3c}
+.identity-entry label{display:block;color:#ead2a4;font:650 14px/1.7 "Noto Serif TC",serif;margin-bottom:7px}
+.identity-entry-row{display:flex;gap:8px;align-items:center}
+.identity-entry-row input{min-width:0;flex:1;border:1px solid #658394;background:#0e2030;border-radius:8px;padding:10px 12px;color:#f6f0e8;font:15px "Noto Serif TC",serif}
+.identity-entry small{display:block;margin-top:8px;color:#adc4d0;font-size:11px;line-height:1.7}
+.world-verify{padding:14px;margin:12px 0;border:1px solid #688a97;background:#1c3544;border-radius:12px;color:#f1e7d4}
+.world-verify p{margin:6px 0 10px;color:#b9d0d7}
+.world-verify.problem{border-color:#ae8890;color:#f5c9c9}
+.world-candidate{display:flex;width:100%;flex-direction:column;text-align:left;gap:4px;margin:8px 0;border:1px solid #a78c62;background:#253749;border-radius:9px;padding:11px 12px;color:#efe5d2}
+.world-candidate strong{font:600 16px/1.5 "Noto Serif TC",serif}
+.world-candidate small{font:400 11px/1.6 system-ui,sans-serif;color:#b7c9d0}
+.world-candidate span{align-self:end;font-size:12px;color:#e9c892}
+.reading-focused .scene-prose{flex:1 1 auto;padding:clamp(18px,4vw,34px) clamp(17px,4vw,35px) 30px;background:#121e2b;scroll-behavior:auto}
+.reading-focused .scene-eyebrow{font-size:12px;line-height:1.8;letter-spacing:1px;color:#e1c998;margin-bottom:26px}
+.reading-focused .scene-prose p{font-size:clamp(16.5px,3.9vw,19px);line-height:2.05;letter-spacing:.2px;margin:0 0 1.3em;color:#f3eee7;white-space:pre-wrap}
+.reading-focused .novel-beat{margin:0 0 .2em}
+.reading-focused .novel-dialogue{margin:0 0 1.45em;padding:0;border:0;background:none}
+.reading-focused .novel-dialogue b{font-size:11px;letter-spacing:.35px;color:#d6bf91;display:block;margin:0 0 6px}
+.reading-focused .novel-dialogue p{font-size:clamp(16px,3.9vw,18px);line-height:1.95;color:#f1e9e0;margin:0}
+.reading-focused .read-end{padding:24px 0 8px;margin-top:12px;border-top:1px solid #53636a60}
+.reading-focused .read-end button{display:block;margin:auto;width:100%;min-height:46px;background:#243849;border:1px solid #8c866f;border-radius:11px;color:#f0dcb1;font:600 14px "Noto Serif TC",serif}
+.reading-focused .story-choice-panel.collapsed{flex:0 0 58px!important;min-height:58px!important;max-height:58px;padding:6px 14px!important;display:flex;overflow:hidden}
+.reading-focused .story-unfold{width:100%;min-height:43px;cursor:pointer;border:1px solid #6a7d82;border-radius:9px;background:#223546;color:#e9d1a7;font:600 13px "Noto Serif TC",serif}
+.reading-focused .story-choice-panel.expanded{flex:0 0 auto!important;min-height:0!important;max-height:min(42dvh,370px);overflow-y:auto;gap:9px;padding:12px 14px!important}
+.reading-focused .story-choice-panel.expanded .narrative-choice{flex:0 0 auto;min-height:60px;padding:10px 12px;line-height:1.7}
+.reading-focused .story-choice-panel.expanded .choice-main b{font-size:14px;line-height:1.6}
+.reading-focused .story-choice-panel.expanded .choice-main small{font-size:11px;line-height:1.55}
+.reading-focused .story-choice-panel .free-row{flex:0 0 46px;min-height:46px}
+.reading-focused .story-choice-panel .free-row input{font-size:13px}
+.reading-focused .story-toolbar{overflow-x:auto;scrollbar-width:none}
+.reading-focused .story-toolbar .btn{white-space:nowrap}
+.reading-focused .story-footer{flex:0 0 30px}
+@media(max-height:740px){.reading-focused .story-choice-panel.collapsed{flex-basis:52px!important;min-height:52px!important}.reading-focused .scene-prose p{font-size:16px;line-height:1.95}}
+@media(prefers-reduced-motion:no-preference){.reading-focused .scene-prose:not(.fx-strong) .novel-beat{animation:none!important}}
+
+
+/* NOVEL MODE v2: full-screen reading experience, zero RPG HUD or stat bars */
+.book-nav{grid-template-columns:repeat(4,minmax(0,1fr));padding-inline:14px;box-shadow:0 -10px 28px #04091022}
+.book-nav button{min-height:45px}.book-nav span{font-size:19px}.book-nav small{font-size:11px;letter-spacing:.06em}
+.library-home,.story-ending{flex:1;min-height:0;overflow-y:auto;padding:clamp(28px,7dvh,64px) clamp(23px,6vw,44px);background:radial-gradient(ellipse at 75% 8%,#3b394035,transparent 56%),linear-gradient(180deg,#101c28,#0d1620);color:#f0eadd}
+.library-kicker{font:600 11px/1.8 ui-monospace,monospace;letter-spacing:2.2px;color:#bfa779;text-transform:uppercase}
+.library-home h1,.story-ending h1{font:550 clamp(32px,8vw,46px)/1.5 "Noto Serif TC","Source Han Serif TC",serif;letter-spacing:1px;margin:28px 0 18px;color:#f1e7d4}
+.library-desc,.ending-note{font:400 15px/2 "Noto Serif TC",serif;color:#b8c4cb;max-width:38ch}
+.library-hero-action{margin:34px 0 44px}.library-hero-action .btn{min-height:53px;font-size:14px;margin-top:12px}
+.library-shelf{margin-top:38px;border-top:1px solid #67706a58;padding-top:22px}
+.library-shelf h2{font:600 18px "Noto Serif TC",serif;margin:0 0 12px;color:#e6d4b1}
+.library-shelf p{font:400 13px/1.9 "Noto Serif TC",serif;color:#aabdc5}
+.library-shelf .btn{margin-top:18px}
+.literary-top{background:#101923!important;border-bottom-color:#34404a!important;padding-inline:16px!important;min-height:50px!important;flex-basis:50px!important}
+.literary-top>span{font:550 13px/1.4 "Noto Serif TC",serif!important;color:#dac7a5!important}
+.literary-top small{font-size:11px!important;color:#b1b7ba!important}
+.literary-top .story-leave{border:1px solid #716b66;background:transparent;color:#e3caba;font:500 12px/1.6 "Noto Serif TC",serif;min-height:35px;padding:6px 12px;border-radius:9px}
+.literary-top .story-leave:focus-visible{outline:2px solid #ebcba0}
+.reading-focused .scene-prose{background:#111b26!important;padding-top:26px;padding-bottom:36px}
+.reading-focused .scene-prose p{line-height:2.12!important;letter-spacing:.28px;max-width:41em;margin-bottom:1.48em!important}
+.reading-focused .novel-dialogue{margin-bottom:1.6em!important;position:relative}
+.reading-focused .novel-dialogue b{font:600 12px/1.6 "Noto Serif TC",serif!important;margin-bottom:6px;color:#cfb88d}
+.reading-focused .novel-dialogue p{color:#e9e1d5;line-height:2.05!important}
+.reading-focused .scene-eyebrow{font:550 13px/1.8 "Noto Serif TC",serif;margin-bottom:27px;letter-spacing:1.1px}
+.reading-focused .literary-toolbar{flex:0 0 34px;min-height:34px;padding:4px 12px;border-top-color:#303a42;background:#121d29;gap:8px}
+.reading-focused .literary-toolbar>span{font-size:11px;color:#c9b58d;font-weight:500}
+.reading-focused .literary-toolbar .btn{min-height:29px;border:0;font-size:11px}
+.reading-focused .story-choice-panel.expanded{max-height:min(50dvh,435px);background:#121e29!important;gap:9px}
+.reading-focused .narrative-choice{font:400 14px/1.7 "Noto Serif TC",serif;background:#1d2c39;border:1px solid #515f67;text-align:left;padding:13px 15px!important;border-radius:10px;min-height:58px}
+.reading-focused .narrative-choice .choice-main b{font:550 14px/1.65 "Noto Serif TC",serif}
+.reading-focused .narrative-choice .choice-main small{font:400 11px/1.6 "Noto Serif TC",serif;margin-top:6px}
+.reading-focused .choice-arrow{font-size:20px;color:#ccb589;margin-left:12px;flex:0 0 auto}
+.reading-focused .story-choice-panel.collapsed{background:#141f2a!important}
+.reading-focused .story-unfold{background:#273340;border-color:#74736d;font-size:13px}
+.reading-focused .story-footer.literary-footer{height:32px;min-height:32px;background:#0e1722;border-top-color:#3a454e;justify-content:space-between}
+.reading-focused .literary-footer>button{font-size:11px;padding:4px 6px;color:#cdb692}
+.reading-focused .literary-footer>span{font-size:10px;color:#8d9ea9}
+.literary-free-row{display:flex;align-items:stretch;min-height:84px!important;flex:0 0 auto!important;gap:8px;margin-top:7px}
+.literary-free-row textarea{resize:vertical;min-width:0;flex:1;min-height:78px;background:#0e1c28;color:#ede4d6;border:1px solid #5e737b;border-radius:10px;padding:12px;font:400 13px/1.7 "Noto Serif TC",serif}
+.literary-free-row textarea:focus-visible{outline:2px solid #b9a67f;outline-offset:1px}
+.literary-free-row .btn{flex:0 0 auto;min-width:72px;min-height:56px;padding:8px;font-size:12px;white-space:normal}
+.story-exit-overlay{position:absolute;inset:0;background:#03080bcc;z-index:100;display:flex;justify-content:center;align-items:center;padding:22px;backdrop-filter:blur(3px)}
+.story-exit-card{width:min(100%,400px);padding:26px 22px;border:1px solid #8b826f;border-radius:16px;background:#172431;box-shadow:0 26px 85px #000a;color:#f3ebdb}
+.story-exit-card h2{font:600 24px/1.55 "Noto Serif TC",serif;margin:0 0 14px}
+.story-exit-card p{font:400 14px/1.9 "Noto Serif TC",serif;color:#bbcbd0}
+.story-exit-actions{display:grid;gap:9px;margin-top:24px}
+.story-exit-actions .btn{min-height:45px;font-size:14px}
+.literary-dialog,.literary-info{border-color:#766f62!important}
+.story-ending .ending-recall{border-left:2px solid #a89c82;color:#d2c5ae;margin:32px 0;padding:13px 18px;background:#182532;font:400 16px/2 "Noto Serif TC",serif}
+.story-ending .btn{min-height:50px;font-size:14px;margin-top:12px}
+.story-ending .ending-note{margin:27px 0}
+@media (max-width:400px){.literary-top>span{font-size:12px!important}.literary-top .story-leave{font-size:11px;padding:6px 9px}.library-home,.story-ending{padding-inline:22px}.reading-focused .scene-prose p{font-size:16.2px}}
+@media(prefers-reduced-motion:reduce){.reading-focused .scene-prose,.reading-focused .scene-prose *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+
+/* Natural novel paragraphs, not screenplay dialogue cards. */
+.library-mast .mast-user strong{font:550 12px/1.5 "Noto Serif SC","Noto Serif TC",serif;color:#e1d7c6}
+.library-mast .mast-user small{font:400 9px/1.5 system-ui,sans-serif;color:#9fadb2}
+.reading-focused .scene-prose p,.reading-focused .novel-dialogue-prose{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","Noto Serif TC","SimSun",serif!important}
+.reading-focused .novel-dialogue-prose{display:block;margin:0 0 1.48em!important;padding:0;text-indent:0;font-size:clamp(16.5px,3.9vw,19px);font-weight:400;line-height:2.12;letter-spacing:.26px;color:#ede5dc;background:transparent;border:0;box-shadow:none}
+.story-archive{padding-top:16px}
+.archive-story-meta{font:400 11px/1.7 "Noto Serif SC","Noto Serif TC",serif;color:#9eacb5;margin-bottom:14px}
+.archive-choice,.archive-excerpt{font:400 13px/1.92 "Noto Serif SC","Noto Serif TC",serif;color:#dedbd3;margin:12px 0}
+.archive-excerpt{border-left:2px solid #8a816f;padding:5px 0 5px 12px;color:#bbc8c8}
+.archive-tabs button{font-size:12px!important}
+@media(max-width:370px){.reading-focused .scene-prose p,.reading-focused .novel-dialogue-prose{font-size:16.2px!important;line-height:2.06!important}.literary-free-row textarea{font-size:12px}}
+
+
+.rewrite-notes{box-sizing:border-box;display:block;width:100%;min-height:116px;margin:17px 0 8px;background:#0d1b26;color:#ebe4da;border:1px solid #7a827d;border-radius:10px;padding:12px;font:400 14px/1.8 "Noto Serif SC","Noto Serif TC",serif;resize:vertical}
+.rewrite-notes:focus-visible{outline:2px solid #e2c894;outline-offset:1px}
+.literary-toolbar .btn{color:#e1cda9!important}
+.story-exit-actions .btn{white-space:normal;text-align:center}
+@media(max-height:690px){.story-exit-card{padding:18px;max-height:92dvh;overflow-y:auto}.story-exit-card h2{font-size:20px}}
+
+
+/* E+ editorial effects: full text always readable; reveal only when scrolled into view. */
+.reading-focused .scene-prose.fx-standard .novel-beat,
+.reading-focused .scene-prose.fx-strong .novel-beat{
+  animation:none!important;opacity:1;transform:none;filter:none;letter-spacing:normal;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed{
+  animation:nwNovelSoft .55s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed{
+  animation:nwNovelStrong .68s cubic-bezier(.18,.85,.3,1) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.fx-alert{
+  animation:nwNovelAlert .73s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.fx-reveal{
+  animation:nwNovelClue .9s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.fx-death{
+  animation:nwNovelSilence 1.05s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-alert,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-alert{
+  border-left:2px solid #ae796a;padding-left:13px;
+  background:linear-gradient(90deg,rgba(157,84,75,.095),transparent 80%);
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-reveal,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-reveal{
+  border-left:2px solid #bfaa79;padding-left:13px;
+  background:linear-gradient(90deg,rgba(177,148,84,.095),transparent 80%);
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-death,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-death{
+  border-left:2px solid #87939c;padding-left:13px;
+  background:linear-gradient(90deg,rgba(105,121,134,.085),transparent 80%);
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-alert p,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-alert p{color:#f4dfd9}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-reveal p,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-reveal p{color:#f1e7c9}
+.reading-focused .scene-prose.fx-strong .novel-system.eplus-typing::after{
+  content:"▍";color:#dac7a0;animation:fxCaret .55s steps(2,end) infinite;
+}
+.reading-focused .literary-toolbar .btn{font-size:11px;min-height:30px;padding:5px 8px}
+.reading-focused .literary-toolbar>div{display:flex;flex-wrap:nowrap;gap:2px;white-space:nowrap}
+.reading-focused .literary-toolbar>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+@keyframes nwNovelSoft{
+  from{opacity:.70;transform:translateY(4px);filter:blur(.45px)}
+  to{opacity:1;transform:translateY(0);filter:none}
+}
+@keyframes nwNovelStrong{
+  from{opacity:.52;transform:translateY(9px);filter:blur(1.9px)}
+  to{opacity:1;transform:translateY(0);filter:none}
+}
+@keyframes nwNovelAlert{
+  0%{opacity:.58;transform:translateX(9px);filter:blur(1.5px)}
+  50%{opacity:1;transform:translateX(-2px);filter:none}
+  100%{opacity:1;transform:none;filter:none}
+}
+@keyframes nwNovelClue{
+  0%{opacity:.5;filter:blur(3px);letter-spacing:.7px}
+  65%{opacity:1;filter:blur(0);letter-spacing:.1px}
+  100%{opacity:1;filter:none;letter-spacing:normal}
+}
+@keyframes nwNovelSilence{
+  from{opacity:.48;filter:blur(2px) grayscale(.6)}
+  to{opacity:1;filter:none}
+}
+.reading-focused .scene-prose.motion-off .novel-beat,
+.reading-focused .scene-prose.fx-static .novel-beat{
+ animation:none!important;transform:none!important;opacity:1!important;filter:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .reading-focused .scene-prose .novel-beat,
+ .reading-focused .scene-prose .novel-beat.fx-revealed,
+ .reading-focused .scene-prose .novel-system.eplus-typing::after{
+  animation:none!important;transform:none!important;opacity:1!important;filter:none!important;
+ }
+}
+
+
+/* Nightwalker Emotion E+: actual typographic acting, rather than uniform fade-in.
+   Focus effects apply to phrases already present in the prose, never invented UI text. */
+.reading-focused .scene-prose .novel-beat .emotion-focus{
+  display:inline;
+  color:inherit;
+  font:inherit;
+  letter-spacing:inherit;
+  text-decoration:none;
+  white-space:normal;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-fear,
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-panic{
+  animation:nwEmotionUneasy .7s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-anger,
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-shock{
+  animation:nwEmotionStrike .52s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-grief,
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-dread{
+  animation:nwEmotionFade .9s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-revelation,
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed.emotion-relief{
+  animation:nwEmotionReveal .8s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-fear{
+  animation:nwEmotionFear 1.15s steps(8,end) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-panic{
+  animation:nwEmotionPanic .78s steps(9,end) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-anger{
+  animation:nwEmotionRage .79s cubic-bezier(.2,.8,.27,1) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-shock{
+  animation:nwEmotionShock .87s cubic-bezier(.19,1,.38,1) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-grief{
+  animation:nwEmotionGrief 1.5s ease both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-dread{
+  animation:nwEmotionDread 1.4s ease both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-revelation{
+  animation:nwEmotionTruth 1.12s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-relief{
+  animation:nwEmotionRelease 1.2s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-fear .emotion-focus,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-panic .emotion-focus{
+  display:inline-block;animation:nwEmotionWordTremble .8s steps(7,end) both!important;
+  color:#f4d6d5;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-anger .emotion-focus,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-shock .emotion-focus{
+  display:inline-block;animation:nwEmotionWordImpact .68s ease-out both!important;
+  color:#f6b9aa;font-weight:650;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-grief .emotion-focus{
+  display:inline-block;animation:nwEmotionWordDissolve 1.38s ease-out both!important;
+  color:#a7bbc8;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-revelation .emotion-focus{
+  display:inline-block;animation:nwEmotionWordIlluminate 1.35s ease-out both!important;
+  color:#edce8b;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-dread .emotion-focus{
+  animation:nwEmotionWhisper 1.2s ease both!important;color:#c3d3d9;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.emotion-relief .emotion-focus{
+  animation:nwEmotionWordIlluminate 1.2s ease both!important;color:#bcdccc;
+}
+@keyframes nwEmotionUneasy{
+  from{opacity:.6;filter:blur(2px);transform:translateY(3px)}
+  to{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionStrike{
+  0%{opacity:.55;transform:translateX(5px)}
+  45%{opacity:1;transform:translateX(-2px)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionFade{
+  from{opacity:.55;filter:grayscale(.5) blur(1px)}
+  to{opacity:1;filter:none}
+}
+@keyframes nwEmotionReveal{
+  from{opacity:.5;letter-spacing:.5px;filter:blur(2px)}
+  to{opacity:1;letter-spacing:normal;filter:none}
+}
+@keyframes nwEmotionFear{
+  0%{opacity:.48;filter:blur(3px);transform:translateX(2px)}
+  16%{opacity:.7;transform:translateX(-2px)}
+  32%{opacity:.85;transform:translateX(1px)}
+  48%{opacity:.7;transform:translateX(-1px)}
+  64%{opacity:1;transform:translateX(1px)}
+  82%{opacity:1;filter:none;transform:translateX(-1px)}
+  100%{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionPanic{
+  0%{opacity:.3;transform:translateX(10px)}
+  20%{opacity:.92;transform:translateX(-4px)}
+  35%{opacity:.8;transform:translateX(3px)}
+  55%{opacity:1;transform:translateX(-2px)}
+  75%{opacity:1;transform:translateX(1px)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionRage{
+  0%{opacity:.3;filter:blur(3px);transform:scale(1.022) translateX(-6px)}
+  40%{opacity:1;filter:none;transform:scale(1.007) translateX(2px)}
+  75%{transform:translateX(-1px)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionShock{
+  0%{opacity:.25;filter:brightness(1.7) blur(5px);transform:translateY(-8px)}
+  43%{opacity:1;filter:brightness(1.25);transform:translateY(2px)}
+  100%{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionGrief{
+  0%{opacity:.25;filter:grayscale(1) blur(2px);transform:translateY(4px)}
+  60%{opacity:.65;filter:grayscale(.8);transform:translateY(1px)}
+  100%{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionDread{
+  0%{opacity:.3;filter:blur(5px);letter-spacing:1.4px}
+  62%{opacity:.83;filter:blur(.8px);letter-spacing:.5px}
+  100%{opacity:1;filter:none;letter-spacing:normal}
+}
+@keyframes nwEmotionTruth{
+  0%{opacity:.45;filter:blur(5px) brightness(1.3);letter-spacing:2px}
+  65%{opacity:1;filter:blur(.4px);letter-spacing:.4px}
+  100%{opacity:1;filter:none;letter-spacing:normal}
+}
+@keyframes nwEmotionRelease{
+  0%{opacity:.3;filter:blur(2px);transform:translateY(8px)}
+  68%{opacity:.9;transform:translateY(-1px)}
+  100%{opacity:1;filter:none;transform:none}
+}
+@keyframes nwEmotionWordTremble{
+  0%{opacity:.55;transform:translateX(0)}
+  20%{transform:translateX(-1.5px)}
+  40%{transform:translateX(1.5px)}
+  60%{transform:translateX(-1px)}
+  80%{transform:translateX(1px)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionWordImpact{
+  0%{opacity:.4;transform:translateX(4px) scale(1.14)}
+  55%{opacity:1;transform:translateX(-1px) scale(1.03)}
+  100%{opacity:1;transform:none}
+}
+@keyframes nwEmotionWordDissolve{
+  0%{opacity:.25;filter:blur(3px)}
+  55%{opacity:.78;filter:blur(1px)}
+  100%{opacity:1;filter:none}
+}
+@keyframes nwEmotionWordIlluminate{
+  0%{opacity:.45;letter-spacing:3px;text-shadow:0 0 13px #f3d48d;color:#fff5c4}
+  65%{opacity:1;letter-spacing:.4px;text-shadow:0 0 4px #ddbf8e}
+  100%{opacity:1;letter-spacing:normal;text-shadow:none}
+}
+@keyframes nwEmotionWhisper{
+  0%{opacity:.3;filter:blur(2px)}
+  55%{opacity:.7;filter:blur(1px)}
+  100%{opacity:1;filter:none}
+}
+.reading-focused .scene-prose.motion-off .novel-beat .emotion-focus,
+.reading-focused .scene-prose.fx-static .novel-beat .emotion-focus{
+  animation:none!important;filter:none!important;transform:none!important;opacity:1!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .reading-focused .scene-prose .novel-beat[class*="emotion-"],
+ .reading-focused .scene-prose .novel-beat .emotion-focus{
+   animation:none!important;filter:none!important;transform:none!important;opacity:1!important;
+ }
+}
+
+
+/* Restore the old E+ atmospheric mood palette in the new uncluttered reader. */
+.reading-focused .scene-prose.fx-strong[data-mood="suspense"],
+.reading-focused .scene-prose.fx-strong[data-mood="eerie"]{
+  background:radial-gradient(ellipse at 75% 26%,rgba(79,91,109,.15),transparent 63%),#0e1824!important;
+}
+.reading-focused .scene-prose.fx-strong[data-mood="shock"],
+.reading-focused .scene-prose.fx-strong[data-mood="anger"]{
+  background:radial-gradient(ellipse at 20% 24%,rgba(114,63,60,.18),transparent 56%),#141b27!important;
+}
+.reading-focused .scene-prose.fx-strong[data-mood="grief"]{
+  background:radial-gradient(ellipse at 50% 18%,rgba(90,104,118,.14),transparent 75%),#101822!important;
+}
+.reading-focused .scene-prose.fx-strong[data-mood="resolve"]{
+  background:radial-gradient(ellipse at 65% 15%,rgba(112,105,72,.13),transparent 72%),#121d28!important;
+}
+.reading-focused .scene-prose.fx-strong[data-mood="system"]{
+  background:radial-gradient(ellipse at 40% 20%,rgba(57,100,116,.15),transparent 67%),#101c27!important;
+}
+
+
+/* Infinite-flow fiction: pre-entry synopsis, world correction and playable codex. */
+.world-suggestion{border:1px solid #4b5f65;border-radius:11px;padding:10px;margin:10px 0;background:#142936}
+.world-suggestion .world-candidate{width:100%;margin:0;padding:10px;border-color:#7b795f}
+.world-synopsis,.world-verify-note{font:400 13px/1.95 "Noto Serif SC","Noto Serif TC",serif;color:#cbd5d3;padding:8px 4px 0;margin:4px 0}
+.world-synopsis{max-height:260px;overflow-y:auto;white-space:pre-wrap}
+.entry-world-intro{border:1px solid #77806c;background:linear-gradient(180deg,#1d3140,#142431);border-radius:14px;padding:20px 18px;margin-bottom:20px}
+.entry-world-intro h3{font:600 clamp(21px,5.2vw,27px)/1.55 "Noto Serif SC","Noto Serif TC",serif;color:#f0e4cf;margin:11px 0 4px}
+.entry-world-category{font:400 12px/1.75 system-ui,sans-serif;color:#e0c48c;margin:0 0 14px}
+.entry-world-summary{font:400 15px/2 "Noto Serif SC","Noto Serif TC",serif;color:#ede8dd;white-space:pre-wrap;max-height:340px;overflow-y:auto;overscroll-behavior:contain}
+.entry-source{display:inline-block;font:500 12px/1.6 system-ui,sans-serif;color:#d9bf86;margin:12px 0}
+.entry-world-rules{border-top:1px solid #626d66;margin-top:12px;padding-top:15px}
+.entry-world-rules b{font:600 14px "Noto Serif SC","Noto Serif TC",serif;color:#e8cda1}
+.entry-world-rules p{font:400 13px/1.95 "Noto Serif SC","Noto Serif TC",serif;color:#bdcacc;margin:10px 0 0}
+.world-mode-choice{padding:13px 0}
+.world-mode-choice p{color:#d9c8aa;font:550 13px/1.6 "Noto Serif SC","Noto Serif TC",serif}
+.world-mode-choice button{display:inline-flex;align-items:center;min-height:42px;border:1px solid #536873;color:#d2d9d6;background:#142331;border-radius:9px;padding:9px 14px;margin-right:8px;font:500 13px "Noto Serif SC",serif;cursor:pointer}
+.world-mode-choice button.chosen{color:#f5e1b8;border-color:#b09a72;background:#304050}
+.literary-codex{display:flex;flex-direction:column;gap:10px;max-height:min(84dvh,720px);min-height:240px;overflow:hidden;border:1px solid #657b78;background:#132432;color:#eae5db;z-index:80}
+.literary-codex .codex-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-shrink:0}
+.literary-codex .codex-heading h2{font:600 20px/1.6 "Noto Serif SC",serif;color:#f0dfbc;margin:0}
+.codex-heading button,.codex-action{border:1px solid #7e836c;border-radius:8px;color:#eed8ab;background:#223948;padding:9px 12px;font:500 12px/1.45 "Noto Serif SC","Noto Serif TC",serif;cursor:pointer;min-height:38px}
+.codex-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;flex-shrink:0}
+.codex-tabs button{font:500 12px/1.5 "Noto Serif SC","Noto Serif TC",serif;color:#c3ccd0;border:1px solid #425b68;background:#1b2e3e;padding:9px 5px;border-radius:6px;cursor:pointer;min-height:40px}
+.codex-tabs button.active{color:#f1ddaf;background:#35424b;border-color:#af986d}
+.codex-body{overflow-y:auto;overscroll-behavior:contain;min-height:100px;flex:1}
+.codex-section{padding:8px 2px 16px}
+.codex-section h3{font:600 16px/1.65 "Noto Serif SC","Noto Serif TC",serif;color:#e7d4af;margin:8px 0 12px}
+.codex-section>p,.codex-row p{font:400 12px/1.9 "Noto Serif SC","Noto Serif TC",serif;color:#aebdc4;margin:3px 0}
+.codex-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #3b4c55}
+.codex-row strong{font:550 14px/1.65 "Noto Serif SC","Noto Serif TC",serif;color:#ede5d3}
+.codex-row>div:first-child{min-width:0;flex:1}
+.codex-row .codex-action{flex-shrink:0}
+.codex-hint{color:#9fb7c0;font:400 11px/1.75 system-ui,sans-serif;margin:2px 0;flex-shrink:0}
+.codex-memory{border-left:2px solid #998b6c;padding:8px 10px;margin:10px 0;color:#d7d4cc!important}
+.story-codex-page{padding:12px 14px 24px;min-height:0}
+.codex-page{max-height:none;height:auto;overflow:visible;background:#142536;padding:15px 14px;border-radius:12px}
+.codex-page .codex-body{overflow:visible}
+.codex-page .codex-row{flex-wrap:wrap}
+.world-premise-input{line-height:1.9!important;resize:vertical;min-height:108px}
+#free-action{line-height:1.85;resize:vertical;min-height:104px!important}
+@media(max-width:390px){.literary-codex{max-height:85dvh}.codex-row{align-items:flex-start;flex-wrap:wrap}.codex-row .codex-action{margin-top:5px}.world-mode-choice button{margin:4px 3px;padding:10px 12px}.entry-world-intro{padding:16px 13px}.entry-world-summary{font-size:14px}}
+
+
+/* Actual selectable mainland-webnovel worlds: searchable bookshelf, not a hidden text prompt */
+.world-kind-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.world-kind-tabs>button{min-width:0;overflow-wrap:anywhere;font-size:12px;line-height:1.45;padding:12px 7px}
+.world-kind-tabs>button small{display:block;margin-top:3px;font-size:10px;opacity:.72}
+.cn-novel-library{width:100%;min-width:0;padding:6px 1px 15px}
+.cn-novel-library>h2{color:#eed9b1;font:600 22px/1.5 "Noto Serif SC","Noto Serif TC",serif;margin:9px 0}
+.cn-novel-library>p{color:#b6c7cc;font:400 13px/1.85 "Noto Serif SC","Noto Serif TC",serif;margin:8px 0 17px}
+.cn-novel-library>label{display:block;color:#e5d6b7;font:500 13px/1.6 "Noto Serif SC","Noto Serif TC",serif;margin:14px 0 7px}
+.cn-novel-library .custom-world-input{width:100%;box-sizing:border-box;margin-bottom:12px}
+.cn-novel-genres{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.cn-novel-genres button{min-height:36px;background:#162d3a;color:#c5d0d3;border:1px solid #455f68;border-radius:7px;padding:7px 11px;font:500 12px/1.35 "Noto Serif SC","Noto Serif TC",serif;cursor:pointer}
+.cn-novel-genres button.on{background:#3a4b4f;border-color:#c2a779;color:#f1dab0}
+.cn-novel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(235px,100%),1fr));gap:12px;min-width:0}
+.cn-novel-card{display:flex;flex-direction:column;min-height:210px;min-width:0;background:linear-gradient(140deg,#233749,#112330 78%);border:1px solid #50646d;border-radius:13px;padding:17px 16px 15px;box-sizing:border-box;box-shadow:0 9px 30px #050e191b}
+.cn-novel-category{color:#cfb47d;font:500 11px/1.5 system-ui,sans-serif;letter-spacing:.045em;margin-bottom:10px}
+.cn-novel-card h3{color:#f1e6d0;font:600 clamp(19px,3.8vw,23px)/1.4 "Noto Serif SC","Noto Serif TC",serif;margin:0 0 5px}
+.cn-novel-card .cn-novel-author{color:#9fb1bb;font:400 12px/1.7 "Noto Serif SC","Noto Serif TC",serif;margin:0 0 10px}
+.cn-novel-summary{color:#cbd8d7;font:400 13px/1.9 "Noto Serif SC","Noto Serif TC",serif;flex:1;margin:0 0 16px}
+.cn-novel-card .btn{margin-top:auto;min-height:43px;font:550 13px/1.55 "Noto Serif SC","Noto Serif TC",serif}
+@media(max-width:470px){.world-kind-tabs{gap:4px}.world-kind-tabs>button{padding:10px 4px;font-size:11px}.world-kind-tabs>button small{font-size:9px}.cn-novel-grid{grid-template-columns:1fr}.cn-novel-card{min-height:0}.cn-novel-genres button{font-size:11px;padding:7px 9px}}
+
+
+/* NIGHTWALKER: balanced RPG command center + literary world reader (V9). */
+.command-dashboard{flex:1;min-height:0;overflow:auto;scrollbar-width:thin;background:radial-gradient(ellipse at 50% 6%,#46607e50,transparent 40%),linear-gradient(180deg,#111f32,#0b1421 68%);color:#ece5d6;padding:0 16px 32px}
+.command-greeting{position:relative;overflow:hidden;padding:46px 10px 31px;min-height:210px;border-bottom:1px solid #5f72805b}
+.command-orbit{position:absolute;right:3%;top:10px;width:135px;height:135px;border-radius:50%;border:1px solid #a9a89b65;display:flex;align-items:center;justify-content:center;font:400 70px/1 Georgia,serif;color:#b4a37c88;box-shadow:0 0 0 23px #8aabad0e,0 0 0 48px #8aabad08;pointer-events:none}
+.command-greeting .library-kicker{position:relative;color:#cbb88d;font:550 10px/1.6 ui-monospace,monospace;letter-spacing:1.5px}
+.command-greeting h1{position:relative;color:#f1e8d6;font:550 clamp(24px,6.2vw,33px)/1.55 "Noto Serif TC","Noto Serif SC",serif;letter-spacing:.4px;max-width:75%;margin:24px 0 11px}
+.command-greeting>p{position:relative;color:#b9c5cc;font:400 13px/1.9 "Noto Serif TC",serif;max-width:45ch;margin:0}
+.command-identity{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 13px;background:linear-gradient(115deg,#24394b,#152637);border:1px solid #526c77;border-radius:12px;margin-top:17px}
+.command-identity>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.command-identity span,.command-identity small{color:#a7b4bb;font:400 10px/1.4 system-ui,sans-serif}
+.command-identity strong{color:#f1e6d3;font:600 19px/1.45 "Noto Serif TC",serif;overflow-wrap:anywhere}
+.command-resources{text-align:right}
+.command-resources strong{color:#e2c186;font-size:18px}
+.command-vitals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
+.command-vitals>div{padding:10px 9px 12px;border:1px solid #435a68;border-radius:9px;background:#1a2b3c;min-width:0}
+.command-vitals span{display:block;color:#c4cdd0;font:400 11px/1.5 "Noto Serif TC",serif;margin-bottom:9px}
+.command-meter{background:#0d1724;height:4px;border-radius:3px;overflow:hidden}
+.command-meter>i{height:100%;background:linear-gradient(90deg,#8fbdc2,#d8be89);display:block;border-radius:3px}
+.command-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0}
+.command-shortcut{display:flex;flex-direction:column;align-items:flex-start;min-height:111px;padding:15px 14px;border:1px solid #485e69;border-radius:12px;background:linear-gradient(135deg,#263b4d,#142534);color:#eee8dc;text-align:left;cursor:pointer}
+.command-shortcut:focus-visible{outline:2px solid #c1a877;outline-offset:3px}
+.command-shortcut .command-symbol{font:550 21px/1.2 Georgia,serif;color:#dfc690;margin-bottom:10px}
+.command-shortcut strong{font:600 14px/1.5 "Noto Serif TC","Noto Serif SC",serif}
+.command-shortcut small{font:400 11px/1.7 "Noto Serif TC","Noto Serif SC",serif;color:#abbdc4;margin-top:3px}
+.command-next{padding:22px 17px 26px;border:1px solid #9b8763;background:linear-gradient(150deg,#324352,#172b38);border-radius:13px}
+.command-next h2{font:600 clamp(18px,5vw,24px)/1.55 "Noto Serif TC",serif;color:#f1e0bd;margin:12px 0 5px}
+.command-next p{font:400 12px/1.9 "Noto Serif TC",serif;color:#c0ced1;margin:0 0 18px}
+.command-next .btn{min-height:48px}
+.identity-confirmed{border:1px solid #4b6b73;border-radius:9px;background:#1e3240;color:#e5d6bd;padding:11px 12px;display:flex;align-items:center;flex-wrap:wrap;gap:9px;font:400 13px/1.55 "Noto Serif TC",serif;margin:10px 0}
+.identity-confirmed strong{font-size:15px;color:#f1e6d3}
+.identity-confirmed span{font-size:11px;color:#a7bcc1;flex:1}
+.main-god-decree{padding:18px;border-radius:12px;border:1px solid #bd9e68;background:radial-gradient(ellipse at 80% 20%,#c4b68d15,transparent 48%),#1e303d;margin:15px 0}
+.main-god-decree .library-kicker{font-size:10px;color:#ddbe86}
+.main-god-decree h3{font:600 20px/1.6 "Noto Serif TC",serif;color:#e9d0a5;margin:8px 0}
+.main-god-decree p{font:400 13px/1.92 "Noto Serif TC",serif;color:#ced5d1;margin:0}
+.codex-rpg-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:9px 0 15px}
+.codex-rpg-overview>div{padding:10px 8px;border:1px solid #577179;background:#1d3443;border-radius:8px;min-width:0}
+.codex-rpg-overview span{font:400 10px/1.5 system-ui,sans-serif;color:#9eafba;display:block;margin-bottom:3px}
+.codex-rpg-overview b{font:600 11px/1.65 "Noto Serif TC",serif;color:#e5d7bb;overflow-wrap:anywhere}
+.main-god-rewards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:24px 0}
+.main-god-rewards>div{border:1px solid #756b58;border-radius:10px;background:#1d3443;padding:16px 12px}
+.main-god-rewards span{display:block;color:#a6bec5;font-size:12px;margin-bottom:9px}
+.main-god-rewards strong{color:#ecc78e;font-size:22px}
+.emotion-demo-overlay{position:absolute;inset:0;z-index:160;background:#040a0eeb;display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(5px)}
+.emotion-demo-card{display:flex;flex-direction:column;gap:12px;width:min(100%,560px);max-height:95dvh;min-height:0;box-sizing:border-box;border:1px solid #938367;border-radius:15px;background:#132435;color:#e8ded1;padding:19px 15px}
+.emotion-demo-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.emotion-demo-head h2{font:600 19px/1.5 "Noto Serif TC",serif;margin:0}
+.emotion-demo-note{font:400 11px/1.8 "Noto Serif TC",serif;color:#9fb1bd;margin:0}
+.emotion-demo-prose{flex:1!important;min-height:0;max-height:70dvh;overflow:auto!important;padding:8px 10px!important;border:1px solid #324957;border-radius:10px;background:#0e1a29!important}
+.emotion-demo-row{padding:10px 4px;margin:0 0 7px;border-bottom:1px solid #334958}
+.emotion-demo-row label{font:550 11px/1.5 system-ui,sans-serif;color:#cfb989}
+.emotion-demo-row .novel-beat{margin-top:7px}
+.emotion-demo-row .novel-beat p{font:400 15px/1.86 "Noto Serif TC",serif!important;margin:4px 0 6px!important}
+.emotion-demo-bottom{display:flex;gap:9px}
+.emotion-demo-bottom button{flex:1;font-size:12px;min-height:43px}
+@media(max-width:410px){.command-dashboard{padding:0 11px 22px}.command-greeting{padding:36px 7px 23px}.command-greeting h1{font-size:24px;max-width:82%}.command-orbit{width:105px;height:105px;font-size:58px;right:0}.command-vitals{gap:5px}.command-vitals>div{padding:9px 6px}.command-shortcuts{gap:8px}.command-shortcut{min-height:100px;padding:12px 10px}.codex-rpg-overview{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.codex-rpg-overview>div{padding:7px 5px}}
+@media(prefers-reduced-motion:reduce){.emotion-demo-card .novel-beat,.emotion-demo-card .emotion-focus{animation:none!important;transform:none!important;filter:none!important;opacity:1!important}}
