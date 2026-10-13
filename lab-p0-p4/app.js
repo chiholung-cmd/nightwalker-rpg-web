@@ -374,11 +374,12 @@ function missionUI(){
 function resultUI(){
  const m=s.mission,chapters=(m.directorPlan?.chapters||[]);
  const recent=chapters.at(-1);
+ const award='<div class="main-god-rewards"><div><span>主神積分</span><strong>+'+num(m.reward?.credits||0)+'</strong></div><div><span>人物經驗</span><strong>+'+num(m.reward?.xp||0)+'</strong></div></div>';
  return '<section class="story-ending"><div class="library-kicker">THE END · 一個世界的終點</div>'+
  '<h1>這段故事，<br>終於有了自己的結尾。</h1>'+
  '<p>《'+esc(m.worldName)+'》</p>'+
  (recent?'<blockquote class="ending-recall">'+esc(recent.summary||"")+'</blockquote>':"")+
- '<p class="ending-note">曾經作出的選擇會留喺故事記憶之中。唔需要結算戰鬥分數，亦唔需要升級先可以再開始。</p>'+
+ award+'<p class="ending-note">故事結束後，戰利品、技能、人物經歷同世界記憶都會帶返主神空間，成為下一次輪迴嘅一部分。</p>'+
  a("保存經歷，返回故事書架","claim","block main")+
  a("立即開始另一段故事","claimNew","block ghost")+'</section>'
 }
