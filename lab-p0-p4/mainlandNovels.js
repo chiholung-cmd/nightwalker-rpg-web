@@ -6,7 +6,7 @@ const data=[["infinite-terror","無限恐怖","zhttty","無限流","主神空間
 const genres=["全部","無限流","懸疑驚悚","仙俠玄幻","科幻末日","遊戲競技"];
 const books=data.map(([id,title,author,genre,summary,sourceUrl,sourceTitle])=>Object.freeze({id,title,author,genre,summary,sourceUrl,sourceTitle,mediaType:"小說"}));
 const normalized=s=>String(s||"").normalize("NFKC").replace(/[《》\s，。·:：－-]/g,"").replace(/无/g,"無").replace(/限/g,"限").replace(/恐怖/g,"恐怖").replace(/诡/g,"詭").replace(/秘/g,"秘").replace(/斗罗/g,"斗羅").replace(/斗破/g,"斗破").replace(/传/g,"傳").replace(/园/g,"園").replace(/乐/g,"樂").replace(/惊/g,"驚").replace(/悚/g,"悚").replace(/书/g,"書").replace(/终/g,"終").replace(/焉/g,"焉").toLowerCase();
-const filter=(genre="全部",query="")=>books.filter(b=>(genre==="全部"||b.genre===genre)&&(!String(query).trim()||normalized([b.title,b.sourceTitle,b.author,b.genre,b.summary].join(" ")).includes(normalized(query))));
+const filter=(genre="全部",query="")=>books.filter(b=>(genre==="全部"||b.genre===genre)&&(!String(query).trim()||normalized([b.title,b.sourceTitle,b.author,b.genre,b.summary,b.id==="lord-mysteries"?"克蘇魯 蒸汽朋克 神秘學":""].join(" ")).includes(normalized(query))));
 const find=id=>books.find(x=>x.id===id)||null;
 global.NW_CN_NOVELS={books,genres,filter,find};
 })(window);
