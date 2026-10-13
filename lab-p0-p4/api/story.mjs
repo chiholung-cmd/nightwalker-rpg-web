@@ -90,7 +90,8 @@ async function lookupCanon(name,medium){
   canonCache.set(key,info);return info;
  }
  const unknown={title,url:"",source:"unverified",confidence:"unverified",mediaType:medium,extract:""};
- canonCache.set(key,unknown);return unknown;
+ // Never cache an unsuccessful source lookup: retry when network returns.
+ return unknown;
 }
 
 const COMMON_TYPO_TITLES={
