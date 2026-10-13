@@ -213,6 +213,17 @@ return section("MAIN GOD / WORLD TRANSFER","輪迴傳送終端","主神發佈任
 function mood(i,worldId){if(worldId==="deathnote"&&i===5)return "grief";if(worldId==="alice"&&i===2)return "anger";if(worldId==="demon"&&i===0)return "system";return ["calm","suspense","eerie","dialogue","shock","resolve"][i%6]}
 
 function missionStory(){return N.excerpt(s)}
+function soundtrackMood(){
+ if(s.screen!=="mission"||!s.mission||s.mission.finished)return "system";
+ const m=s.mission;
+ const scene=m.aiScenes?.[m.phase]||(m.director?null:window.NW_NOVEL?.scene?.(s));
+ return scene?.mood||"suspense";
+}
+function musicControlText(){
+ const live=window.NW_MUSIC?.status?.();
+ return live?.enabled?"♫ 配樂：播放中":"♫ 開啟配樂";
+}
+
 function eplusMode(){
  if(s.settings?.reducedMotion||window.NW_EFFECTS?.reducedMotion?.())return "off";
  const mode=s.settings?.eplusMode;
@@ -267,7 +278,7 @@ function missionUI(){
  }).join("");
  const notice="";
  const bar='<div class="story-top literary-top"><span>'+esc(w.name)+' <small>· 第 '+(m.phase+1)+' 章</small></span><button class="story-leave" data-do="leaveStory" aria-label="退出當前故事並開始新故事">退出 · 新故事</button></div>';
- const toolbox='<div class="story-toolbar literary-toolbar"><span>《'+esc(m.worldName)+'》 · '+esc(novel?.title||"本章")+'</span><div>'+a(eplusMode()==="strong"?"演出：強":eplusMode()==="standard"?"演出：柔和":"演出：關","toggleMotion","tiny ghost")+a("重寫","rewriteOpen","tiny ghost")+a("線索","taskinfo","tiny ghost")+'</div></div>';
+ const toolbox='<div class="story-toolbar literary-toolbar"><span>《'+esc(m.worldName)+'》 · '+esc(novel?.title||"本章")+'</span><div>'+a(musicControlText(),"musicToggle","tiny ghost")+a(eplusMode()==="strong"?"演出：強":eplusMode()==="standard"?"演出：柔和":"演出：關","toggleMotion","tiny ghost")+a("重寫","rewriteOpen","tiny ghost")+a("線索","taskinfo","tiny ghost")+'</div></div>';
   const popups=[];
  if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只有發生體力消耗、施展術式或受到傷害時，才需要特別注意數值。</p>'+a("關閉","status","small ghost")+'</div>');
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
@@ -330,6 +341,18 @@ function memory(){
 function settings(){
  const mode=eplusMode(),cloud=window.NW_CLOUD?.status?.()||{enabled:false,key:"",revision:0};
  const lastUsage=s.aiLastUsage;
+ const musicStatus=window.NW_MUSIC?.status?.()||{enabled:false,error:""};
+ const track=window.NW_MUSIC?.getTrack?.(soundtrackMood());
+ const volume=Math.round(100*Number(s.settings?.musicVolume??.22));
+ const musicCard=card("劇情背景音樂 · Adaptive BGM",
+  '<p class="minor-meta">按照章節情緒自動轉換配樂，約 1.4 秒淡入淡出。首次播放需要你按一下按鈕；預設靜音，不會自行播歌。</p>'+
+  a(musicStatus.enabled?"暫停背景音樂":"♫ 開啟背景音樂","musicToggle","block main")+
+  '<label class="world-input-label" for="bgm-volume">背景音量 · <output id="bgm-volume-value">'+volume+'%</output></label>'+
+  '<input id="bgm-volume" class="bgm-volume" type="range" min="0" max="45" step="1" value="'+volume+'" aria-label="背景音樂音量">'+
+  '<p class="minor-meta">目前場景：'+esc(track?.label||"主神空間")+' · 配樂：'+esc(track?.title||"")+' · CC0</p>'+
+  (musicStatus.error?'<p class="negative-note">'+esc(musicStatus.error)+'</p>':"")+
+  '<p class="minor-meta"><a href="https://opengameart.org/content/dark-sci-fi-audio-pack" target="_blank" rel="noopener noreferrer">SRG774 配樂授權與來源 ↗</a>　·　<a href="https://opengameart.org/content/sadness" target="_blank" rel="noopener noreferrer">Sadness by Kistol ↗</a></p>');
+
  const groqCard=card("AI 劇情健康檢查",'<p class="minor-meta">檢查 API 金鑰與可用模型，不會生成小說或浪費文字 Token。每幕真正剩餘額度取決於 Groq 實時回應。</p>'+a("檢查 Groq API 與模型","groqProbe","block main")+(temporary.groqStatus?'<p class="minor-meta">'+esc(temporary.groqStatus)+'</p>':""));
  const usageCard=card("AI Token 用量",lastUsage?
  piece("最近使用模型",esc(lastUsage.model||"未確認"))+
@@ -344,7 +367,7 @@ function settings(){
  (temporary.cloudError?'<p class="negative-note">'+esc(temporary.cloudError)+'</p>':""));
  return section("TERMINAL SETTINGS","系統設定","閱讀效果及本機、雲端輪迴存檔。")+'<div class="scroll-content column-gap">'+
  card("閱讀",piece("E+ 文字演出強度",mode==="strong"?"強烈（情緒轉折、線索、主神文字）":mode==="standard"?"柔和（閱讀時段落自然浮現）":"關閉（靜態閱讀）",a("切換模式","toggleMotion","small")))+
- groqCard+usageCard+cloudCard+card("本機存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+'</div>'
+ musicCard+groqCard+usageCard+cloudCard+card("本機存檔",piece("已完成輪迴",s.records.length+" 次")+a("匯出角色存檔 JSON","export","block ghost"))+'</div>'
 }
 function screen(){return s.screen==="hub"?hub():s.screen==="profile"?profile():s.screen==="warehouse"?warehouse():s.screen==="loadout"?loadout():s.screen==="upgrade"?upgrade():s.screen==="portal"?missionBoard():s.screen==="mission"?missionUI():s.screen==="memory"?memory():settings()}
 function render(){
@@ -363,6 +386,7 @@ function render(){
  const leaveOverlay=temporary.leaveDialog?'<div class="story-exit-overlay" role="dialog" aria-modal="true" aria-label="退出故事"><div class="story-exit-card"><h2>離開呢個故事？</h2><p>你可以隨時開始新故事。之前嘅章節與選擇會保留喺經歷紀錄；主角姓名同其他存檔唔會被刪除。</p><div class="story-exit-actions">'+a("繼續閱讀","cancelLeave","block ghost")+a("退出並選新故事","confirmLeave","block main")+'</div></div></div>':"";
  R.innerHTML='<div class="app-shell '+(inGame?"in-game":"")+'">'+(inGame?"":header())+'<main class="app-main">'+screen()+'</main>'+(inGame?"":foot())+(temporary.notice?'<div class="toast">'+esc(temporary.notice)+'</div>':"")+leaveOverlay+rewriteOverlay+'</div>';
  if(same&&oldY>0){const pane=R.querySelector?.(".scene-prose");if(pane)pane.scrollTop=oldY}
+ window.NW_MUSIC?.sync?.({mood:soundtrackMood(),volume:Number(s.settings?.musicVolume??.22)});
  window.NW_EFFECTS?.cancel?.();
  if(fresh){temporary.fxSeen=fxKey;window.NW_EFFECTS?.play?.(R,{mode})}
  persist();if(inGame)scheduleAiScene()
@@ -515,11 +539,29 @@ if(cmd==="cloudRestore"){
  notice("已恢復雲端輪迴進度。原本本機存檔已另存備份。")
  }).catch(e=>{temporary.cloudError=String(e.message||e);render()});return
 }
+if(cmd==="musicToggle"){
+ const currently=window.NW_MUSIC?.status?.().enabled;
+ if(currently){
+  window.NW_MUSIC?.stop?.();
+  s.settings.musicEnabled=false;
+ }else{
+  const started=window.NW_MUSIC?.start?.({mood:soundtrackMood(),volume:Number(s.settings?.musicVolume??.22)});
+  s.settings.musicEnabled=!!started;
+ }
+ render();return
+}
 if(cmd==="toggleMotion"){const next=eplusMode()==="standard"?"strong":eplusMode()==="strong"?"off":"standard";s.settings.eplusMode=next;s.settings.reducedMotion=next==="off";temporary.fxSeen="";temporary.fxSkippedFor="";render();return}
 if(cmd==="skipFx"){temporary.fxSkippedFor=temporary.fxSceneKey;window.NW_EFFECTS?.skip?.();const pane=R.querySelector?.(".scene-prose");pane?.classList?.add("fx-static");pane?.classList?.remove("fx-strong","fx-standard");const skip=R.querySelector?.(".eplus-skip");if(skip)skip.hidden=true;return}
 if(cmd==="export"){try{const blob=new Blob([JSON.stringify(s,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nightwalker-save.json";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}catch(_){notice("此瀏覽器暫不支援匯出。")}return}
 }
-R.addEventListener("input",ev=>{const el=ev.target;if(el.id==="free-action")temporary.freeDraft=el.value.slice(0,350);if(el.id==="media-world-name"){temporary.mediaWorldDraft=el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="rewrite-note")temporary.rewriteNote=el.value.slice(0,240);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=el.value.slice(0,450)});
+R.addEventListener("input",ev=>{const el=ev.target;
+if(el.id==="bgm-volume"){
+ const value=Math.max(0,Math.min(45,Number(el.value)||0));
+ s.settings.musicVolume=value/100;
+ window.NW_MUSIC?.setVolume?.(s.settings.musicVolume);
+ const label=R.querySelector("#bgm-volume-value");if(label)label.textContent=value+"%";
+ E.save(s);return
+}if(el.id==="free-action")temporary.freeDraft=el.value.slice(0,350);if(el.id==="media-world-name"){temporary.mediaWorldDraft=el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="rewrite-note")temporary.rewriteNote=el.value.slice(0,240);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=el.value.slice(0,450)});
 R.addEventListener("click",ev=>{let t=ev.target.closest("[data-do]");if(!t||t.disabled)return;handle(t.dataset.do)});
 render();
 checkAiStatus();
