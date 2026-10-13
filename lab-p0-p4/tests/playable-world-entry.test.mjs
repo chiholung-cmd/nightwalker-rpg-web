@@ -51,7 +51,7 @@ test("pre-entry screen has sourced introduction and lets player stage a companio
  for(const token of ["WORLD INTRODUCTION / 世界簡介","worldSummary","verifiedSource","opening-intent","main-god-decree","主神指派 · 不可更改","original-world-premise","world-suggestion","worldPick:","sourceUrl","請按「核對作品名稱」"])assert.ok(app.includes(token),token);
  assert.ok(engine.includes("openingIntent:"));
  assert.ok(engine.includes("worldSummary:"));
- assert.ok(engine.includes('s.assignment.mode==="team"'));
+ assert.ok(engine.includes("function mainGodMode"));
  assert.ok(html.includes('drafts.js')&&html.includes('codex.js'));
  assert.ok(html.indexOf("drafts.js")<html.indexOf("app.js"));
  assert.match(css,/\.entry-world-intro/);
