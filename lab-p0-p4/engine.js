@@ -60,6 +60,16 @@ function mainGodAssign(s,random=Math.random){if(s.mission)return "現有世界�
 function assignReturn(s,worldId){if(s.mission)return "輪迴途中不可定向";if(s.assignment)return "已有主神指派，無法更改";if(!s.discovered.includes(worldId))return "必須先到訪此世界";const w=world(worldId);if(!w)return "無效世界";const cost={busan:220,demon:650,alice:550,deathnote:380}[worldId],fee={busan:60,demon:160,alice:150,deathnote:100}[worldId],level={busan:4,demon:6,alice:6,deathnote:5}[worldId];if(s.profile.level<level)return "需要 Lv."+level;if(!s.coord[worldId]){if(s.profile.credits<cost)return "座標解鎖需要 "+cost+" 積分";s.profile.credits-=cost;s.coord[worldId]=true;return "座標已解鎖，請再次確認指定傳送"}if(s.profile.credits<fee)return "定向費需要 "+fee+" 積分";s.profile.credits-=fee;const tasks=D.tasks.filter(t=>t.world===worldId);const t=tasks[0];s.assignment={task:t.id,world:worldId,mode:t.mode,seed:Date.now()%999999,assignedAt:Date.now(),targeted:true};return null}
 
 function customWorldCost(name){return 300+Math.max(0,String(name||"").trim().length-8)*10}
+// Only the Main God determines whether a world is solo, cooperative or hostile.
+// Seeded once during assignment; reopening the preparation screen cannot reroll it.
+function mainGodMode(seed,kind="adaptation"){
+ const n=Math.abs(Math.floor(Number(seed)||0))%10;
+ if(kind==="original")return n<4?"solo":n<9?"team":"versus";
+ return n<3?"solo":n<8?"team":"versus";
+}
+function mainGodTeam(s,mission){
+ return (mission?.mode==="team"?(mission.crew||[]):[]);
+}
 function assignCustomWorld(s,name,aiReady,details={}){
 if(s.mission)return "請先完成目前輪迴";
 if(s.assignment)return "已有主神指派，請先完成該次傳送";
@@ -82,7 +92,8 @@ if(kind==="adaptation"){
    if(s.profile.credits<cost)return "需支付 "+cost+" 主神積分";
    s.profile.credits-=cost;
    const t=tasks[Math.floor(Math.random()*tasks.length)];
-   s.assignment={task:t.id,world:t.world,worldTitle:title,mode:t.mode,targeted:true,customRequested:title,worldKind:kind,mediaType,verifiedSource:String(details.verifiedSource||"").slice(0,350),verifiedSourceTitle:String(details.verifiedSourceTitle||"").slice(0,120),worldSummary:String(details.summary||"").slice(0,900),paidCost:cost,seed:Date.now()%100000000,assignedAt:Date.now()};
+   const seed=Date.now()%100000000;
+   s.assignment={task:t.id,world:t.world,worldTitle:title,mode:mainGodMode(seed,kind),targeted:true,customRequested:title,worldKind:kind,mediaType,verifiedSource:String(details.verifiedSource||"").slice(0,350),verifiedSourceTitle:String(details.verifiedSourceTitle||"").slice(0,120),worldSummary:String(details.summary||"").slice(0,900),paidCost:cost,seed,assignedAt:Date.now()};
    return null
  }
 }
@@ -90,7 +101,8 @@ if(!aiReady)return "AI 劇情暫不可用，不能進入未收錄的世界；並
 const cost=s.settings?.novelMode!==false?0:customWorldCost(title);
 if(s.profile.credits<cost)return "需要 "+cost+" 主神積分";
 s.profile.credits-=cost;
-s.assignment={task:"custom_generated",world:"custom",worldTitle:title,worldKind:kind,mediaType:kind==="adaptation"?mediaType:null,verifiedSource:kind==="adaptation"?String(details.verifiedSource||"").slice(0,350):"",verifiedSourceTitle:kind==="adaptation"?String(details.verifiedSourceTitle||"").slice(0,120):"",premise:kind==="original"?premise:"",worldSummary:kind==="original"?premise.slice(0,900):String(details.summary||"").slice(0,900),mode:"solo",paidCost:cost,targeted:true,customRequested:title,seed:Date.now()%100000000,assignedAt:Date.now()};
+const seed=Date.now()%100000000;
+s.assignment={task:"custom_generated",world:"custom",worldTitle:title,worldKind:kind,mediaType:kind==="adaptation"?mediaType:null,verifiedSource:kind==="adaptation"?String(details.verifiedSource||"").slice(0,350):"",verifiedSourceTitle:kind==="adaptation"?String(details.verifiedSourceTitle||"").slice(0,120):"",premise:kind==="original"?premise:"",worldSummary:kind==="original"?premise.slice(0,900):String(details.summary||"").slice(0,900),mode:mainGodMode(seed,kind),paidCost:cost,targeted:true,customRequested:title,seed,assignedAt:Date.now()};
 return null
 }
 function cancelCustomWorld(s){
@@ -250,5 +262,5 @@ s.worldLibrary[libraryKey]=previous;
 restoreAllResources(s);
 s.lastReward=summary;s.mission=null;s.assignment=null;s.screen="hub";return null}
 function rest(s){if(s.mission)return "輪迴途中不可使用主神的免費恢復";restoreAllResources(s);return null}
-global.NW_ENGINE={KEY,RESET_MARK,defaultState,load,save,restoreAllResources,customWorldCost,assignCustomWorld,cancelCustomWorld,abandonStory,item,skill,world,task,weight,capacity,maxBag,bagReserved,canPack,addBag,removeBag,setEquipment,toggleSkill,buy,learn,buyBloodline,boost,tierOK,mainGodAssign,assignReturn,validateLoadout,launch,availability,derived,changeSkill,useItem,act,freeAction,end,finish,rest};
+global.NW_ENGINE={KEY,RESET_MARK,defaultState,load,save,restoreAllResources,mainGodMode,mainGodTeam,customWorldCost,assignCustomWorld,cancelCustomWorld,abandonStory,item,skill,world,task,weight,capacity,maxBag,bagReserved,canPack,addBag,removeBag,setEquipment,toggleSkill,buy,learn,buyBloodline,boost,tierOK,mainGodAssign,assignReturn,validateLoadout,launch,availability,derived,changeSkill,useItem,act,freeAction,end,finish,rest};
 })(window);
