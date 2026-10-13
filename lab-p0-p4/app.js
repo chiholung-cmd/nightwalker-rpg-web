@@ -143,18 +143,41 @@ function header(){
 function foot(){const nav=[["hub","書架"],["portal","新故事"],["memory","經歷"],["settings","設定"]];return '<nav class="bottom-nav book-nav">'+nav.map(([id,name])=>'<button class="'+(s.screen===id?"on":"")+'" data-do="nav:'+id+'"><span>'+icon[id]+'</span><small>'+name+'</small></button>').join("")+'</nav>'}
 function pillRow(){let p=s.profile;return '<div class="vitals">'+bar("HP",p.hp,100,"#d8a2aa")+bar("STA",p.sta,100,"#dec993")+bar("MP",p.mp,60,"#93bbd9")+bar("SAN",p.san,100,"#b8a3d7")+'</div>'}
 function hub(){
- const saved=s.mission&&!s.mission.finished;
- const recent=s.abandonedStories?.[0];
- return '<section class="library-home"><div class="library-kicker">NIGHTWALKER · 無限流小說</div><h1>命運，<br>由下一個決定開始。</h1><p class="library-desc">不是一場計分的冒險，而是一段會記住人物、選擇和代價的故事。</p><div class="library-hero-action">'+
- (saved?a("繼續閱讀《"+esc(s.mission.worldName)+"》","nav:mission","block main")+a("放下這個故事 · 開始新故事","leaveStory","block ghost"):a("開始一個新故事","nav:portal","block main"))+
- '</div><div class="library-shelf"><h2>你的經歷</h2><p>'+(recent?'上次離開《'+esc(recent.worldName||"未知世界")+'》 · 第 '+esc(recent.chapter)+' 章':'故事尚未開始。你可以揀一部作品進入其中，或者建立自己的世界。')+'</p>'+a("打開故事紀錄","nav:memory","small ghost")+'</div></section>'
+ const p=s.profile,missions=p.missions||0,assignment=s.assignment;
+ const goNext=s.mission&&!s.mission.finished?
+  a("繼續目前輪迴 ·《"+esc(s.mission.worldName)+"》","nav:mission","block main"):
+  a(assignment?"檢視主神指派的世界":"前往主神輪迴終端","nav:portal","block main");
+ const cards=[
+  ["profile","user-round","人物檔案","屬性／血脈／關係"],
+  ["loadout","swords","裝備配置","武器／防具／技能欄"],
+  ["upgrade","sparkles","主神強化","能力／血脈／技能分支"],
+  ["warehouse","package","永久倉庫","戰利品／補給／商店"],
+  ["memory","book-open","輪迴記憶","已經歷的世界"],
+  ["portal","orbit","世界終端","主神任務與入場"]
+ ];
+ const active=s.mission&&!s.mission.finished;
+ return '<section class="command-dashboard"><div class="command-greeting"><div class="library-kicker">NIGHTWALKER · MAIN GOD CHAMBER</div><div class="command-orbit">∞</div>'+
+ '<h1>'+(playerName()?'歡迎歸還，'+esc(playerName())+'。':'主神已經注意到你。')+'</h1>'+
+ '<p>裝備、能力、隊友關係與輪迴記憶都屬於同一個人。你下一個決定將改變故事。</p></div>'+
+ '<div class="command-identity"><div><span>輪迴者檔案</span><strong>'+esc(playerName()||"尚未建立身份")+'</strong><small>Lv.'+Number(p.level||1)+' · 已完成 '+Number(missions)+' 次輪迴</small></div>'+
+ '<div class="command-resources"><span>主神積分</span><strong>'+num(p.credits||0)+'</strong></div></div>'+
+ '<div class="command-vitals">'+[
+  ["生命",p.hp,100],["體力",p.sta,100],["精神",p.mp,60],["理智",p.san,100]
+ ].map(([name,val,max])=>'<div><span>'+name+'</span><div class="command-meter"><i style="width:'+Math.max(0,Math.min(100,100*Number(val||0)/max))+'%"></i></div></div>').join("")+'</div>'+
+ '<div class="command-shortcuts">'+cards.map(([dest,symbol,title,subtitle])=>
+ '<button class="command-shortcut" data-do="nav:'+dest+'"><span class="command-symbol">'+esc(symbol==="swords"?"⚔":symbol==="sparkles"?"✧":symbol==="package"?"▣":symbol==="book-open"?"▤":symbol==="orbit"?"∞":"◈")+
+ '</span><strong>'+title+'</strong><small>'+subtitle+'</small></button>').join("")+'</div>'+
+ '<div class="command-next"><div class="library-kicker">'+(active?"輪迴進行中":assignment?"主神已指派世界":"下一次輪迴")+'</div><h2>'+
+ esc(active?s.mission.worldName:assignment?(assignment.worldTitle||world(assignment.world)?.name||"主神試煉"):"等待主神宣告")+'</h2>'+
+ '<p>主神決定任務形式與隊友安排；你負責選擇自己的技能、裝備、判斷與行動。</p>'+goNext+'</div></section>';
 }
-function profile(){
- const m=s.mission||{phase:0,history:[],crew:[],npcMemory:{},storyBible:{characters:{}}};
- return section("CHARACTER DOSSIER","人物與世界","主角、已學技能、武器、物品與 NPC 都會留在故事之中，直接影響可用行動。")+
- '<div class="scroll-content story-codex-page">'+(window.NW_CODEX?.render?.(s,m,temporary.codexTab,{page:true})||"")+
- a(s.mission?"返回故事":"返回主神空間",s.mission?"nav:mission":"nav:portal","block ghost")+'</div>'
-}
+function profile(){const p=s.profile,t=temporary.profileTab;let tabs=[["overview","總覽"],["attributes","能力"],["gear","裝備"],["relations","關係"],["records","輪迴"]];let content="";
+if(t==="overview")content='<div class="profile-art"><div class="profile-seal"><span>∞</span></div><div><div class="eyebrow">REINCARNATOR · NO.0000</div><h2>'+esc(playerName()||"未命名輪迴者")+'</h2><p>'+esc(p.title)+'</p><span class="chip warm">LV.'+p.level+' · 生存觀察者</span></div></div>'+pillRow()+'<div class="two-cols">'+statCard("基礎強度",p.attrs.str+p.attrs.agi+p.attrs.con)+statCard("精神感知",p.attrs.per+p.attrs.wil)+'</div>'+card('主神判定','已完成輪迴：'+p.missions+' 次。'+(s.records.length?"最近世界《"+world(s.records[0].world)?.name+"》。":"尚未取得完整輪迴紀錄。"))+card("血脈／異能",s.profile.bloodline?esc(D.bloodlines.find(x=>x.id===s.profile.bloodline)?.name||"未知血脈"):"未覺醒（主神強化 Lv.5 起可解鎖）")+card("命運標籤","觀察者 · 未歸之人 · 記憶重置疑雲");
+if(t==="attributes")content=card("五維基礎屬性",D.attributes.map(([id,name])=>piece(name,"影響技能判定與可用裝備",'<b class="num">'+p.attrs[id]+'</b>')).join(""))+card("衍生能力","行囊負重上限 "+E.capacity(s)+"，目前 "+E.weight(s)+"；已學習技能 "+s.learned.length+" 項。");
+if(t==="gear")content=card("當前攜帶裝備",["weapon","offhand","armor","accessory"].map(x=>piece({weapon:"主武器",offhand:"副武器",armor:"防具",accessory:"飾品"}[x],objId(s.loadout[x])?.name||"未裝備")).join(""))+card("戰技配置",s.loadout.active.map(id=>piece(skill(id)?.name||id,skill(id)?.desc||"")).join(""))+a("前往戰前配置","nav:loadout","main block");
+if(t==="relations")content=card("輪迴者關係網",D.companions.map(c=>piece(c.name,c.role+" · "+c.temper,tag("關係 "+(s.bonds[c.id]||0),(s.bonds[c.id]||0)>=2?"gold":""))).join(""))+card("故事規則","隊友只有被分派到同一任務時才會登場；單人輪迴不會固定攜帶林霧。");
+if(t==="records")content=card("已完成的世界",s.discovered.length?s.discovered.map(id=>piece(world(id)?.name||id,"可用積分解鎖定向座標")).join(""):"尚未完成正式輪迴。")+card("主神檔案",s.memory.length?s.memory.slice(0,5).map(x=>piece(x.text,new Date(x.at).toLocaleDateString("zh-HK"))).join(""):"仍未恢復失落的記憶。");
+return section("個人登錄資料","輪迴者檔案","輪迴者檔案沿用舊版 RPG 功能，技能、血脈、裝備與人際關係永久跨世界保留。")+'<div class="tabbar">'+tabs.map(x=>'<button class="'+(t===x[0]?"on":"")+'" data-do="tab:profile:'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="scroll-content column-gap">'+content+'</div>'}
 function statCard(title,value){return '<div class="card little"><div class="eyebrow">'+esc(title)+'</div><strong class="big-number">'+value+'</strong></div>'}
 function card(title,body,cl=""){return '<div class="card '+cl+'"><div class="card-heading">'+title+'</div><div class="card-body">'+body+'</div></div>'}
 function warehouse(){const mode=temporary.warehouseMode,filter=temporary.filter;const tabs=[["storage","永久倉庫"],["shop","主神商店"]];let catalog=mode==="storage"?D.items.filter(x=>(s.warehouse[x.id]||0)>0):D.shop.map(([id,price])=>({...objId(id),price})),items=catalog.filter(x=>filter==="all"||x.type===filter);
@@ -204,7 +227,7 @@ return head+menu+'<div class="scroll-content column-gap">'+content+'</div>'
 }
 function missionBoard(){if(s.mission)return missionUI();
 let banner=s.assignment?(()=>{let t=s.assignment.world==="custom"?{name:s.assignment.worldKind==="original"?"自創世界·主神試煉":"作品世界·主神試煉",mode:"solo",goal:"探索「"+s.assignment.worldTitle+"」並完成主神委派的目標",desc:s.assignment.worldKind==="original"?"原創世界構築":"AI 作品世界"}:task(s.assignment.task),w=s.assignment.world==="custom"?{name:s.assignment.worldTitle,tone:"AI 創作世界"}:world(t.world);return '<div class="assigned"><div class="eyebrow">MAIN GOD / ASSIGNED SCENARIO</div><span class="mode-label">'+({solo:"單人任務",team:"團隊任務",versus:"對抗任務"}[t.mode])+'</span><h2>'+esc(t.name)+'</h2><p>《'+w.name+'》 · '+esc(w.tone)+'</p><div class="rule"></div><h3>主線目標</h3><p>'+esc(t.goal)+'</p><div class="assigned-desc">'+esc(t.desc)+'</div><small>隱藏任務：尚未公開。世界及模式已鎖定，無法免費重抽。</small></div>'})():'<div class="unassigned"><div class="main-god-eye">◌</div><div class="eyebrow">DESTINY LOCKED / UNKNOWN</div><h2>主神尚未公布你的下一個世界</h2><p>可能進入電影、動畫或劇集世界。每次任務可為單人、合作小隊或對抗任務，主神將決定你的入場位置與身份。</p></div>';
-const protagonistSetup='<div class="identity-entry"><label for="protagonist-name">主角姓名 · 自由設定</label><div class="identity-entry-row"><input id="protagonist-name" maxlength="20" placeholder="由你命名，唔再叫夜行者" value="'+esc(temporary.nameDraft??playerName())+'">'+a("保存姓名","saveName","small main")+'</div><small>Nightwalker 只係遊戲名稱；已有劇情同存檔會繼續保留。</small></div>';
+const protagonistSetup=playerName()?'<div class="identity-confirmed">輪迴者：<strong>'+esc(playerName())+'</strong><span>人物資料已保存，所有世界沿用同一身份。</span>'+a("改名","editName","tiny ghost")+'</div>':'<div class="identity-entry"><label for="protagonist-name">第一次建立主角姓名</label><div class="identity-entry-row"><input id="protagonist-name" maxlength="20" placeholder="建立一次，此後所有輪迴沿用" value="'+esc(temporary.nameDraft??"")+'">'+a("建立身份","saveName","small main")+'</div><small>呢個名字只需要設定一次；之後可以自行改名，唔會每次選世界都再問。</small></div>';
 const worldIntro=s.assignment?
  '<div class="entry-world-intro"><div class="eyebrow">WORLD INTRODUCTION / 世界簡介</div>'+
  '<h3>《'+esc(s.assignment.worldTitle||world(s.assignment.world)?.name||"未命名世界")+'》</h3>'+
@@ -551,6 +574,7 @@ if(cmd.startsWith("novelPick:")){
 }
 
 if(cmd.startsWith("worldMedia:")){temporary.worldMedia=cmd.slice("worldMedia:".length);temporary.worldMatches=[];temporary.worldLookupError="";render();return}
+if(cmd==="editName"){s.profile.nameCustomized=false;s.profile.name="";temporary.nameDraft="";render();return}
 if(cmd==="saveName"){
  const name=(R.querySelector("#protagonist-name")?.value??temporary.nameDraft??"").trim();
  if(name.length<2||name.length>20)return notice("主角姓名需要 2 至 20 字");
