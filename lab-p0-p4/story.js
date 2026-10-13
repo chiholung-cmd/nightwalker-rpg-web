@@ -92,7 +92,11 @@ function distinct(a){return Array.from(new Set(a))}
 function get(s){
 const m=s.mission;if(!m)return null;
 const st=ensure(m);
-if(m.world==="custom"||m.director){const custom=m.aiOptions?.[m.phase]||[];const opts=custom.map((x,i)=>{let o={id:x.id||"ai-"+i,label:x.label,hint:x.hint,kind:x.kind,cost:Number(x.cost)||0,progress:Number(x.progress)||1,flag:x.flag||"ai-option-"+i,reasons:[]};if(!m.narrativeMode&&["run","sneak","physical","risk","fight"].includes(o.kind)&&s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length;return o});return {world:{name:m.worldName},section:null,actions:opts,exertion:st.exertion,active:false,phase:m.phase,storyState:st}}
+if(m.world==="custom"||m.director){const custom=m.aiOptions?.[m.phase]||[];const opts=custom.map((x,i)=>{
+ const caps=m.narrativeCapabilities||{};
+ const active=new Set([...(caps.skills||[]).map(z=>"skill:"+z.id),...(caps.items||[]).map(z=>"item:"+z.id),...(caps.bloodline?["bloodline:"+caps.bloodline]:[])]);
+ let o={id:x.id||"ai-"+i,label:x.label,hint:x.hint,kind:x.kind,cost:m.narrativeMode?0:Number(x.cost)||0,progress:m.narrativeMode?0:Number(x.progress)||1,flag:x.flag||"ai-option-"+i,requires:x.requires||"",reasons:[]};
+ if(m.narrativeMode&&o.requires&&!active.has(o.requires))o.reasons.push("當前人物未掌握所需能力");if(!m.narrativeMode&&["run","sneak","physical","risk","fight"].includes(o.kind)&&s.profile.sta<o.cost)o.reasons.push("體力不足");o.usable=!o.reasons.length;return o});return {world:{name:m.worldName},section:null,actions:opts,exertion:st.exertion,active:false,phase:m.phase,storyState:st}}
 const data=W[m.world]||W.busan;let idx=Math.min(5,m.phase),section=data.chapters[idx];
 let opts=section.options.map(([id,label,hint,kind,cost,progress,flag,require])=>({id,label,hint,kind,cost,progress,flag,require,reasons:[]}));
 if(m.mode==="team"&&idx===2)opts[1]={id:"coordinate",label:"與隊友商量如何完成主神任務",hint:"共同推進目標，也許改變關係",kind:"talk",cost:0,progress:1,flag:"teamwork",reasons:[]};
