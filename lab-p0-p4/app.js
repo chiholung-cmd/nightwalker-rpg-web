@@ -2,7 +2,7 @@
 "use strict";
 const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElementById("app");
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
-let s=E.load();if(s.mission&&!s.mission.finished)s.mission.narrativeMode=true;let temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,aiRewriteAttempts:{},rewriteDialog:false,rewriteNote:"",codexOpen:false,codexTab:"character",draftScope:"",openingDraft:"",leaveDialog:false,freeDraft:"",freeReview:null,choicesOpen:false,worldMatches:[],worldLookupQuery:"",worldLookupMedia:"",worldLookupPending:false,worldLookupError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
+let s=E.load();if(s.mission&&!s.mission.finished)s.mission.narrativeMode=true;let temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,aiRewriteAttempts:{},rewriteDialog:false,rewriteNote:"",codexOpen:false,codexTab:"character",draftScope:"",openingDraft:"",leaveDialog:false,freeDraft:"",freeReview:null,choicesOpen:false,worldMatches:[],worldLookupQuery:"",worldLookupMedia:"",worldLookupPending:false,worldLookupError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",novelGenre:"全部",novelQuery:"",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
 temporary.originalPremiseDraft=window.NW_DRAFTS?.get?.("premise","new-world")||temporary.originalPremiseDraft;
 temporary.mediaWorldDraft=window.NW_DRAFTS?.get?.("world","media-title")||"";
 temporary.originalWorldDraft=window.NW_DRAFTS?.get?.("world","original-title")||"";
@@ -73,7 +73,7 @@ const narrativeCapabilities={
  rivals:m.rival?[{name:m.rival.name,role:m.rival.role||""}]:[]
 };
 m.narrativeCapabilities=narrativeCapabilities;
-const body={openingIntent:m.openingIntent||"",recentAction:String(m.pendingAction?.text||"").slice(0,1500),narrativeCapabilities,rewriteFeedback:temporary.aiRewriteAttempts[key]?String(temporary.rewriteNote||"").slice(0,240):"",rewriteAttempt:Number(temporary.aiRewriteAttempts[key]||0),directorBrief,storyBible,endingAudit,verifiedSource:m.verifiedSource||"",verifiedSourceTitle:m.verifiedSourceTitle||"",canonTimeline:(m.canonTimeline||[]).slice(0,6),protagonist:literaryName().slice(0,30),sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,350)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{mode:"story",noNumericStats:true}};
+const body={curatedNovelId:m.curatedNovelId||"",openingIntent:m.openingIntent||"",recentAction:String(m.pendingAction?.text||"").slice(0,1500),narrativeCapabilities,rewriteFeedback:temporary.aiRewriteAttempts[key]?String(temporary.rewriteNote||"").slice(0,240):"",rewriteAttempt:Number(temporary.aiRewriteAttempts[key]||0),directorBrief,storyBible,endingAudit,verifiedSource:m.verifiedSource||"",verifiedSourceTitle:m.verifiedSourceTitle||"",canonTimeline:(m.canonTimeline||[]).slice(0,6),protagonist:literaryName().slice(0,30),sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,350)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{mode:"story",noNumericStats:true}};
 try{
  const res=await fetch("/api/story",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
  const obj=await res.json();if(!res.ok){const error=new Error(obj.message||obj.error||"AI 劇情暫時無法載入");error.code=obj.error||"";error.httpStatus=res.status;error.retryAfter=Number(obj.retryAfter)||0;throw error}
@@ -228,7 +228,7 @@ let customCard="";
 if(!s.assignment){
  const original=temporary.worldType==="original";
  const media=["電影","劇集","動畫","小說","遊戲","其他作品"];
- const types='<div class="world-kind-tabs"><button class="'+(!original?"selected":"")+'" data-do="worldType:adaptation">作品世界<small>電影／劇集／動畫等</small></button><button class="'+(original?"selected":"")+'" data-do="worldType:original">自創世界<small>建立原創世界觀</small></button></div>';
+ const types='<div class="world-kind-tabs"><button class="'+(!original&&temporary.worldType==="adaptation"?"selected":"")+'" data-do="worldType:adaptation">電影／劇集／遊戲<small>現有影視或其他作品</small></button><button class="'+(temporary.worldType==="mainland"?"selected":"")+'" data-do="worldType:mainland">大陸網文<small>無限流／玄幻／修仙／懸疑</small></button><button class="'+(original?"selected":"")+'" data-do="worldType:original">自創世界<small>自行設定背景</small></button></div>';
  const status='<p class="minor-meta">AI 創作狀態：'+aiStatusText()+'。原作會先核對，再由你確認。</p>';
  const mediaVerify=temporary.worldLookupPending?'<div class="world-verify">正在核對作品名稱、原作版本與故事背景；輸入文字已保留……</div>':
  temporary.worldMatches.length?'<div class="world-verify"><b>可能係你想搵嘅作品</b><p>請揀正確作品；原作資料未確認就唔會冒充官方劇情。</p>'+
@@ -239,8 +239,19 @@ if(!s.assignment){
  (temporary.worldLookupError?'<p class="world-verify-note">'+esc(temporary.worldLookupError)+'</p>':"")+'</div>':
  temporary.worldLookupError?'<div class="world-verify problem">'+esc(temporary.worldLookupError)+'</div>':"";
  const mediaForm='<p>選擇現有電影、劇集、動畫、小說或遊戲嘅世界，由你親自加入故事。主神仍會發佈任務，唔會直接重演原作劇情。</p><div class="world-mediums">'+media.map(x=>'<button class="'+(temporary.worldMedia===x?"selected":"")+'" data-do="worldMedia:'+x+'">'+x+'</button>').join("")+'</div><label for="media-world-name" class="world-input-label">作品名稱</label><input id="media-world-name" class="custom-world-input" value="'+esc(temporary.mediaWorldDraft)+'" maxlength="50" placeholder="例如：死亡筆記、進擊的巨人" aria-label="作品世界名稱"><p class="minor-meta">作品名稱會先核對，確認作品及媒介版本後才開始。原作人物與設定會盡量維持，但衍生劇情並非官方內容。</p>';
+ const shelf=window.NW_CN_NOVELS;
+ const novelForm='<section class="cn-novel-library"><h2>大陸網文世界</h2><p>已查閱作品資料，以下選項全部係原著小說版本。選擇後先睇簡介、人物同入場安排，再由你決定開始。</p>'+
+ '<label for="cn-novel-search">搜尋小說、作者或題材</label>'+
+ '<input id="cn-novel-search" class="custom-world-input" type="search" placeholder="例如：無限恐怖、輪迴、克蘇魯、修仙" value="'+esc(temporary.novelQuery)+'" autocomplete="off">'+
+ '<div class="cn-novel-genres">'+(shelf?.genres||[]).map(g=>'<button data-do="novelGenre:'+g+'" class="'+(g===temporary.novelGenre?"on":"")+'">'+esc(g)+'</button>').join("")+'</div>'+
+ '<div class="cn-novel-grid">'+(shelf?.filter?.(temporary.novelGenre,temporary.novelQuery)||[]).map(x=>'<article class="cn-novel-card">'+
+ '<div class="cn-novel-category">'+esc(x.genre)+' · 原著小說</div><h3>《'+esc(x.title)+'》</h3><p class="cn-novel-author">'+esc(x.author)+'</p>'+
+ '<p class="cn-novel-summary">'+esc(x.summary)+'</p>'+
+ a("選擇呢個小說世界 →","novelPick:"+x.id,"block main")+
+ '</article>').join("")+'</div>'+
+ '<p class="minor-meta">搵唔到？可以喺「電影／劇集／遊戲」選「小說」後輸入作品名，系統會核對作品及提供修正建議。</p></section>';
  const originalForm='<p>完全由你構思世界。可以係規則怪談、末日、仙俠、懸疑或者任何原創背景；AI 會根據你嘅規則設計人物、危機同故事。</p><label for="original-world-name" class="world-input-label">原創世界名稱</label><input id="original-world-name" class="custom-world-input" value="'+esc(temporary.originalWorldDraft)+'" maxlength="50" placeholder="例如：零號月台、深海第七城" aria-label="原創世界名稱"><label for="original-world-premise" class="world-input-label">世界背景與核心規則</label><textarea id="original-world-premise" class="world-premise-input" maxlength="2000" rows="7" placeholder="例如：每晚十二點，失蹤者會收到一張沒有終點站的車票。車上有三條禁忌規則，每個人都在隱瞞自己的目的……" aria-label="原創世界背景與規則">'+esc(temporary.originalPremiseDraft)+'</textarea><p class="minor-meta">背景最少 12 字。AI 會以你提供嘅規則建立世界；開場唔理想亦可以退出重新開始。</p>';
- customCard=card("額外權限 · 自選世界",types+'<div class="world-form">'+(original?originalForm:mediaForm)+(!original?mediaVerify:"")+a(original?"建立原創故事":"核對作品名稱","customWorld","block main")+status+'</div>');
+ customCard=card("選擇故事世界",types+'<div class="world-form">'+(original?originalForm:temporary.worldType==="mainland"?novelForm:mediaForm)+(temporary.worldType==="adaptation"?mediaVerify:"")+a(original?"建立原創故事":"核對作品名稱","customWorld","block main")+status+'</div>');
 }
 let returnLinks=false&&s.discovered.length?card("定向返回已去過的世界",s.discovered.map(id=>{let w=world(id),unlocked=s.coord[id];return '<div class="return-row"><div><b>'+esc(w?.name||id)+'</b><small>'+(unlocked?"座標已解鎖":"須先付費解鎖座標")+'</small></div>'+a("查看代價","coord:"+id,"small ghost")+'</div>'}).join("")):"";
 return section("MAIN GOD / WORLD TRANSFER","主神空間","選擇世界、保留人物能力和過往關係；每次傳送都由你決定如何準備。")+'<div class="scroll-content column-gap">'+protagonistSetup+banner+stages+customCard+returnLinks+'</div>'}
@@ -515,7 +526,30 @@ if(cmd==="aiRetry"){
  generateAiScene(true);return
 }
 if(cmd==="cancelCustom"){let err=E.cancelCustomWorld(s);if(err)return notice(err);temporary.aiError="";go("hub");return}
-if(cmd.startsWith("worldType:")){temporary.worldType=cmd.slice("worldType:".length)==="original"?"original":"adaptation";temporary.worldMatches=[];temporary.worldLookupError="";render();return}
+if(cmd.startsWith("worldType:")){
+ const type=cmd.slice("worldType:".length);
+ if(["original","adaptation","mainland"].includes(type))temporary.worldType=type;
+ temporary.worldMatches=[];temporary.worldLookupError="";render();return
+}
+if(cmd.startsWith("novelGenre:")){
+ const genre=cmd.slice("novelGenre:".length);
+ if(window.NW_CN_NOVELS?.genres?.includes(genre))temporary.novelGenre=genre;
+ render();return
+}
+if(cmd.startsWith("novelPick:")){
+ if(s.mission||s.assignment)return notice("請先完成或退出目前故事，先可以開始新世界");
+ const novel=window.NW_CN_NOVELS?.find?.(cmd.slice("novelPick:".length));
+ if(!novel)return notice("作品資料暫時未載入，請重新開啟世界頁");
+ if(!playerName())return notice("請先保存主角姓名");
+ const err=E.assignCustomWorld(s,novel.title,true,{kind:"adaptation",mediaType:"小說",
+  verifiedTitle:novel.title,verifiedSource:novel.sourceUrl,verifiedSourceTitle:novel.sourceTitle,summary:novel.summary});
+ if(err)return notice(err);
+ s.assignment.curatedNovelId=novel.id;
+ s.assignment.novelAuthor=novel.author;
+ s.assignment.novelGenre=novel.genre;
+ temporary.worldMatches=[];temporary.novelQuery="";render();return
+}
+
 if(cmd.startsWith("worldMedia:")){temporary.worldMedia=cmd.slice("worldMedia:".length);temporary.worldMatches=[];temporary.worldLookupError="";render();return}
 if(cmd==="saveName"){
  const name=(R.querySelector("#protagonist-name")?.value??temporary.nameDraft??"").trim();
@@ -652,7 +686,8 @@ if(el.id==="bgm-volume"){
  window.NW_MUSIC?.setVolume?.(s.settings.musicVolume);
  const label=R.querySelector("#bgm-volume-value");if(label)label.textContent=value+"%";
  E.save(s);return
-}if(el.id==="free-action"){temporary.freeDraft=el.value.slice(0,3000);window.NW_DRAFTS?.save?.("free",temporary.draftScope,temporary.freeDraft)}if(el.id==="media-world-name"){temporary.mediaWorldDraft=window.NW_DRAFTS?.save?.("world","media-title",el.value.slice(0,50))||el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="opening-intent")temporary.openingDraft=window.NW_DRAFTS?.save?.("opening","next-world",el.value.slice(0,1200))||el.value.slice(0,1200);
+}if(el.id==="free-action"){temporary.freeDraft=el.value.slice(0,3000);window.NW_DRAFTS?.save?.("free",temporary.draftScope,temporary.freeDraft)}if(el.id==="cn-novel-search"){temporary.novelQuery=el.value.slice(0,70);const cursor=el.selectionStart;render();const box=R.querySelector("#cn-novel-search");if(box){box.focus();box.setSelectionRange?.(cursor,cursor)}return}
+if(el.id==="media-world-name"){temporary.mediaWorldDraft=window.NW_DRAFTS?.save?.("world","media-title",el.value.slice(0,50))||el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="opening-intent")temporary.openingDraft=window.NW_DRAFTS?.save?.("opening","next-world",el.value.slice(0,1200))||el.value.slice(0,1200);
 if(el.id==="rewrite-note")temporary.rewriteNote=window.NW_DRAFTS?.save?.("rewrite","chapter",el.value.slice(0,700))||el.value.slice(0,700);if(el.id==="original-world-name")temporary.originalWorldDraft=window.NW_DRAFTS?.save?.("world","original-title",el.value.slice(0,50))||el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=window.NW_DRAFTS?.save?.("premise","new-world",el.value.slice(0,2000))||el.value.slice(0,2000)});
 R.addEventListener("click",ev=>{let t=ev.target.closest("[data-do]");if(!t||t.disabled)return;handle(t.dataset.do)});
 render();
