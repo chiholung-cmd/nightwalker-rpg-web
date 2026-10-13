@@ -178,7 +178,7 @@ function collectStoryBlocks(scene,protagonist){
   const type=["dialogue","d","對白","对话"].includes(x.type)?"dialogue":"narration";
   const raw=String(x.text??x.content??"").trim();
   const paragraphs=type==="narration"?raw.split(/\n\s*\n/).filter(Boolean):[raw];
-  return paragraphs.map(text=>({type,speaker:clean(x.speaker,40),text:type==="dialogue"?clean(text,1400):thirdPerson(clean(text,1400),protagonist)}));
+  return paragraphs.map(text=>({type,speaker:clean(x.speaker,40),emotion:["fear","panic","anger","grief","revelation","shock","dread","relief"].includes(x.emotion)?x.emotion:"",text:type==="dialogue"?clean(text,1400):thirdPerson(clean(text,1400),protagonist)}));
  });
  if(!blocks.length){
   const prose=clean(scene?.story??scene?.prose??scene?.narration??scene?.content??"",6000);
@@ -208,7 +208,7 @@ const system=[
 "採用中文長篇無限流、生存懸疑與群像網絡小說的一般敘事技法：未知規則與現實代價、夥伴互相試探、主神空間的冷酷規則、危險逐級擴張、線索與行動形成因果。不要仿寫任何特定小說的原句、獨有角色或標誌性橋段，也不要直接照搬既有作品劇情。",
 "正文必须有一个足以单独阅读的完整场景：直接从人物的处境与具体动作开始，顺着环境变化、人物互动、冲突和行动后果推进。写清楚角色为何如此判断，而不是旁白替读者下结论。对白要有人物性格、停顿与潜台词。每段优先具体感官与动作，避免堆砌空泛比喻、玄虚词句、抒情套话、不断重复的诡异气氛。每章别都用突然出现黑影、屏幕提示或者莫名一声巨响制造伪悬念。",
 "旁白不要称主角为轮回者／夜行者；Nightwalker 仅是产品品牌，protagonist 才是主角姓名。除主神确实宣读任务外，禁用主神提示、选项、获得线索、你发现等机械式词语。不能在三两句后停下让玩家选择；故事必须有情节进展，抉择出现在有意义的关口。",
-"只返回合法 JSON：title,mood,blocks:[{type:narration|dialogue,speaker?,text}],options:[{label,hint,kind,requires?}]最多三个,resolution。missionArc,npcUpdates,facts,npcEvents,sideQuests可省略；不用解释、战斗日志或数据表。正文里自然插入对白，对话用「」。",
+"只返回合法 JSON：title,mood,blocks:[{type:narration|dialogue,speaker?,text,emotion?}],options:[{label,hint,kind,requires?}]最多三个,resolution。可以在有明确文本证据的重点段落填写 emotion=fear/panic/anger/grief/revelation/shock/dread/relief，用于 E+ 动态文字表现；普通段落不标注，不因情绪效果添写剧情。missionArc,npcUpdates,facts,npcEvents,sideQuests可省略；不用解释、战斗日志或数据表。正文里自然插入对白，对话用「」。",
 "三个候选行动应该来自当前人物处境、具有不同风险及信息代价，不要千篇一律调查／对话／隐瞒。主角可以自由输入任何其他行动。narrativeCapabilities 代表已知技能和携带物品，只影响哪些方案在叙事中合理可行，不生成体力、等级、伤害或冷却数值。能力专用方案可以设置 requires=skill:技能ID 或 item:物品ID；其余方案不设 requires。kind 限 talk/observe/conceal/sneak/run/hide/physical/risk/fight/rest。",
 "故事以18至28段真实、充分发展的场景推进，绝不为凑章节反复停在门口让玩家选择。NPC有独立目的，会记住玩家决定，支线与主线相互影响。不要谈论角色数值、配装、奖励、伤害或任务评分。",
 "worldKind=adaptation：嚴格沿用媒介mediaType所指定作品的已核實設定、人物性格、歷史事件與時間線。以新角色介入，衍生支線可以分歧，但不可冒充官方劇情；不確定的情節不要亂編作正史。",
