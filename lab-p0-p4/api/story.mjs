@@ -255,7 +255,7 @@ function finaleCheck(v){
 }
 function context(v){
 let limited=(a,n=8)=>Array.isArray(a)?a.slice(-n):[];
-return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),protagonist:clean(v?.protagonist,30)||"主角",world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),rewriteAttempt:Math.max(0,Math.min(5,Number(v?.rewriteAttempt)||0)),
+return {mode:v?.mode==="custom"?"custom":"known",worldKind:v?.worldKind==="original"?"original":"adaptation",mediaType:["電影","劇集","動畫","小說","遊戲","其他作品"].includes(v?.mediaType)?v.mediaType:"",premise:clean(v?.premise,450),protagonist:clean(v?.protagonist,30)||"主角",world:clean(v?.world,65),task:clean(v?.task,120),objective:clean(v?.objective,220),phase:Math.max(0,Math.min(28,Number(v?.phase)||0)),rewriteAttempt:Math.max(0,Math.min(5,Number(v?.rewriteAttempt)||0)),rewriteFeedback:clean(v?.rewriteFeedback,240),
  narrativeCapabilities:v?.narrativeCapabilities&&typeof v.narrativeCapabilities==="object"?
  {skills:Array.isArray(v.narrativeCapabilities.skills)?v.narrativeCapabilities.skills.slice(0,15).map(x=>({id:clean(x?.id,35),name:clean(x?.name,45)})):[],
  items:Array.isArray(v.narrativeCapabilities.items)?v.narrativeCapabilities.items.slice(0,12).map(x=>({id:clean(x?.id,35),name:clean(x?.name,45)})):[],
@@ -324,7 +324,7 @@ const longStoryRules=[
 "phase<23不可以 readyToConclude；phase 23至27先進入高潮與收束。phase>=27必須在本章實際寫出完整結局與主要角色去向，不能以懸念或選項取代結局。",
 "npcUpdates至多3人；facts至多4條；npcEvents至多2項{name,event,intent}；sideQuests至多2項{title,objective,trigger}。只回報發生的變化，無變化用空陣列。",
 "作品世界：canon.extract僅代表可核實公開資料；保持重要人物關係、事件前後與媒介版本一致。當canon.confidence=unverified，唔可以聲稱劇情已核實；不得逐段複製原作。",
-"JSON 字段可以精简，但不能牺牲场景完整性。对白应当融入动作与环境描写，不要写成角色名标签式的剧本台词。如果 rewriteAttempt>0，说明上一版正文过短或过度像战报，必须重写完整场景，人物性格和因果保持一致。"
+"JSON 字段可以精简，但不能牺牲场景完整性。对白应当融入动作与环境描写，不要写成角色名标签式的剧本台词。如果 rewriteAttempt>0 且 rewriteFeedback 有具体意见，优先解决用户提出的文笔、节奏、人物声音或描写问题。重写只能改善当前章节，必须保留先前已发生的事件、人物性格和线索，不得改动既有因果；不要反复使用原文的套话。"
 ].join("\n");
 if(canon?.extract)canon.extract=clean(canon.extract,input.phase===0?1250:650);
 input.canon=canon;
@@ -388,7 +388,7 @@ const narrativeLength=blocks.filter(x=>x.type==="narration").reduce((sum,x)=>sum
 if(blocks.length<1||narrativeLength<110)return reply(502,{error:"SCENE_INCOMPLETE",message:"模型只返回零碎內容，劇情已保留；可重新生成",detail:{blocks:blocks.length,narrativeLength,finishReason:data?.choices?.[0]?.finish_reason||""}});
 const opts=normalizeStoryOptions(scene,input);
 const quota=modelGates.get(usedModel)||{};
-const payload={quality:{narrativeChars:narrativeLength,targetChars:750,underlength:narrativeLength<550},quota:{remainingTokens:quota.remaining,resetSeconds:quota.reset},usage:{promptTokens:Number(data?.usage?.prompt_tokens)||0,completionTokens:Number(data?.usage?.completion_tokens)||0,totalTokens:Number(data?.usage?.total_tokens)||0},title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:usedModel,
+const payload={quality:{narrativeChars:narrativeLength,targetChars:750,underlength:narrativeLength<750},quota:{remainingTokens:quota.remaining,resetSeconds:quota.reset},usage:{promptTokens:Number(data?.usage?.prompt_tokens)||0,completionTokens:Number(data?.usage?.completion_tokens)||0,totalTokens:Number(data?.usage?.total_tokens)||0},title:clean(scene.title,30)||"無名之幕",mood:["calm","suspense","eerie","shock","anger","grief","resolve","system"].includes(scene.mood)?scene.mood:"suspense",blocks,options:opts,model:usedModel,
 canon:canon&&{title:canon.title,url:canon.url,source:canon.source,confidence:canon.confidence,extract:canon.extract},
 canonTimeline:input.canonTimeline,
 missionArc:(Array.isArray(scene.missionArc)?scene.missionArc:[]).slice(0,4).map(x=>clean(x,85)).filter(Boolean),
