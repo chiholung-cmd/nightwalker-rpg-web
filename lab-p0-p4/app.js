@@ -2,7 +2,7 @@
 "use strict";
 const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElementById("app");
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
-let s=E.load();if(s.mission&&!s.mission.finished)s.mission.narrativeMode=true;let temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,aiRewriteAttempts:{},rewriteDialog:false,rewriteNote:"",emotionDemo:false,codexOpen:false,codexTab:"character",draftScope:"",openingDraft:"",leaveDialog:false,freeDraft:"",freeReview:null,choicesOpen:false,worldMatches:[],worldLookupQuery:"",worldLookupMedia:"",worldLookupPending:false,worldLookupError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",novelGenre:"全部",novelQuery:"",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
+let s=E.load();if(s.mission&&!s.mission.finished)s.mission.narrativeMode=true;let temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,aiRewriteAttempts:{},rewriteDialog:false,rewriteNote:"",emotionDemo:false,editName:false,codexOpen:false,codexTab:"character",draftScope:"",openingDraft:"",leaveDialog:false,freeDraft:"",freeReview:null,choicesOpen:false,worldMatches:[],worldLookupQuery:"",worldLookupMedia:"",worldLookupPending:false,worldLookupError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",novelGenre:"全部",novelQuery:"",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
 temporary.originalPremiseDraft=window.NW_DRAFTS?.get?.("premise","new-world")||temporary.originalPremiseDraft;
 temporary.mediaWorldDraft=window.NW_DRAFTS?.get?.("world","media-title")||"";
 temporary.originalWorldDraft=window.NW_DRAFTS?.get?.("world","original-title")||"";
@@ -227,7 +227,7 @@ return head+menu+'<div class="scroll-content column-gap">'+content+'</div>'
 }
 function missionBoard(){if(s.mission)return missionUI();
 let banner=s.assignment?(()=>{let t=s.assignment.world==="custom"?{name:s.assignment.worldKind==="original"?"自創世界·主神試煉":"作品世界·主神試煉",mode:s.assignment.mode||"solo",goal:"探索「"+s.assignment.worldTitle+"」並完成主神委派的目標",desc:s.assignment.worldKind==="original"?"原創世界構築":"AI 作品世界"}:task(s.assignment.task),w=s.assignment.world==="custom"?{name:s.assignment.worldTitle,tone:"AI 創作世界"}:world(t.world);return '<div class="assigned"><div class="eyebrow">MAIN GOD / ASSIGNED SCENARIO</div><span class="mode-label">'+({solo:"單人任務",team:"團隊任務",versus:"對抗任務"}[t.mode])+'</span><h2>'+esc(t.name)+'</h2><p>《'+w.name+'》 · '+esc(w.tone)+'</p><div class="rule"></div><h3>主線目標</h3><p>'+esc(t.goal)+'</p><div class="assigned-desc">'+esc(t.desc)+'</div><small>隱藏任務：尚未公開。世界及模式已鎖定，無法免費重抽。</small></div>'})():'<div class="unassigned"><div class="main-god-eye">◌</div><div class="eyebrow">DESTINY LOCKED / UNKNOWN</div><h2>主神尚未公布你的下一個世界</h2><p>可能進入電影、動畫或劇集世界。每次任務可為單人、合作小隊或對抗任務，主神將決定你的入場位置與身份。</p></div>';
-const protagonistSetup=playerName()?'<div class="identity-confirmed">輪迴者：<strong>'+esc(playerName())+'</strong><span>人物資料已保存，所有世界沿用同一身份。</span>'+a("改名","editName","tiny ghost")+'</div>':'<div class="identity-entry"><label for="protagonist-name">第一次建立主角姓名</label><div class="identity-entry-row"><input id="protagonist-name" maxlength="20" placeholder="建立一次，此後所有輪迴沿用" value="'+esc(temporary.nameDraft??"")+'">'+a("建立身份","saveName","small main")+'</div><small>呢個名字只需要設定一次；之後可以自行改名，唔會每次選世界都再問。</small></div>';
+const protagonistSetup=playerName()&&!temporary.editName?'<div class="identity-confirmed">輪迴者：<strong>'+esc(playerName())+'</strong><span>人物資料已保存，所有世界沿用同一身份。</span>'+a("改名","editName","tiny ghost")+'</div>':'<div class="identity-entry"><label for="protagonist-name">第一次建立主角姓名</label><div class="identity-entry-row"><input id="protagonist-name" maxlength="20" placeholder="建立一次，此後所有輪迴沿用" value="'+esc(temporary.nameDraft??playerName())+'">'+a("建立身份","saveName","small main")+'</div><small>呢個名字只需要設定一次；之後可以自行改名，唔會每次選世界都再問。</small></div>';
 const worldIntro=s.assignment?
  '<div class="entry-world-intro"><div class="eyebrow">WORLD INTRODUCTION / 世界簡介</div>'+
  '<h3>《'+esc(s.assignment.worldTitle||world(s.assignment.world)?.name||"未命名世界")+'》</h3>'+
@@ -592,11 +592,11 @@ if(cmd.startsWith("novelPick:")){
 }
 
 if(cmd.startsWith("worldMedia:")){temporary.worldMedia=cmd.slice("worldMedia:".length);temporary.worldMatches=[];temporary.worldLookupError="";render();return}
-if(cmd==="editName"){s.profile.nameCustomized=false;s.profile.name="";temporary.nameDraft="";render();return}
+if(cmd==="editName"){temporary.editName=true;temporary.nameDraft=playerName();render();return}
 if(cmd==="saveName"){
  const name=(R.querySelector("#protagonist-name")?.value??temporary.nameDraft??"").trim();
  if(name.length<2||name.length>20)return notice("主角姓名需要 2 至 20 字");
- s.profile.name=name;s.profile.nameCustomized=true;temporary.nameDraft=name;render();return
+ s.profile.name=name;s.profile.nameCustomized=true;temporary.nameDraft=name;temporary.editName=false;render();return
 }
 if(cmd==="customWorld"){
  const original=temporary.worldType==="original";
