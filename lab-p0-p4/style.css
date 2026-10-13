@@ -840,3 +840,62 @@ animation:none!important;transition:none!important;
 .cn-novel-summary{color:#cbd8d7;font:400 13px/1.9 "Noto Serif SC","Noto Serif TC",serif;flex:1;margin:0 0 16px}
 .cn-novel-card .btn{margin-top:auto;min-height:43px;font:550 13px/1.55 "Noto Serif SC","Noto Serif TC",serif}
 @media(max-width:470px){.world-kind-tabs{gap:4px}.world-kind-tabs>button{padding:10px 4px;font-size:11px}.world-kind-tabs>button small{font-size:9px}.cn-novel-grid{grid-template-columns:1fr}.cn-novel-card{min-height:0}.cn-novel-genres button{font-size:11px;padding:7px 9px}}
+
+
+/* NIGHTWALKER: balanced RPG command center + literary world reader (V9). */
+.command-dashboard{flex:1;min-height:0;overflow:auto;scrollbar-width:thin;background:radial-gradient(ellipse at 50% 6%,#46607e50,transparent 40%),linear-gradient(180deg,#111f32,#0b1421 68%);color:#ece5d6;padding:0 16px 32px}
+.command-greeting{position:relative;overflow:hidden;padding:46px 10px 31px;min-height:210px;border-bottom:1px solid #5f72805b}
+.command-orbit{position:absolute;right:3%;top:10px;width:135px;height:135px;border-radius:50%;border:1px solid #a9a89b65;display:flex;align-items:center;justify-content:center;font:400 70px/1 Georgia,serif;color:#b4a37c88;box-shadow:0 0 0 23px #8aabad0e,0 0 0 48px #8aabad08;pointer-events:none}
+.command-greeting .library-kicker{position:relative;color:#cbb88d;font:550 10px/1.6 ui-monospace,monospace;letter-spacing:1.5px}
+.command-greeting h1{position:relative;color:#f1e8d6;font:550 clamp(24px,6.2vw,33px)/1.55 "Noto Serif TC","Noto Serif SC",serif;letter-spacing:.4px;max-width:75%;margin:24px 0 11px}
+.command-greeting>p{position:relative;color:#b9c5cc;font:400 13px/1.9 "Noto Serif TC",serif;max-width:45ch;margin:0}
+.command-identity{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 13px;background:linear-gradient(115deg,#24394b,#152637);border:1px solid #526c77;border-radius:12px;margin-top:17px}
+.command-identity>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.command-identity span,.command-identity small{color:#a7b4bb;font:400 10px/1.4 system-ui,sans-serif}
+.command-identity strong{color:#f1e6d3;font:600 19px/1.45 "Noto Serif TC",serif;overflow-wrap:anywhere}
+.command-resources{text-align:right}
+.command-resources strong{color:#e2c186;font-size:18px}
+.command-vitals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
+.command-vitals>div{padding:10px 9px 12px;border:1px solid #435a68;border-radius:9px;background:#1a2b3c;min-width:0}
+.command-vitals span{display:block;color:#c4cdd0;font:400 11px/1.5 "Noto Serif TC",serif;margin-bottom:9px}
+.command-meter{background:#0d1724;height:4px;border-radius:3px;overflow:hidden}
+.command-meter>i{height:100%;background:linear-gradient(90deg,#8fbdc2,#d8be89);display:block;border-radius:3px}
+.command-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0}
+.command-shortcut{display:flex;flex-direction:column;align-items:flex-start;min-height:111px;padding:15px 14px;border:1px solid #485e69;border-radius:12px;background:linear-gradient(135deg,#263b4d,#142534);color:#eee8dc;text-align:left;cursor:pointer}
+.command-shortcut:focus-visible{outline:2px solid #c1a877;outline-offset:3px}
+.command-shortcut .command-symbol{font:550 21px/1.2 Georgia,serif;color:#dfc690;margin-bottom:10px}
+.command-shortcut strong{font:600 14px/1.5 "Noto Serif TC","Noto Serif SC",serif}
+.command-shortcut small{font:400 11px/1.7 "Noto Serif TC","Noto Serif SC",serif;color:#abbdc4;margin-top:3px}
+.command-next{padding:22px 17px 26px;border:1px solid #9b8763;background:linear-gradient(150deg,#324352,#172b38);border-radius:13px}
+.command-next h2{font:600 clamp(18px,5vw,24px)/1.55 "Noto Serif TC",serif;color:#f1e0bd;margin:12px 0 5px}
+.command-next p{font:400 12px/1.9 "Noto Serif TC",serif;color:#c0ced1;margin:0 0 18px}
+.command-next .btn{min-height:48px}
+.identity-confirmed{border:1px solid #4b6b73;border-radius:9px;background:#1e3240;color:#e5d6bd;padding:11px 12px;display:flex;align-items:center;flex-wrap:wrap;gap:9px;font:400 13px/1.55 "Noto Serif TC",serif;margin:10px 0}
+.identity-confirmed strong{font-size:15px;color:#f1e6d3}
+.identity-confirmed span{font-size:11px;color:#a7bcc1;flex:1}
+.main-god-decree{padding:18px;border-radius:12px;border:1px solid #bd9e68;background:radial-gradient(ellipse at 80% 20%,#c4b68d15,transparent 48%),#1e303d;margin:15px 0}
+.main-god-decree .library-kicker{font-size:10px;color:#ddbe86}
+.main-god-decree h3{font:600 20px/1.6 "Noto Serif TC",serif;color:#e9d0a5;margin:8px 0}
+.main-god-decree p{font:400 13px/1.92 "Noto Serif TC",serif;color:#ced5d1;margin:0}
+.codex-rpg-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:9px 0 15px}
+.codex-rpg-overview>div{padding:10px 8px;border:1px solid #577179;background:#1d3443;border-radius:8px;min-width:0}
+.codex-rpg-overview span{font:400 10px/1.5 system-ui,sans-serif;color:#9eafba;display:block;margin-bottom:3px}
+.codex-rpg-overview b{font:600 11px/1.65 "Noto Serif TC",serif;color:#e5d7bb;overflow-wrap:anywhere}
+.main-god-rewards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:24px 0}
+.main-god-rewards>div{border:1px solid #756b58;border-radius:10px;background:#1d3443;padding:16px 12px}
+.main-god-rewards span{display:block;color:#a6bec5;font-size:12px;margin-bottom:9px}
+.main-god-rewards strong{color:#ecc78e;font-size:22px}
+.emotion-demo-overlay{position:absolute;inset:0;z-index:160;background:#040a0eeb;display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(5px)}
+.emotion-demo-card{display:flex;flex-direction:column;gap:12px;width:min(100%,560px);max-height:95dvh;min-height:0;box-sizing:border-box;border:1px solid #938367;border-radius:15px;background:#132435;color:#e8ded1;padding:19px 15px}
+.emotion-demo-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.emotion-demo-head h2{font:600 19px/1.5 "Noto Serif TC",serif;margin:0}
+.emotion-demo-note{font:400 11px/1.8 "Noto Serif TC",serif;color:#9fb1bd;margin:0}
+.emotion-demo-prose{flex:1!important;min-height:0;max-height:70dvh;overflow:auto!important;padding:8px 10px!important;border:1px solid #324957;border-radius:10px;background:#0e1a29!important}
+.emotion-demo-row{padding:10px 4px;margin:0 0 7px;border-bottom:1px solid #334958}
+.emotion-demo-row label{font:550 11px/1.5 system-ui,sans-serif;color:#cfb989}
+.emotion-demo-row .novel-beat{margin-top:7px}
+.emotion-demo-row .novel-beat p{font:400 15px/1.86 "Noto Serif TC",serif!important;margin:4px 0 6px!important}
+.emotion-demo-bottom{display:flex;gap:9px}
+.emotion-demo-bottom button{flex:1;font-size:12px;min-height:43px}
+@media(max-width:410px){.command-dashboard{padding:0 11px 22px}.command-greeting{padding:36px 7px 23px}.command-greeting h1{font-size:24px;max-width:82%}.command-orbit{width:105px;height:105px;font-size:58px;right:0}.command-vitals{gap:5px}.command-vitals>div{padding:9px 6px}.command-shortcuts{gap:8px}.command-shortcut{min-height:100px;padding:12px 10px}.codex-rpg-overview{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.codex-rpg-overview>div{padding:7px 5px}}
+@media(prefers-reduced-motion:reduce){.emotion-demo-card .novel-beat,.emotion-demo-card .emotion-focus{animation:none!important;transform:none!important;filter:none!important;opacity:1!important}}
