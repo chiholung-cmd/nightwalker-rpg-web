@@ -195,7 +195,7 @@ if(!s.assignment){
  const original=temporary.worldType==="original";
  const media=["電影","劇集","動畫","小說","遊戲","其他作品"];
  const types='<div class="world-kind-tabs"><button class="'+(!original?"selected":"")+'" data-do="worldType:adaptation">作品世界<small>電影／劇集／動畫等</small></button><button class="'+(original?"selected":"")+'" data-do="worldType:original">自創世界<small>建立原創世界觀</small></button></div>';
- const status='<p class="minor-meta">AI 劇情：'+aiStatusText()+'。未能傳送時不會扣除積分。</p>';
+ const status='<p class="minor-meta">AI 創作狀態：'+aiStatusText()+'。原作會先核對，再由你確認。</p>';
  const mediaVerify=temporary.worldLookupPending?'<div class="world-verify">正在核對原作資料，未扣積分……</div>':temporary.worldLookupError?'<div class="world-verify problem">'+esc(temporary.worldLookupError)+'</div>':temporary.worldMatches.length?'<div class="world-verify"><b>請確認正確作品及版本</b><p>發現可能嘅作品；唔會自行當成新世界生成。</p>'+temporary.worldMatches.map((x,i)=>'<button class="world-candidate" data-do="worldPick:'+i+'"><strong>《'+esc(x.title)+'》 · '+esc(x.mediaType)+'</strong><small>核對來源：'+esc(x.sourceTitle)+' · '+(x.confidence==="exact"?"作品名吻合":"可能係輸入錯字")+'</small><span>確認使用此作品 →</span></button>').join("")+'</div>':"";
  const mediaForm='<p>選擇現有電影、劇集、動畫、小說或遊戲嘅世界，由你親自加入故事。主神仍會發佈任務，唔會直接重演原作劇情。</p><div class="world-mediums">'+media.map(x=>'<button class="'+(temporary.worldMedia===x?"selected":"")+'" data-do="worldMedia:'+x+'">'+x+'</button>').join("")+'</div><label for="media-world-name" class="world-input-label">作品名稱</label><input id="media-world-name" class="custom-world-input" value="'+esc(temporary.mediaWorldDraft)+'" maxlength="50" placeholder="例如：死亡筆記、進擊的巨人" aria-label="作品世界名稱"><p class="minor-meta">作品名稱會先核對，確認作品及媒介版本後才開始。原作人物與設定會盡量維持，但衍生劇情並非官方內容。</p>';
  const originalForm='<p>完全由你構思世界。可以係規則怪談、末日、仙俠、懸疑或者任何原創背景；AI 會根據你嘅規則設計人物、危機同故事。</p><label for="original-world-name" class="world-input-label">原創世界名稱</label><input id="original-world-name" class="custom-world-input" value="'+esc(temporary.originalWorldDraft)+'" maxlength="50" placeholder="例如：零號月台、深海第七城" aria-label="原創世界名稱"><label for="original-world-premise" class="world-input-label">世界背景與核心規則</label><textarea id="original-world-premise" class="world-premise-input" maxlength="450" rows="4" placeholder="例如：每晚十二點，失蹤者會收到一張沒有終點站的車票。車上有三條禁忌規則，每個人都在隱瞞自己的目的……" aria-label="原創世界背景與規則">'+esc(temporary.originalPremiseDraft)+'</textarea><p class="minor-meta">背景最少 12 字。AI 會以你提供嘅規則建立世界；開場唔理想亦可以退出重新開始。</p>';
@@ -270,19 +270,33 @@ function resultUI(){
  a("保存經歷，返回故事書架","claim","block main")+
  a("立即開始另一段故事","claimNew","block ghost")+'</section>'
 }
-function memory(){const mode=temporary.memoryTab, tabs=[["timeline","輪迴記錄"],["worlds","世界情報"],["relations","隊友關係"],["system","主神備忘"]];let body="";
-if(mode==="timeline")body=s.records.length?s.records.map(r=>card("《"+esc(r.worldName||world(r.world)?.name||r.world)+"》 · "+r.result,esc(task(r.task)?.name||r.task)+" · "+({solo:"單人",team:"團隊",versus:"對抗"}[r.mode])+'<div class="rule"></div>'+r.choices.map(x=>'<p class="record-choice">'+esc(x)+'</p>').join("")+'<div class="minor-meta">'+new Date(r.date).toLocaleString("zh-HK")+'</div>')).join(""):card("尚未有輪迴記錄","正式完成第一個世界後，所有重大選擇會留在這裡。");
-if(mode==="worlds"){
-const library=Object.values(s.worldLibrary||{});
-body=library.length?library.map(r=>card(esc(r.name),
-'<p class="minor-meta">已訪問 '+(r.visits||0)+' 次 · 已發現 '+(r.facts||[]).length+' 條線索</p>'+
-(r.source?.url?'<p class="minor-meta"><a href="'+esc(r.source.url)+'" target="_blank" rel="noopener noreferrer">原作公開資料：'+esc(r.source.title)+' ↗</a></p>':"")+
-(r.facts||[]).slice(-8).map(x=>'<p>◈ '+esc(x)+'</p>').join("")+
-Object.entries(r.npcs||{}).slice(0,10).map(([name,v])=>'<p><b>'+esc(name)+'</b> · 信任 '+(v.trust||0)+' · '+esc(v.memory||"")+'</p>').join(""))).join(""):card("未知世界","輪迴後會永久收錄原作、人物、線索同你作出嘅選擇。")
+function memory(){
+ const tabs=[["timeline","已完成"],["unfinished","曾離開"],["worlds","世界與人物"]];
+ const mode=tabs.some(x=>x[0]===temporary.memoryTab)?temporary.memoryTab:"timeline";
+ let body="";
+ if(mode==="timeline")body=s.records.length?s.records.map(r=>
+  card("《"+esc(r.worldName||r.world||"未知世界")+"》",
+    '<div class="archive-story-meta">'+esc(new Date(r.date).toLocaleDateString("zh-HK"))+'</div>'+
+    (r.choices||[]).slice(-9).map(choice=>'<p class="archive-choice">「'+esc(choice)+'」</p>').join("")+
+    (r.directorPlan?.finale?.prose?'<p class="archive-excerpt">'+esc(r.directorPlan.finale.prose)+'</p>':"")
+  )).join(""):card("尚未完結的書頁","故事完結後，你作出過的選擇會記錄喺呢度。");
+ if(mode==="unfinished")body=(s.abandonedStories||[]).length?s.abandonedStories.map(r=>card("《"+esc(r.worldName||"未知世界")+"》",
+  '<p class="archive-story-meta">閱讀至第 '+esc(r.chapter)+' 章 · '+esc(new Date(r.at).toLocaleDateString("zh-HK"))+'</p>'+
+  (r.snapshots||[]).slice(-3).map(c=>'<p class="archive-excerpt"><b>'+esc(c.title||"")+'</b>　'+esc(c.excerpt||"")+'</p>').join("")+
+  (r.choices||[]).slice(-3).map(c=>'<p class="archive-choice">「'+esc(c)+'」</p>').join("")
+ )).join(""):card("尚未有離開過的故事","如果你決定退出，之前嘅主要章節同選擇會保留喺呢度。");
+ if(mode==="worlds"){
+  const library=Object.values(s.worldLibrary||{});
+  body=library.length?library.map(r=>card("《"+esc(r.name||"未知世界")+"》",
+   (r.source?.url?'<p class="archive-excerpt">原作來源：<a href="'+esc(r.source.url)+'" target="_blank" rel="noopener noreferrer">'+esc(r.source.title)+' ↗</a></p>':"")+
+   (r.facts||[]).slice(-6).map(x=>'<p class="archive-excerpt">'+esc(x)+'</p>').join("")+
+   Object.entries(r.npcs||{}).slice(0,6).map(([name,npc])=>'<p class="archive-excerpt"><b>'+esc(name)+'</b> · '+esc(npc.memory||"尚未記錄人物經歷")+'</p>').join("")
+  )).join(""):card("尚未建立世界記憶","隨故事推進，人物與線索會逐漸留下痕跡。");
+ }
+ return section("LIBRARY / REMEMBRANCE","故事與記憶","不再用等級、裝備或戰鬥數值衡量經歷。")+
+ '<div class="tabbar archive-tabs">'+tabs.map(([id,label])=>'<button class="'+(mode===id?"on":"")+'" data-do="tab:memory:'+id+'">'+label+'</button>').join("")+'</div>'+
+ '<div class="scroll-content column-gap story-archive">'+body+'</div>';
 }
-if(mode==="relations")body=D.companions.map(c=>card(esc(c.name)+" · "+esc(c.role),esc(c.bio)+'<div class="minor-meta">關係值 '+(s.bonds[c.id]||0)+'</div>')).join("");
-if(mode==="system")body=card("主神規則說明","世界與任務由主神決定；定向返回需要先到訪，再支付座標解鎖及定向傳送代價。") +card("劇情記憶","歷史抉擇、線索、戰利品、隊友關係在本裝置持久保存。") +card("真人多人連線","目前團隊與對抗採用 AI 輪迴者的確定性規則模擬；尚未啟用伺服器同步、真人配對及即時 PvP。");
-return section("MAIN GOD ARCHIVE","輪迴記錄","主神會保存重大抉擇與線索；世界居民亦應根據合理身份和記憶作出反應。")+'<div class="tabbar">'+tabs.map(x=>'<button class="'+(mode===x[0]?"on":"")+'" data-do="tab:memory:'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="scroll-content column-gap">'+body+'</div>'}
 function settings(){
  const mode=eplusMode(),cloud=window.NW_CLOUD?.status?.()||{enabled:false,key:"",revision:0};
  const lastUsage=s.aiLastUsage;
