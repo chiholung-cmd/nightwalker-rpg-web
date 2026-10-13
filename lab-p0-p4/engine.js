@@ -92,7 +92,7 @@ function cancelCustomWorld(s){
 const m=s.mission,a=s.assignment;
 if(m){
  if(m.world!=="custom"||m.phase!==0||m.history.length)return "輪迴已開始，無法取消並退款";
- for(const id in m.bag)s.warehouse[id]=(s.warehouse[id]||0)+m.bag[id];
+ if(!m.narrativeMode)for(const id in m.bag)s.warehouse[id]=(s.warehouse[id]||0)+m.bag[id];
  s.profile.credits+=Number(m.paidCost||0);
  s.mission=null;s.assignment=null;s.screen="hub";
  restoreAllResources(s);return null;
