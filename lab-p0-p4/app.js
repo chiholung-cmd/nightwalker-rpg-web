@@ -62,9 +62,14 @@ const known=window.NW_NOVEL?.scene(s);
 const scene=N.get(s);const directorBrief=window.NW_WORLD?.directorContext?.(s)||null;
 const storyBible=window.NW_BIBLE?.context?.(s)||null;
 const endingAudit=m.phase>=19?(window.NW_BIBLE?.endingAudit?.(s)||null):null;
-const narrativeCapabilities={skills:(s.learned||[]).slice(0,20).map(id=>({id,name:skill(id)?.name||id})),
- items:Array.from(new Set([...(s.loadout?.backpack||[]),...(s.loadout?.weapon?[s.loadout.weapon]:[]),...(s.loadout?.accessory?[s.loadout.accessory]:[])])).slice(0,15).map(id=>({id,name:objId(id)?.name||id})),
- bloodline:s.profile?.bloodline||""};
+const narrativeCapabilities={
+ skills:(s.learned||[]).slice(0,20).map(id=>({id,name:skill(id)?.name||id,description:skill(id)?.desc||""})),
+ items:Array.from(new Set([...(s.loadout?.backpack||[]),s.loadout?.weapon,s.loadout?.offhand,s.loadout?.armor,s.loadout?.accessory].filter(Boolean))).slice(0,15)
+ .map(id=>({id,name:objId(id)?.name||id,description:objId(id)?.desc||"",type:objId(id)?.type||""})),
+ bloodline:s.profile?.bloodline||"",
+ team:(m.crew||[]).slice(0,5).map(x=>({name:x.name,role:x.role||"",personality:x.temper||"",skill:x.skill||""})),
+ rivals:m.rival?[{name:m.rival.name,role:m.rival.role||""}]:[]
+};
 m.narrativeCapabilities=narrativeCapabilities;
 const body={openingIntent:m.openingIntent||"",recentAction:String(m.pendingAction?.text||"").slice(0,1500),narrativeCapabilities,rewriteFeedback:temporary.aiRewriteAttempts[key]?String(temporary.rewriteNote||"").slice(0,240):"",rewriteAttempt:Number(temporary.aiRewriteAttempts[key]||0),directorBrief,storyBible,endingAudit,verifiedSource:m.verifiedSource||"",verifiedSourceTitle:m.verifiedSourceTitle||"",canonTimeline:(m.canonTimeline||[]).slice(0,6),protagonist:literaryName().slice(0,30),sessionKey:String(m.seed||""),directorStage:phase<5?"調查":phase<10?"人際":phase<16?"危機":phase<23?"決戰":"結局",npcMemory:m.npcMemory||{},worldFacts:m.storyFacts||[],worldHistory:(m.worldHistory||[]).slice(-2),priorArc:m.missionArc||[],sideQuests:m.quests||[],npcAgency:(m.agencyEvents||[]).slice(-4),branchConsequences:(m.branchConsequences||[]).slice(-4),returnVisit:!!m.returnVisit,canonCache:m.canon?{...m.canon,extract:String(m.canon.extract||"").slice(0,phase===0?1250:650)}:null,mode:m.world==="custom"?"custom":"known",worldKind:m.worldKind||"adaptation",mediaType:m.mediaType||"",premise:m.premise||"",world:m.worldName,task:m.title,objective:m.objective,phase,cast:[...(m.crew||[]).map(x=>x.name),...(m.rival?[m.rival.name]:[])],flags:(m.flags||[]).slice(-16),history:(m.history||[]).slice(-4).map(x=>String(x.action||"").slice(0,350)+" → "+String(x.events?.[0]||"").slice(0,65)),previousScenes:Object.keys(m.aiScenes||{}).map(Number).filter(i=>i<phase).sort((x,y)=>x-y).slice(-1).flatMap(i=>(m.aiScenes[i]?.blocks||[]).slice(-2).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,220)}))),base:(phase===0?(known?.blocks||[]).slice(0,2):[]).map(b=>({type:b.type,speaker:b.speaker||"",text:String(b.text||"").slice(0,170)})),choices:(scene?.actions||[]).slice(0,3).map(x=>({label:x.label,kind:x.kind})),state:{mode:"story",noNumericStats:true}};
 try{
