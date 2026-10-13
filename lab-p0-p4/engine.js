@@ -12,7 +12,7 @@ warehouse:{ironrod:1,shortblade:1,jacket:1,charm:1,medkit:3,energy:2,ether:1,san
 learned:["strike","guard","observe","focus"],
 loadout:{weapon:"ironrod",armor:"jacket",accessory:"charm",offhand:null,backpack:["medkit","medkit","energy","sanity","recorder"],active:["strike","guard","observe"],passive:["focus"]},
 assignment:null,mission:null,records:[],memory:[],bonds:{linwu:0,shenyuan:0,chuling:0,weixun:0},discovered:[],coord:{},perk:[],ui:{selectedSkill:2,filter:"all",category:"weapon",alert:"",page:0},
-settings:{reducedMotion:false,eplusMode:"strong",novelSize:"normal",novelMode:true},lastReward:null
+settings:{reducedMotion:false,eplusMode:"strong",novelSize:"normal",novelMode:true,musicVolume:.22,musicEnabled:false},lastReward:null
 });
 function load(storage){const st=storage||global.localStorage;
 try{if(st.getItem(RESET_MARK)!=="1"){
