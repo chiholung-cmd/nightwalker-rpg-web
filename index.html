@@ -56,11 +56,27 @@
 .gd-hot-reason{margin-top:9px;padding:9px 11px;background:#fff7ed;border-left:4px solid #f08a24;border-radius:8px;color:#7b470e}
 .gd-count{font-size:13px;color:var(--muted)}
 
+
+/* IA QUEST — isolated from the original quiz and interview modes */
+.ia-quest-head{border-radius:18px;background:linear-gradient(115deg,#082f63,#1466ad);color:white;padding:20px;margin:12px 0}
+.ia-quest-head h2{margin:6px 0;font-size:25px}.ia-quest-head p{opacity:.88;margin:0}
+.ia-quest-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:14px 0}
+.ia-quest-stats div{background:white;padding:13px;border-radius:13px;border:1px solid var(--line)}
+.ia-quest-stats strong{display:block;font-size:23px;color:var(--navy)}
+.ia-quest-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ia-quest-card{padding:17px;text-align:left;background:white;border:1px solid var(--line);border-radius:14px;color:var(--text);cursor:pointer}
+.ia-quest-card strong{display:block;color:var(--navy);font-size:17px}.ia-quest-card small{display:block;margin-top:9px;color:var(--muted)}
+.ia-quest-play{display:none;padding:16px;border:1px solid var(--line);border-radius:14px;background:white;margin-top:16px}
+.ia-quest-choice{width:100%;display:block;text-align:left;margin:8px 0;background:#f5f9ff;border:1px solid #c9dbef;border-radius:12px;padding:12px;color:var(--text)}
+.ia-quest-choice:disabled{opacity:.75}.ia-quest-answer{border-left:4px solid #16865c;background:#e8f7f0;padding:13px;border-radius:10px;margin:12px 0}
+.ia-quest-play textarea{width:100%;min-height:135px;display:block;margin:12px 0}
+@media(max-width:600px){.ia-quest-grid{grid-template-columns:1fr}.ia-quest-head{padding:17px}}
+
 </style></head>
 <body><div class="app">
 <section class="hero"><h1>IA 入境事務助理｜考前溫習器</h1><p>高命中知識庫 · A必背 + B熟悉 · 最後整理：2026-08-27</p>
 <div class="stats"><div class="stat"><b id="totalCount">101</b><span>高命中題目</span></div><div class="stat"><b>43</b><span>A 必背</span></div><div class="stat"><b>58</b><span>B 熟悉</span></div><div class="stat"><b id="masteredCount">0</b><span>已掌握</span></div></div></section>
-<nav class="tabs"><button class="tab active" data-tab="list">📚 題庫溫習</button><button class="tab" data-tab="flash">🃏 卡片模式</button><button class="tab" data-tab="quiz">🎯 快問快答</button><button class="tab" data-tab="gd">👥 小組討論</button><button class="tab" data-tab="progress">📈 我的進度</button></nav>
+<nav class="tabs"><button class="tab active" data-tab="list">📚 題庫溫習</button><button class="tab" data-tab="flash">🃏 卡片模式</button><button class="tab" data-tab="quiz">🎯 快問快答</button><button class="tab" data-tab="gd">👥 小組討論</button><button class="tab" data-tab="iaquest">🎮 IA 闖關</button><button class="tab" data-tab="progress">📈 我的進度</button></nav>
 
 <section id="list" class="panel active"><div class="toolbar"><div class="filters"><input class="search" id="search" placeholder="搜尋問題、答案或重點…"><select id="priorityFilter"><option value="">A + B 全部</option><option value="A">只看 A 必背</option><option value="B">只看 B 熟悉</option></select><select id="categoryFilter"><option value="">全部類別</option></select><button class="btn secondary" id="onlyReview">只看未熟</button></div></div><div class="meta-line"><span id="resultMeta"></span><button class="btn ghost" id="expandAll">展開全部答案</button></div><div class="cards" id="cards"></div></section>
 
@@ -186,6 +202,20 @@
   </div>
 </section>
 
+
+<section id="iaquest" class="panel">
+ <div class="ia-quest-head"><span>IA QUEST ACADEMY · P0–P2</span><h2>入境事務助理員 · 考前挑戰</h2><p>獨立 IA 題庫與判斷訓練，保留原有題庫、快問快答、小組討論及所有進度。</p></div>
+ <div class="ia-quest-stats"><div><small>訓練 XP</small><strong id="iaQuestXp">0</strong></div><div><small>完成局數</small><strong id="iaQuestRuns">0</strong></div><div><small>客觀題準確率</small><strong id="iaQuestAccuracy">—</strong></div></div>
+ <div class="ia-quest-grid">
+ <button type="button" class="ia-quest-card" data-ia-mode="quick"><strong>🎯 P0 · 通關快問</strong><small>部門知識、服務流程、安全及廉潔 · 5 題</small></button>
+ <button type="button" class="ia-quest-card" data-ia-mode="scenario"><strong>⚖️ P1 · 情境判斷</strong><small>從多個處理方案找出合適程序，逐題解釋</small></button>
+ <button type="button" class="ia-quest-card" data-ia-mode="interview"><strong>🎤 P2 · 模擬面試</strong><small>完整情境追問、作答及自查框架（非自動評分）</small></button>
+ <button type="button" class="ia-quest-card" data-ia-mode="review"><strong>🔁 弱點重練</strong><small>只重做本機記錄嘅答錯題目</small></button>
+ </div>
+ <div id="iaQuestPlay" class="ia-quest-play" aria-live="polite"></div>
+ <p class="small" style="margin-top:13px">訓練屬考試準備教材，並非官方考核或對個別事件的正式法律意見。進度只保存在此裝置瀏覽器。</p>
+</section>
+
 <section id="progress" class="panel"><div class="quiz"><h2 style="margin-top:0">我的溫習進度</h2><div class="stats" style="color:var(--text)"><div class="stat" style="background:#eef6ff"><b id="pMastered">0</b><span>已掌握</span></div><div class="stat" style="background:#fff5df"><b id="pReview">0</b><span>要再溫</span></div><div class="stat" style="background:#f3f6fa"><b id="pNew">0</b><span>未標記</span></div><div class="stat" style="background:#eef9f4"><b id="quizAccuracy">-</b><span>自評答到率</span></div></div><h3>建議次序</h3><p>① 先完成 A 必背 → ② 用「快問快答」測自己 → ③ 將「部分識／未識」標記為要再溫 → ④ 最後補 B 熟悉。</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn secondary" id="exportProgress">匯出進度 JSON</button><button class="btn bad" id="resetProgress">清除本機進度</button></div><p class="small">進度只儲存在目前瀏覽器的 localStorage；HTML本身不會上傳你的答案。</p></div></section>
 <div class="footer-note">資料以題庫所列官方來源為準；時效性政策請於正式面試前再核實。</div></div>
 
@@ -295,4 +325,57 @@ if(gdTimerReset)gdTimerReset.onclick=function(){if(gdTimerInt)clearInterval(gdTi
 renderGDTopics();paintGDTimer();
 
 refreshStats();renderList();buildFlashDeck();
+
+/* IA-only Quest. Keeps a separate localStorage namespace and never touches JRE. */
+(function(){
+const Q=[
+{id:'im1',k:'quick',q:'一名旅客在繁忙時段未能理解排隊指示，最適當的第一步是？',o:['立即要求對方離開','以清晰、尊重語氣重述指示，必要時尋求語言協助','略過核查程序以加快通關'],a:1,e:'服務效率不能凌駕依法辦事與程序公平；先溝通和提供可行協助。'},
+{id:'im2',k:'quick',q:'你發現證件資料與申報內容有不一致之處，應如何處理？',o:['按程序核對，記錄問題及向主管匯報','自行刪改記錄','因排隊人多便直接放行'],a:0,e:'核實、妥善記錄及依指引升級處理，避免任意決定。'},
+{id:'im3',k:'quick',q:'有親友請你查閱與職務無關的個人資料，你應？',o:['為對方破例查詢','只口頭透露','拒絕不當查閱，遵守資料保密及授權程序'],a:2,e:'最小權限、資料保密及避免利益衝突，是紀律部隊工作基本要求。'},
+{id:'im4',k:'quick',q:'面對投訴，哪種做法最符合良好公共服務？',o:['耐心聆聽、確認事實，解釋投訴及跟進渠道','立即承諾任何要求都可滿足','與市民爭辯'],a:0,e:'先聆聽與釐清事實，客觀回應並在權限內跟進。'},
+{id:'im5',k:'quick',q:'遇上不熟悉的個案，最穩妥的做法是？',o:['自行猜測法例適用方式','翻查最新指引及向主管尋求指示','照同事口頭說法隨意處理'],a:1,e:'正確程序與一致執行比臨場猜測更重要。'},
+{id:'is1',k:'scenario',q:'同事建議因熟客而省略必要核查步驟，應如何回應？',o:['婉拒並堅守程序，必要時按匯報機制處理','默許以免尷尬','改在下班後補做'],a:0,e:'廉潔與程序一致性不可因私人關係改變；涉及違規要按政策適當匯報。'},
+{id:'is2',k:'scenario',q:'口岸突然出現人流擠塞，部分旅客情緒激動。應優先？',o:['立即關閉所有通道','保障安全、通知主管、協調分流並作清晰廣播','單獨與最激動旅客爭論'],a:1,e:'先安全與秩序，再採取可執行分流措施，同時保持準確資訊傳遞。'},
+{id:'is3',k:'scenario',q:'有人要求為長者提供協助，但現場人手緊張。最佳安排是？',o:['一律拒絕','忽略其他旅客並長期調派全隊','評估迫切需要，安排適切協助並兼顧隊伍運作'],a:2,e:'因應風險與實際需要作合理優先次序及資源分配。'},
+{id:'is4',k:'scenario',q:'你收到含有未經證實入境政策變動的社交媒體帖子，應？',o:['轉發予旅客','先核對正式通告／上級指引，避免傳播未核實消息','即時自行宣布新安排'],a:1,e:'入境政策具時效性，只能依官方最新指引作準。'},
+{id:'is5',k:'scenario',q:'完成一項新分流安排後，如何判斷是否有效？',o:['只看一位旅客意見','只看工作人員感覺','比較等候時間、投訴、安全事件與人力負荷，定期檢討'],a:2,e:'採用過程、成效及風險指標作整體評估。'}
+];
+const prompts=[
+{q:'有旅客認為通關太慢，要求跳過核查。你會如何解釋及處理？',guide:'立場：保持法定程序；先同理及核對實際需要；解釋安全與公平；按指引分流；必要時升級；檢討等候時間。'},
+{q:'同事在忙碌時犯下資料輸入錯誤，你會點做？',guide:'先止損及記錄，通知相關同事／主管，依程序修正並保障個人資料，之後分析原因和預防重犯。'},
+{q:'如何平衡執法一致性、旅客服務及前線工作壓力？',guide:'共同目標是安全與依法辦事；用標準作業程序、訓練、跨崗位協作、透明溝通及 KPI 建議具體方案。'}
+];
+const KEY='ia-study:quest:v1';
+let state={xp:0,runs:0,correct:0,answered:0,miss:[]};
+try{state={...state,...JSON.parse(localStorage.getItem(KEY)||'{}')};}catch(e){}
+let mode='',list=[],pos=0,score=0,locked=false;
+const $=id=>document.getElementById(id);
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function stats(){$('iaQuestXp').textContent=state.xp;$('iaQuestRuns').textContent=state.runs;$('iaQuestAccuracy').textContent=state.answered?Math.round(state.correct*100/state.answered)+'%':'—';}
+function start(m){mode=m;pos=0;score=0;locked=false;list=m==='quick'?Q.filter(x=>x.k==='quick'):m==='scenario'?Q.filter(x=>x.k==='scenario'):m==='review'?Q.filter(x=>state.miss.includes(x.id)):prompts;
+if(!list.length){$('iaQuestPlay').style.display='block';$('iaQuestPlay').innerHTML='<p>暫時沒有待重練題目，先完成 P0／P1 挑戰。</p>';return;}
+render();}
+function finish(){state.runs++;state.xp+=10;persist();stats();$('iaQuestPlay').innerHTML='<h3>挑戰完成</h3><p>本輪 '+score+' / '+list.length+' 題（面試模式僅記錄完成，唔等同正式評分）。</p><button type="button" class="btn primary" id="iaQRestart">再挑戰</button>';$('iaQRestart').onclick=()=>start(mode);}
+function advance(){pos++;locked=false;if(pos>=list.length)finish();else render();}
+function render(){
+const el=$('iaQuestPlay');el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});
+const item=list[pos];
+if(mode==='interview'){
+el.innerHTML='<div class="small">P2 · 面試題 '+(pos+1)+' / '+list.length+'</div><h3>'+item.q+'</h3><textarea id="iaQWriting" placeholder="寫低你會點回答：原則、判斷、步驟、風險、跟進…"></textarea><button class="btn primary" id="iaQSubmit">提交作答並查看框架</button><div id="iaQFeedback"></div>';
+$('iaQSubmit').onclick=()=>{const v=$('iaQWriting').value.trim();if(v.length<30){$('iaQFeedback').textContent='請最少寫 30 個字。';return;}
+$('iaQFeedback').innerHTML='<div class="ia-quest-answer"><strong>面試自查示範</strong><p>'+item.guide+'</p><p>檢查：有冇清晰立場、按程序行事、服務態度、風險處理及檢討？</p></div><button class="btn primary" id="iaQNext">下一題 →</button>';
+$('iaQSubmit').disabled=true;state.xp+=10;persist();stats();$('iaQNext').onclick=advance;};return;}
+el.innerHTML='<div class="small">'+(mode==='quick'?'P0':mode==='scenario'?'P1':'重練')+' · '+(pos+1)+' / '+list.length+'</div><h3>'+item.q+'</h3>'+item.o.map((v,i)=>'<button type="button" class="ia-quest-choice" data-ia-choice="'+i+'">'+String.fromCharCode(65+i)+'. '+v+'</button>').join('')+'<div id="iaQFeedback"></div>';
+el.querySelectorAll('[data-ia-choice]').forEach(b=>b.onclick=()=>{
+if(locked)return;locked=true;const ok=Number(b.dataset.iaChoice)===item.a;if(ok)score++;
+state.answered++;state.correct+=ok?1:0;state.xp+=ok?15:5;
+state.miss=ok?state.miss.filter(x=>x!==item.id):Array.from(new Set([...state.miss,item.id]));
+persist();stats();el.querySelectorAll('[data-ia-choice]').forEach(x=>x.disabled=true);
+$('iaQFeedback').innerHTML='<div class="ia-quest-answer"><b>'+(ok?'正確 ✓':'建議重溫')+'</b><p>'+item.e+'</p><p>較佳答案：'+item.o[item.a]+'</p></div><button class="btn primary" id="iaQNext">下一題 →</button>';$('iaQNext').onclick=advance;
+});
+}
+document.querySelectorAll('[data-ia-mode]').forEach(b=>b.addEventListener('click',()=>start(b.dataset.iaMode)));
+stats();
+})();
+
 </script></body></html>
