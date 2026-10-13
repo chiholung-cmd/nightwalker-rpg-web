@@ -49,7 +49,7 @@ test("emotion is presentation only; never changes prose, stage or save text",()=
  assert.match(app,/class="emotion-focus"/);
  assert.match(app,/esc\(raw\.slice\(0,at\)\)/);
  assert.match(app,/esc\(raw\.slice\(at\+token\.length\)\)/);
- assert.match(app,/emotionalBeats<4/);
+ assert.match(app,/emotionalBeats<8/);
  assert.doesNotMatch(fx,/\.innerHTML\s*=/);
  assert.doesNotMatch(fx,/\.mission\s*=/);
 });
