@@ -70,7 +70,7 @@ const kind=details.kind==="original"?"original":"adaptation";
 const types=["電影","劇集","動畫","小說","遊戲","其他作品"];
 const mediaType=types.includes(details.mediaType)?details.mediaType:"電影";
 const premise=String(details.premise||"").trim();
-if(kind==="original"&&(premise.length<12||premise.length>450))return "自創世界請提供 12 至 450 字的背景、規則或故事構思";
+if(kind==="original"&&(premise.length<12||premise.length>2000))return "自創世界請提供 12 至 2,000 字的背景、規則或故事構思；草稿會保留";
 if(kind==="adaptation"&&(!details.verifiedTitle||title!==details.verifiedTitle||!details.verifiedSource))
  return "作品世界必須先核對並確認原作名稱與媒介版本，不會自動創作不存在的作品";
 if(kind==="adaptation"){
@@ -133,7 +133,7 @@ w=s.assignment.world==="custom"?{id:"custom",name:s.assignment.worldTitle,enemy:
 if(s.profile.bloodline==="wolf")s.profile.sta=clamp(s.profile.sta+15,0,100);
 if(s.profile.bloodline==="blank")s.profile.san=clamp(s.profile.san-10,0,100);let seed=s.assignment.seed;
 let actors=taskObj.mode==="team"?[D.companions[seed%4],D.companions[(seed+1)%4]]:taskObj.mode==="versus"?[D.companions[(seed+1)%4]]:[],opponent=taskObj.mode==="versus"?D.rivals[seed%3]:null;
-s.mission={...copy(s.assignment),narrativeMode:literary,title:taskObj.name,aiScenes:{},aiOptions:{},director:false,npcMemory:{},storyFacts:[],missionArc:[],phase:0,turn:0,progress:0,required:taskObj.required,flags:[],evidence:[],outcomes:[],log:[],history:[],bag,crew:actors.map(x=>({...x,bond:s.bonds[x.id]||0})),rival:opponent?{...opponent,progress:0}:null,enemy:{name:taskObj.mode==="versus"?opponent.name:w.enemy,hp:taskObj.mode==="versus"?opponent.hp:w.foeHp,max:taskObj.mode==="versus"?opponent.hp:w.foeHp,intent:0,bleed:0,stunned:0},status:{guard:0,barrier:0,bonus:0,poison:0},cooldowns:{},chosenSkill:0,weaponCondition:100,hidden:false,finished:false,roundEvents:[],mode:taskObj.mode,objective:taskObj.goal,worldName:w.name};
+s.mission={...copy(s.assignment),narrativeMode:literary,title:taskObj.name,openingIntent:String(s.assignment.openingIntent||"").slice(0,1200),playerAgency:{skillsUsed:[],itemsUsed:[],contacts:[]},aiScenes:{},aiOptions:{},director:false,npcMemory:{},storyFacts:[],missionArc:[],phase:0,turn:0,progress:0,required:taskObj.required,flags:[],evidence:[],outcomes:[],log:[],history:[],bag,crew:actors.map(x=>({...x,bond:s.bonds[x.id]||0})),rival:opponent?{...opponent,progress:0}:null,enemy:{name:taskObj.mode==="versus"?opponent.name:w.enemy,hp:taskObj.mode==="versus"?opponent.hp:w.foeHp,max:taskObj.mode==="versus"?opponent.hp:w.foeHp,intent:0,bleed:0,stunned:0},status:{guard:0,barrier:0,bonus:0,poison:0},cooldowns:{},chosenSkill:0,weaponCondition:100,hidden:false,finished:false,roundEvents:[],mode:taskObj.mode,objective:taskObj.goal,worldName:w.name};
 s.assignment=null;s.screen="mission";global.NW_WORLD?.enter?.(s);return null}
 function availability(s,skillId){let sk=skill(skillId),m=s.mission;if(!sk)return {ok:false,reasons:["技能不存在"]};let r=[];if(!s.loadout.active.includes(skillId))r.push("未裝入出戰招式欄");if(!s.learned.includes(skillId))r.push("尚未習得");r.push(...tierOK(s,sk));if(s.profile.sta<(sk.sta||0))r.push("STA 不足");if(s.profile.mp<(sk.mp||0))r.push("MP 不足");if(m&&(m.cooldowns[skillId]||0)>0)r.push("冷卻 "+m.cooldowns[skillId]+" 回合");if(skillId==="sunbreath"&&!(item(s.loadout.weapon)?.tags||[]).includes("日光"))r.push("必須使用日光武器");return {ok:!r.length,reasons:r}}
 function derived(s){let m=s.mission;if(!m)return null;let w=world(m.world),t=task(m.task),active=s.loadout.active,selected=active[m.chosenSkill%Math.max(1,active.length)]||"observe",isFight=m.world==="demon"||m.mode==="versus"||(m.world==="busan"&&m.phase>=2);
