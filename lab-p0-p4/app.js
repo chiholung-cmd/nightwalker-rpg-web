@@ -199,7 +199,14 @@ return head+menu+'<div class="scroll-content column-gap">'+content+'</div>'
 function missionBoard(){if(s.mission)return missionUI();
 let banner=s.assignment?(()=>{let t=s.assignment.world==="custom"?{name:s.assignment.worldKind==="original"?"自創世界·主神試煉":"作品世界·主神試煉",mode:"solo",goal:"探索「"+s.assignment.worldTitle+"」並完成主神委派的目標",desc:s.assignment.worldKind==="original"?"原創世界構築":"AI 作品世界"}:task(s.assignment.task),w=s.assignment.world==="custom"?{name:s.assignment.worldTitle,tone:"AI 創作世界"}:world(t.world);return '<div class="assigned"><div class="eyebrow">MAIN GOD / ASSIGNED SCENARIO</div><span class="mode-label">'+({solo:"單人任務",team:"團隊任務",versus:"對抗任務"}[t.mode])+'</span><h2>'+esc(t.name)+'</h2><p>《'+w.name+'》 · '+esc(w.tone)+'</p><div class="rule"></div><h3>主線目標</h3><p>'+esc(t.goal)+'</p><div class="assigned-desc">'+esc(t.desc)+'</div><small>隱藏任務：尚未公開。世界及模式已鎖定，無法免費重抽。</small></div>'})():'<div class="unassigned"><div class="main-god-eye">◌</div><div class="eyebrow">DESTINY LOCKED / UNKNOWN</div><h2>主神尚未公布你的下一個世界</h2><p>可能進入電影、動畫或劇集世界。每次任務可為單人、合作小隊或對抗任務，主神將決定你的入場位置與身份。</p></div>';
 const protagonistSetup='<div class="identity-entry"><label for="protagonist-name">主角姓名 · 自由設定</label><div class="identity-entry-row"><input id="protagonist-name" maxlength="20" placeholder="由你命名，唔再叫夜行者" value="'+esc(temporary.nameDraft??playerName())+'">'+a("保存姓名","saveName","small main")+'</div><small>Nightwalker 只係遊戲名稱；已有劇情同存檔會繼續保留。</small></div>';
-let stages=s.assignment?card("進入故事前",'<h2>《'+esc(s.assignment.worldTitle||world(s.assignment.world)?.name||"未知作品")+'》</h2><p class="minor-meta">確認後開始小說正文。角色可以自由選擇，唔需要配裝或升級數值。</p>'+a("開始閱讀","launch","block main")+a("取消呢個世界","leaveStory","block ghost")):a("由主神安排未知世界","assign","block ghost");
+let stages=s.assignment?card("主神空間 · 進入世界之前",
+ '<h2>《'+esc(s.assignment.worldTitle||world(s.assignment.world)?.name||"未知作品")+'》</h2>'+
+ '<p class="minor-meta">主角會帶住已學技能、武器同已有經歷進入世界；新故事會由主神空間同入場前嘅人物互動慢慢展開，而唔係一開始就結束事件。</p>'+
+ '<label class="world-input-label" for="opening-intent">入場前主角想做甚麼？（可選，會自動儲存）</label>'+
+ '<textarea id="opening-intent" class="world-premise-input" rows="4" maxlength="1200" placeholder="例如：先同林霧討論任務，再檢查加固鐵棍；傳送時盡量觀察隊友有冇可疑舉動……">'+esc(temporary.openingDraft||"")+'</textarea>'+
+ a("檢查角色、技能與武器","nav:profile","block ghost")+
+ a("確認準備，進入序章","launch","block main")+a("取消呢個世界","leaveStory","block ghost")):
+ a("由主神安排未知世界","assign","block ghost");
 let customCard="";
 if(!s.assignment){
  const original=temporary.worldType==="original";
@@ -212,7 +219,7 @@ if(!s.assignment){
  customCard=card("額外權限 · 自選世界",types+'<div class="world-form">'+(original?originalForm:mediaForm)+(!original?mediaVerify:"")+a(original?"建立原創故事":"核對作品名稱","customWorld","block main")+status+'</div>');
 }
 let returnLinks=false&&s.discovered.length?card("定向返回已去過的世界",s.discovered.map(id=>{let w=world(id),unlocked=s.coord[id];return '<div class="return-row"><div><b>'+esc(w?.name||id)+'</b><small>'+(unlocked?"座標已解鎖":"須先付費解鎖座標")+'</small></div>'+a("查看代價","coord:"+id,"small ghost")+'</div>'}).join("")):"";
-return section("MAIN GOD / WORLD TRANSFER","輪迴傳送終端","主神發佈任務與目標；返回主神空間後 HP、STA、MP、SAN 全部免費恢復，再進入下一個世界。")+'<div class="scroll-content column-gap">'+protagonistSetup+banner+stages+customCard+returnLinks+'</div>'}
+return section("MAIN GOD / WORLD TRANSFER","主神空間","選擇世界、保留人物能力和過往關係；每次傳送都由你決定如何準備。")+'<div class="scroll-content column-gap">'+protagonistSetup+banner+stages+customCard+returnLinks+'</div>'}
 function mood(i,worldId){if(worldId==="deathnote"&&i===5)return "grief";if(worldId==="alice"&&i===2)return "anger";if(worldId==="demon"&&i===0)return "system";return ["calm","suspense","eerie","dialogue","shock","resolve"][i%6]}
 
 function missionStory(){return N.excerpt(s)}
@@ -283,8 +290,9 @@ function missionUI(){
  }).join("");
  const notice="";
  const bar='<div class="story-top literary-top"><span>'+esc(w.name)+' <small>· 第 '+(m.phase+1)+' 章</small></span><button class="story-leave" data-do="leaveStory" aria-label="退出當前故事並開始新故事">退出 · 新故事</button></div>';
- const toolbox='<div class="story-toolbar literary-toolbar"><span>《'+esc(m.worldName)+'》 · '+esc(novel?.title||"本章")+'</span><div>'+a(musicControlText(),"musicToggle","tiny ghost")+a(eplusMode()==="strong"?"演出：強":eplusMode()==="standard"?"演出：柔和":"演出：關","toggleMotion","tiny ghost")+a("重寫","rewriteOpen","tiny ghost")+a("線索","taskinfo","tiny ghost")+'</div></div>';
+ const toolbox='<div class="story-toolbar literary-toolbar"><span>《'+esc(m.worldName)+'》 · '+esc(novel?.title||"本章")+'</span><div>'+a("人物・技能","codexOpen","tiny ghost")+a(musicControlText(),"musicToggle","tiny ghost")+a(eplusMode()==="strong"?"演出：強":eplusMode()==="standard"?"演出：柔和":"演出：關","toggleMotion","tiny ghost")+a("重寫","rewriteOpen","tiny ghost")+a("線索","taskinfo","tiny ghost")+'</div></div>';
   const popups=[];
+ if(temporary.codexOpen)popups.push(window.NW_CODEX?.render?.(s,m,temporary.codexTab)||"");
  if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只有發生體力消耗、施展術式或受到傷害時，才需要特別注意數值。</p>'+a("關閉","status","small ghost")+'</div>');
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
  if(temporary.showSkills)popups.push('<div class="mission-popup"><div class="card-heading">已配置的招式與技能</div><p class="popup-note">招式不會自動取代劇情選項；招式可以在合適的劇情節點使用。</p>'+N.skills(s).map(x=>'<button class="button-row story-skill" data-do="cast:'+x.id+'" '+(x.ok?"":"disabled")+'><div><b>'+esc(x.name)+'</b><small>'+esc(x.desc)+'</small><small>'+(x.sta?"STA −"+x.sta+" ":"")+(x.mp?"MP −"+x.mp:"")+(x.reasons.length?" · "+esc(x.reasons.join("、")):"")+'</small></div><span>使用 ›</span></button>').join("")+a("關閉","skills","small ghost")+'</div>');
@@ -397,12 +405,43 @@ function render(){
  persist();if(inGame)scheduleAiScene()
 }
 function handle(cmd){if(!cmd)return;
+if(cmd==="codexOpen"){temporary.codexOpen=true;temporary.codexTab="character";render();return}
+if(cmd==="codexClose"){temporary.codexOpen=false;render();return}
+if(cmd.startsWith("codexTab:")){const tab=cmd.slice(9);if(["character","skills","gear","npcs"].includes(tab))temporary.codexTab=tab;render();return}
+if(cmd.startsWith("codexArm:")){
+ const id=decodeURIComponent(cmd.slice(9));
+ const obj=objId(id);
+ if(!obj||obj.type!=="weapon"||!((s.warehouse||{})[id]>0||Object.values(s.loadout||{}).includes(id)))return notice("未擁有呢件武器");
+ s.loadout.weapon=id;render();return
+}
+if(cmd.startsWith("codexCarry:")){
+ const id=decodeURIComponent(cmd.slice(11)),obj=objId(id);
+ if(!obj||!(s.warehouse?.[id]>0))return notice("暫時未擁有呢件物品");
+ s.loadout.backpack ||= [];
+ if(!s.loadout.backpack.includes(id))s.loadout.backpack.push(id);
+ render();return
+}
+if(cmd.startsWith("insert:")){
+ const [kind,...args]=cmd.slice(7).split(":"),id=decodeURIComponent(args.join(":"));
+ const item=kind==="skill"?skill(id):kind==="item"?objId(id):null;
+ if(kind==="skill"&&(!(s.learned||[]).includes(id)||!item))return notice("呢項技能未學會");
+ if(kind==="item"&&(!item||![...(s.loadout?.backpack||[]),s.loadout?.weapon,s.loadout?.offhand,s.loadout?.accessory].includes(id)))return notice("呢件物品未隨身帶住");
+ const knownNpc=kind==="npc"&&!!(s.mission?.npcMemory?.[id]||(s.mission?.crew||[]).some(x=>x.name===id)||s.mission?.storyBible?.characters?.[id]);
+ if(kind==="npc"&&!knownNpc)return notice("尚未喺故事中接觸過呢位人物");
+ const addition=kind==="skill"?"嘗試運用「"+item.name+"」，":
+  kind==="item"?"拿出「"+item.name+"」，":"走向「"+id+"」，";
+ if(!addition)return;
+ const scope=temporary.draftScope||window.NW_DRAFTS?.storyKey?.(s.mission)||"new-story";
+ temporary.freeDraft=window.NW_DRAFTS?.save?.("free",scope,(temporary.freeDraft.trim()?temporary.freeDraft.trim()+"\n":"")+addition)||addition;
+ temporary.codexOpen=false;temporary.choicesOpen=true;render();
+ R.querySelector("#free-action")?.focus?.();return
+}
 if(cmd==="rewriteOpen"){temporary.rewriteDialog=true;render();return}
 if(cmd==="cancelRewrite"){temporary.rewriteDialog=false;render();return}
 if(cmd==="leaveStory"){temporary.rewriteDialog=false;temporary.leaveDialog=true;render();return}
 if(cmd==="cancelLeave"){temporary.leaveDialog=false;render();return}
 if(cmd==="confirmLeave"){
- temporary.leaveDialog=false;
+ temporary.leaveDialog=false;temporary.codexOpen=false;
  const err=E.abandonStory(s);if(err)return notice(err);
  clearTimeout(temporary.aiRetryTimer);temporary.aiRetryTimer=0;
  temporary.aiError="";temporary.aiFailedKey="";temporary.freeDraft="";
@@ -485,10 +524,14 @@ if(cmd==="assign"){let err=E.mainGodAssign(s);if(err)return notice(err);render()
 if(cmd.startsWith("coord:")){let err=E.assignReturn(s,cmd.slice(6));if(err)return notice(err);render();return}
 if(cmd==="launch"){
  if(!playerName())return notice("開始故事之前先設定主角姓名");
+ const opening=R.querySelector("#opening-intent")?.value??temporary.openingDraft??"";
+ temporary.openingDraft=window.NW_DRAFTS?.save?.("opening","next-world",opening)||opening;
+ if(s.assignment)s.assignment.openingIntent=String(opening).slice(0,1200);
  const startNovel=()=>{
   if(!temporary.aiConfigured)return notice("目前 AI 未連線。為避免誤入六幕短篇，請先在設定頁檢查 AI 連線。");
   const err=E.launch(s);if(err)return notice(err);
   s.mission.director=true;
+  window.NW_DRAFTS?.clear?.("opening","next-world");temporary.openingDraft="";
   temporary.showItems=false;temporary.showLog=false;temporary.showSkills=false;temporary.showStatus=false;render()
  };
  if(!temporary.aiConfigured){checkAiStatus(true).then(startNovel);return}
@@ -568,7 +611,8 @@ if(el.id==="bgm-volume"){
  window.NW_MUSIC?.setVolume?.(s.settings.musicVolume);
  const label=R.querySelector("#bgm-volume-value");if(label)label.textContent=value+"%";
  E.save(s);return
-}if(el.id==="free-action"){temporary.freeDraft=el.value.slice(0,3000);window.NW_DRAFTS?.save?.("free",temporary.draftScope,temporary.freeDraft)}if(el.id==="media-world-name"){temporary.mediaWorldDraft=el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="rewrite-note")temporary.rewriteNote=window.NW_DRAFTS?.save?.("rewrite","chapter",el.value.slice(0,700))||el.value.slice(0,700);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=window.NW_DRAFTS?.save?.("premise","new-world",el.value.slice(0,2000))||el.value.slice(0,2000)});
+}if(el.id==="free-action"){temporary.freeDraft=el.value.slice(0,3000);window.NW_DRAFTS?.save?.("free",temporary.draftScope,temporary.freeDraft)}if(el.id==="media-world-name"){temporary.mediaWorldDraft=el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="opening-intent")temporary.openingDraft=window.NW_DRAFTS?.save?.("opening","next-world",el.value.slice(0,1200))||el.value.slice(0,1200);
+if(el.id==="rewrite-note")temporary.rewriteNote=window.NW_DRAFTS?.save?.("rewrite","chapter",el.value.slice(0,700))||el.value.slice(0,700);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=window.NW_DRAFTS?.save?.("premise","new-world",el.value.slice(0,2000))||el.value.slice(0,2000)});
 R.addEventListener("click",ev=>{let t=ev.target.closest("[data-do]");if(!t||t.disabled)return;handle(t.dataset.do)});
 render();
 checkAiStatus();
