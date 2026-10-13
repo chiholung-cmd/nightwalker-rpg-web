@@ -43,7 +43,7 @@ test("motion defaults back on, with existing saves migrated without resetting th
  runInNewContext(src("engine.js"),context);
  const E=context.window.NW_ENGINE;
  const base=E.defaultState();
- assert.equal(base.settings.eplusMode,"standard");
+ assert.equal(base.settings.eplusMode,"strong");
  assert.equal(base.settings.reducedMotion,false);
  base.settings={novelMode:true,novelSize:"normal",reducedMotion:true};
  base.profile.name="林燁";base.profile.nameCustomized=true;
@@ -53,7 +53,7 @@ test("motion defaults back on, with existing saves migrated without resetting th
    setItem(){},removeItem(){}
  };
  const restored=E.load(storage);
- assert.equal(restored.settings.eplusMode,"standard");
+ assert.equal(restored.settings.eplusMode,"strong");
  assert.equal(restored.settings.reducedMotion,false);
  assert.equal(restored.mission.worldName,"零號月台");
  assert.equal(restored.mission.history[0].action,"留低紙條");
