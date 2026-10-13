@@ -198,8 +198,16 @@ return head+menu+'<div class="scroll-content column-gap">'+content+'</div>'
 function missionBoard(){if(s.mission)return missionUI();
 let banner=s.assignment?(()=>{let t=s.assignment.world==="custom"?{name:s.assignment.worldKind==="original"?"自創世界·主神試煉":"作品世界·主神試煉",mode:"solo",goal:"探索「"+s.assignment.worldTitle+"」並完成主神委派的目標",desc:s.assignment.worldKind==="original"?"原創世界構築":"AI 作品世界"}:task(s.assignment.task),w=s.assignment.world==="custom"?{name:s.assignment.worldTitle,tone:"AI 創作世界"}:world(t.world);return '<div class="assigned"><div class="eyebrow">MAIN GOD / ASSIGNED SCENARIO</div><span class="mode-label">'+({solo:"單人任務",team:"團隊任務",versus:"對抗任務"}[t.mode])+'</span><h2>'+esc(t.name)+'</h2><p>《'+w.name+'》 · '+esc(w.tone)+'</p><div class="rule"></div><h3>主線目標</h3><p>'+esc(t.goal)+'</p><div class="assigned-desc">'+esc(t.desc)+'</div><small>隱藏任務：尚未公開。世界及模式已鎖定，無法免費重抽。</small></div>'})():'<div class="unassigned"><div class="main-god-eye">◌</div><div class="eyebrow">DESTINY LOCKED / UNKNOWN</div><h2>主神尚未公布你的下一個世界</h2><p>可能進入電影、動畫或劇集世界。每次任務可為單人、合作小隊或對抗任務，主神將決定你的入場位置與身份。</p></div>';
 const protagonistSetup='<div class="identity-entry"><label for="protagonist-name">主角姓名 · 自由設定</label><div class="identity-entry-row"><input id="protagonist-name" maxlength="20" placeholder="由你命名，唔再叫夜行者" value="'+esc(temporary.nameDraft??playerName())+'">'+a("保存姓名","saveName","small main")+'</div><small>Nightwalker 只係遊戲名稱；已有劇情同存檔會繼續保留。</small></div>';
+const worldIntro=s.assignment?
+ '<div class="entry-world-intro"><div class="eyebrow">WORLD INTRODUCTION / 世界簡介</div>'+
+ '<h3>《'+esc(s.assignment.worldTitle||world(s.assignment.world)?.name||"未命名世界")+'》</h3>'+
+ '<p class="entry-world-category">'+esc(s.assignment.worldKind==="original"?"原創世界 · 由你提供背景規則":(s.assignment.mediaType||"作品世界")+" · 原作延伸任務")+'</p>'+
+ '<div class="entry-world-summary">'+esc(s.assignment.worldSummary||s.assignment.premise||world(s.assignment.world)?.tone||"主神已鎖定這個世界。作品詳細背景未能核實，會按已確認的資料同你的選擇展開，不會編造官方正史。")+'</div>'+
+ (s.assignment.verifiedSource?'<a class="entry-source" href="'+esc(s.assignment.verifiedSource)+'" target="_blank" rel="noopener noreferrer">查看作品資料來源 ↗</a>':"")+
+ '<div class="entry-world-rules"><b>你會點樣介入呢個世界？</b><p>主角唔會取代原作人物。角色可用已學技能、武器、道具同隊友協作改變故事；每個選擇可以引發新因果，NPC 亦有自己嘅目的。</p></div>'+
+ '</div>':"";
 let stages=s.assignment?card("主神空間 · 進入世界之前",
- '<h2>《'+esc(s.assignment.worldTitle||world(s.assignment.world)?.name||"未知作品")+'》</h2>'+
+ worldIntro+
  '<p class="minor-meta">主角會帶住已學技能、武器同已有經歷進入世界；新故事會由主神空間同入場前嘅人物互動慢慢展開，而唔係一開始就結束事件。</p>'+
  '<div class="world-mode-choice"><p>進入世界嘅方式</p>'+
  '<button data-do="entryMode:solo" class="'+(s.assignment.mode==="team"?"":"chosen")+'">單獨進入</button>'+
@@ -215,7 +223,14 @@ if(!s.assignment){
  const media=["電影","劇集","動畫","小說","遊戲","其他作品"];
  const types='<div class="world-kind-tabs"><button class="'+(!original?"selected":"")+'" data-do="worldType:adaptation">作品世界<small>電影／劇集／動畫等</small></button><button class="'+(original?"selected":"")+'" data-do="worldType:original">自創世界<small>建立原創世界觀</small></button></div>';
  const status='<p class="minor-meta">AI 創作狀態：'+aiStatusText()+'。原作會先核對，再由你確認。</p>';
- const mediaVerify=temporary.worldLookupPending?'<div class="world-verify">正在核對原作資料，未扣積分……</div>':temporary.worldLookupError?'<div class="world-verify problem">'+esc(temporary.worldLookupError)+'</div>':temporary.worldMatches.length?'<div class="world-verify"><b>請確認正確作品及版本</b><p>發現可能嘅作品；唔會自行當成新世界生成。</p>'+temporary.worldMatches.map((x,i)=>'<button class="world-candidate" data-do="worldPick:'+i+'"><strong>《'+esc(x.title)+'》 · '+esc(x.mediaType)+'</strong><small>核對來源：'+esc(x.sourceTitle)+' · '+(x.confidence==="exact"?"作品名吻合":"可能係輸入錯字")+'</small><span>確認使用此作品 →</span></button>').join("")+'</div>':"";
+ const mediaVerify=temporary.worldLookupPending?'<div class="world-verify">正在核對作品名稱、原作版本與故事背景；輸入文字已保留……</div>':
+ temporary.worldMatches.length?'<div class="world-verify"><b>可能係你想搵嘅作品</b><p>請揀正確作品；原作資料未確認就唔會冒充官方劇情。</p>'+
+ temporary.worldMatches.map((x,i)=>'<div class="world-suggestion"><button class="world-candidate" data-do="worldPick:'+i+'"><strong>《'+esc(x.title)+'》 · '+esc(x.mediaType)+'</strong><small>'+
+ (x.sourceUrl?'原作來源：'+esc(x.sourceTitle||x.title)+' · '+(x.confidence==="exact"?"名稱吻合":"可能係打錯字"):'純名稱建議，按下後會用正確名稱重新核對')+
+ '</small><span>'+(x.sourceUrl?'睇世界簡介，準備進入 →':'使用呢個名稱再查 →')+'</span></button>'+
+ (x.sourceUrl&&x.summary?'<p class="world-synopsis">'+esc(x.summary.slice(0,550))+'</p>':"")+'</div>').join("")+
+ (temporary.worldLookupError?'<p class="world-verify-note">'+esc(temporary.worldLookupError)+'</p>':"")+'</div>':
+ temporary.worldLookupError?'<div class="world-verify problem">'+esc(temporary.worldLookupError)+'</div>':"";
  const mediaForm='<p>選擇現有電影、劇集、動畫、小說或遊戲嘅世界，由你親自加入故事。主神仍會發佈任務，唔會直接重演原作劇情。</p><div class="world-mediums">'+media.map(x=>'<button class="'+(temporary.worldMedia===x?"selected":"")+'" data-do="worldMedia:'+x+'">'+x+'</button>').join("")+'</div><label for="media-world-name" class="world-input-label">作品名稱</label><input id="media-world-name" class="custom-world-input" value="'+esc(temporary.mediaWorldDraft)+'" maxlength="50" placeholder="例如：死亡筆記、進擊的巨人" aria-label="作品世界名稱"><p class="minor-meta">作品名稱會先核對，確認作品及媒介版本後才開始。原作人物與設定會盡量維持，但衍生劇情並非官方內容。</p>';
  const originalForm='<p>完全由你構思世界。可以係規則怪談、末日、仙俠、懸疑或者任何原創背景；AI 會根據你嘅規則設計人物、危機同故事。</p><label for="original-world-name" class="world-input-label">原創世界名稱</label><input id="original-world-name" class="custom-world-input" value="'+esc(temporary.originalWorldDraft)+'" maxlength="50" placeholder="例如：零號月台、深海第七城" aria-label="原創世界名稱"><label for="original-world-premise" class="world-input-label">世界背景與核心規則</label><textarea id="original-world-premise" class="world-premise-input" maxlength="2000" rows="7" placeholder="例如：每晚十二點，失蹤者會收到一張沒有終點站的車票。車上有三條禁忌規則，每個人都在隱瞞自己的目的……" aria-label="原創世界背景與規則">'+esc(temporary.originalPremiseDraft)+'</textarea><p class="minor-meta">背景最少 12 字。AI 會以你提供嘅規則建立世界；開場唔理想亦可以退出重新開始。</p>';
  customCard=card("額外權限 · 自選世界",types+'<div class="world-form">'+(original?originalForm:mediaForm)+(!original?mediaVerify:"")+a(original?"建立原創故事":"核對作品名稱","customWorld","block main")+status+'</div>');
@@ -522,11 +537,18 @@ if(cmd==="customWorld"){
 }
 if(cmd.startsWith("worldPick:")){
  const i=Number(cmd.slice(10)),choice=temporary.worldMatches[i];
- if(!choice||!choice.sourceUrl||temporary.worldType!=="adaptation"||temporary.worldMedia!==temporary.worldLookupMedia||temporary.mediaWorldDraft.trim()!==temporary.worldLookupQuery){
+ if(!choice||temporary.worldType!=="adaptation"||temporary.worldMedia!==temporary.worldLookupMedia||temporary.mediaWorldDraft.trim()!==temporary.worldLookupQuery){
   temporary.worldMatches=[];return notice("作品名稱或版本已變更，請重新核對");
  }
+ if(!choice.sourceUrl){
+  temporary.mediaWorldDraft=choice.title;
+  temporary.worldMatches=[];
+  temporary.worldLookupPending=false;
+  temporary.worldLookupError="已更正為《"+choice.title+"》，請按「核對作品名稱」重試核實作品背景。";
+  render();return
+ }
  const commit=()=>{
-  const err=E.assignCustomWorld(s,choice.title,temporary.aiConfigured,{kind:"adaptation",mediaType:choice.mediaType,verifiedTitle:choice.title,verifiedSource:choice.sourceUrl,verifiedSourceTitle:choice.sourceTitle});
+  const err=E.assignCustomWorld(s,choice.title,temporary.aiConfigured,{kind:"adaptation",mediaType:choice.mediaType,verifiedTitle:choice.title,verifiedSource:choice.sourceUrl,verifiedSourceTitle:choice.sourceTitle,summary:choice.summary||""});
   if(err)return notice(err);temporary.worldMatches=[];render()
  };
  if(!temporary.aiConfigured){checkAiStatus(true).then(ok=>ok?commit():notice("AI 無法連線，未扣積分"));return}commit();return
