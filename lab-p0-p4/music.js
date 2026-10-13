@@ -16,7 +16,7 @@ const CATALOG={
 };
 const MOODS={calm:"calm",suspense:"suspense",eerie:"eerie",shock:"shock",anger:"anger",grief:"grief",resolve:"resolve",system:"system",
   fear:"eerie",panic:"chase",chase:"chase",dread:"eerie",revelation:"resolve",relief:"resolve",danger:"chase",horror:"eerie"};
-const state={enabled:false,volume:.22,mood:null,track:null,error:"",tracks:[null,null],slot:0,transition:0,frame:null,unlocking:false};
+const state={enabled:false,volume:.22,mood:null,track:null,error:"",tracks:[null,null],slot:0,transition:0,frame:null,pendingUrl:"",failedUrl:"",failedUntil:0,unlocking:false};
 const clamp=v=>Math.min(1,Math.max(0,Number(v)||0));
 const now=()=>global.performance?.now?.()??Date.now();
 const raf=cb=>typeof global.requestAnimationFrame==="function"?global.requestAnimationFrame(cb):global.setTimeout(()=>cb(now()),16);
@@ -30,7 +30,7 @@ function stop(){
  if(state.frame!=null)caf(state.frame);
  state.frame=null;
  for(let i=0;i<2;i++){cleanAudio(state.tracks[i]);state.tracks[i]=null}
- state.enabled=false;state.mood=null;state.track=null;state.unlocking=false;
+ state.enabled=false;state.mood=null;state.track=null;state.pendingUrl="";state.unlocking=false;
 }
 function getTrack(mood){return CATALOG[MOODS[String(mood||"").toLowerCase()]||"system"]||CATALOG.system}
 function setVolume(value){
@@ -59,7 +59,8 @@ function setMood(mood){
  const config=getTrack(nextMood);
  state.mood=nextMood;
  if(!state.enabled)return false;
- if(state.track?.dataset?.musicUrl===config.url)return true;
+ if(state.track?.dataset?.musicUrl===config.url||state.pendingUrl===config.url)return true;
+ if(state.failedUrl===config.url&&Date.now()<state.failedUntil)return false;
  const previous=state.track;
  const nextIndex=1-state.slot;
  const stale=state.tracks[nextIndex];
@@ -68,19 +69,22 @@ function setMood(mood){
  audio.preload="auto";audio.loop=true;audio.volume=0;
  audio.dataset.musicUrl=config.url;
  state.tracks[nextIndex]=audio;
+ state.pendingUrl=config.url;
  state.transition++;
  const token=state.transition;
  if(state.frame!=null)caf(state.frame);
  // start synchronously from the user's click when applicable (autoplay rules).
  let start;
- try{start=audio.play()}catch(error){state.error="音樂暫時無法播放";cleanAudio(audio);state.tracks[nextIndex]=null;return false}
+ try{start=audio.play()}catch(error){state.pendingUrl="";state.failedUrl=config.url;state.failedUntil=Date.now()+20000;state.error="音樂暫時無法播放";cleanAudio(audio);state.tracks[nextIndex]=null;return false}
  Promise.resolve(start).then(()=>{
   if(token!==state.transition||!state.enabled){cleanAudio(audio);return}
+  state.pendingUrl="";state.failedUrl="";state.failedUntil=0;
   state.error="";
   state.track=audio;state.slot=nextIndex;
   blend(previous,audio,state.volume,token);
  }).catch(()=>{
   if(token!==state.transition)return;
+  state.pendingUrl="";state.failedUrl=config.url;state.failedUntil=Date.now()+20000;
   state.error="免費曲庫音源暫時無法載入，可稍後重試或保持靜音";
   cleanAudio(audio);
   state.tracks[nextIndex]=null;
