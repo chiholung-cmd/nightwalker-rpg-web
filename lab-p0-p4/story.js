@@ -204,7 +204,7 @@ else if(director){
 
 return {error:null,report,finished:!!m.finished}
 }
-function choose(s,i){const g=get(s);if(!g)return {error:"尚未進入輪迴世界"};const a=g.actions[i];if(!a)return {error:"沒有這個選擇"};return apply(s,a)}
+function choose(s,i){const g=get(s);if(!g)return {error:"尚未進入輪迴世界"};const a=g.actions[i];if(!a)return {error:"沒有這個選擇"};if(!a.usable)return {error:a.reasons?.join("、")||"目前情境無法採取呢個行動"};return apply(s,a)}
 const INTENT_RULES=[
  ["fight",/重擊|砍殺|砍|斬|揮刀|攻擊|射擊|拔刀攻擊|戰鬥|動手打|打架|打(?!聽|听|電話|招呼|算)|擊倒|刺殺|偷襲|揍|開槍|搏鬥/g],
  ["run",/逃跑|逃離|奔跑|跑開|跑走|快跑|衝出去|衝向|追上|追趕|趕往|撤離|撤退|奔向|衝刺/g],
