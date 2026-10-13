@@ -496,3 +496,83 @@ animation:none!important;transition:none!important;
 .literary-toolbar .btn{color:#e1cda9!important}
 .story-exit-actions .btn{white-space:normal;text-align:center}
 @media(max-height:690px){.story-exit-card{padding:18px;max-height:92dvh;overflow-y:auto}.story-exit-card h2{font-size:20px}}
+
+
+/* E+ editorial effects: full text always readable; reveal only when scrolled into view. */
+.reading-focused .scene-prose.fx-standard .novel-beat,
+.reading-focused .scene-prose.fx-strong .novel-beat{
+  animation:none!important;opacity:1;transform:none;filter:none;letter-spacing:normal;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-revealed{
+  animation:nwNovelSoft .55s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed{
+  animation:nwNovelStrong .68s cubic-bezier(.18,.85,.3,1) both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.fx-alert{
+  animation:nwNovelAlert .73s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.fx-reveal{
+  animation:nwNovelClue .9s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-revealed.fx-death{
+  animation:nwNovelSilence 1.05s ease-out both!important;
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-alert,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-alert{
+  border-left:2px solid #ae796a;padding-left:13px;
+  background:linear-gradient(90deg,rgba(157,84,75,.095),transparent 80%);
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-reveal,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-reveal{
+  border-left:2px solid #bfaa79;padding-left:13px;
+  background:linear-gradient(90deg,rgba(177,148,84,.095),transparent 80%);
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-death,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-death{
+  border-left:2px solid #87939c;padding-left:13px;
+  background:linear-gradient(90deg,rgba(105,121,134,.085),transparent 80%);
+}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-alert p,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-alert p{color:#f4dfd9}
+.reading-focused .scene-prose.fx-standard .novel-beat.fx-reveal p,
+.reading-focused .scene-prose.fx-strong .novel-beat.fx-reveal p{color:#f1e7c9}
+.reading-focused .scene-prose.fx-strong .novel-system.eplus-typing::after{
+  content:"▍";color:#dac7a0;animation:fxCaret .55s steps(2,end) infinite;
+}
+.reading-focused .literary-toolbar .btn{font-size:11px;min-height:30px;padding:5px 8px}
+.reading-focused .literary-toolbar>div{display:flex;flex-wrap:nowrap;gap:2px;white-space:nowrap}
+.reading-focused .literary-toolbar>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+@keyframes nwNovelSoft{
+  from{opacity:.70;transform:translateY(4px);filter:blur(.45px)}
+  to{opacity:1;transform:translateY(0);filter:none}
+}
+@keyframes nwNovelStrong{
+  from{opacity:.52;transform:translateY(9px);filter:blur(1.9px)}
+  to{opacity:1;transform:translateY(0);filter:none}
+}
+@keyframes nwNovelAlert{
+  0%{opacity:.58;transform:translateX(9px);filter:blur(1.5px)}
+  50%{opacity:1;transform:translateX(-2px);filter:none}
+  100%{opacity:1;transform:none;filter:none}
+}
+@keyframes nwNovelClue{
+  0%{opacity:.5;filter:blur(3px);letter-spacing:.7px}
+  65%{opacity:1;filter:blur(0);letter-spacing:.1px}
+  100%{opacity:1;filter:none;letter-spacing:normal}
+}
+@keyframes nwNovelSilence{
+  from{opacity:.48;filter:blur(2px) grayscale(.6)}
+  to{opacity:1;filter:none}
+}
+.reading-focused .scene-prose.motion-off .novel-beat,
+.reading-focused .scene-prose.fx-static .novel-beat{
+ animation:none!important;transform:none!important;opacity:1!important;filter:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .reading-focused .scene-prose .novel-beat,
+ .reading-focused .scene-prose .novel-beat.fx-revealed,
+ .reading-focused .scene-prose .novel-system.eplus-typing::after{
+  animation:none!important;transform:none!important;opacity:1!important;filter:none!important;
+ }
+}
