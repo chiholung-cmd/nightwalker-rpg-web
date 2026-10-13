@@ -4,6 +4,8 @@ const D=window.NW_DATA,E=window.NW_ENGINE,N=window.NW_STORY,R=document.getElemen
 if(!D||!E){R.textContent="主神資料讀取失敗：請重新整理。";return}
 let s=E.load();if(s.mission&&!s.mission.finished)s.mission.narrativeMode=true;let temporary={panel:"",notice:"",noticeTimer:0,filter:"all",warehouseMode:"storage",profileTab:"overview",gearSlot:"",activePage:0,skillPage:"all",memoryTab:"timeline",showItems:false,showLog:false,showSkills:false,showStatus:false,showTask:false,upgradeCategory:"",upgradeSub:"",aiConfigured:false,aiChecked:false,aiChecking:false,aiStatus:"unchecked",aiPending:false,aiError:"",aiRetryTimer:0,aiRetryKey:"",aiAutoAttempts:0,aiDelayUntil:0,aiUsage:null,aiRewriteAttempts:{},rewriteDialog:false,rewriteNote:"",codexOpen:false,codexTab:"character",draftScope:"",openingDraft:"",leaveDialog:false,freeDraft:"",freeReview:null,choicesOpen:false,worldMatches:[],worldLookupQuery:"",worldLookupMedia:"",worldLookupPending:false,worldLookupError:"",worldInput:"",worldType:"adaptation",worldMedia:"電影",mediaWorldDraft:"",originalWorldDraft:"",originalPremiseDraft:"",fxSeen:"",fxSkippedFor:"",fxPerform:"static",fxSceneKey:""};
 temporary.originalPremiseDraft=window.NW_DRAFTS?.get?.("premise","new-world")||temporary.originalPremiseDraft;
+temporary.mediaWorldDraft=window.NW_DRAFTS?.get?.("world","media-title")||"";
+temporary.originalWorldDraft=window.NW_DRAFTS?.get?.("world","original-title")||"";
 temporary.openingDraft=window.NW_DRAFTS?.get?.("opening","next-world")||"";
 temporary.rewriteNote=window.NW_DRAFTS?.get?.("rewrite","chapter")||"";
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -525,10 +527,12 @@ if(cmd==="customWorld"){
  const title=(R.querySelector(original?"#original-world-name":"#media-world-name")?.value||"").trim();
  if(!playerName())return notice("請先保存主角姓名");
  if(original){
+  temporary.originalWorldDraft=window.NW_DRAFTS?.save?.("world","original-title",title)||title;
   const premise=R.querySelector("#original-world-premise")?.value||temporary.originalPremiseDraft||"";
   const err=E.assignCustomWorld(s,title,true,{kind:"original",premise});if(err)return notice(err);render();return
  }
  if(title.length<2)return notice("請輸入完整作品名稱");
+ temporary.mediaWorldDraft=window.NW_DRAFTS?.save?.("world","media-title",title)||title;
  temporary.worldLookupQuery=title;temporary.worldLookupMedia=temporary.worldMedia;
  temporary.worldMatches=[];temporary.worldLookupError="";temporary.worldLookupPending=true;render();
  fetch("/api/story?resolveWorld="+encodeURIComponent(title)+"&mediaType="+encodeURIComponent(temporary.worldMedia),{cache:"no-store"})
@@ -545,7 +549,7 @@ if(cmd.startsWith("worldPick:")){
   temporary.worldMatches=[];return notice("作品名稱或版本已變更，請重新核對");
  }
  if(!choice.sourceUrl){
-  temporary.mediaWorldDraft=choice.title;
+  temporary.mediaWorldDraft=window.NW_DRAFTS?.save?.("world","media-title",choice.title)||choice.title;
   temporary.worldMatches=[];
   temporary.worldLookupPending=false;
   temporary.worldLookupError="已更正為《"+choice.title+"》，請按「核對作品名稱」重試核實作品背景。";
@@ -648,8 +652,8 @@ if(el.id==="bgm-volume"){
  window.NW_MUSIC?.setVolume?.(s.settings.musicVolume);
  const label=R.querySelector("#bgm-volume-value");if(label)label.textContent=value+"%";
  E.save(s);return
-}if(el.id==="free-action"){temporary.freeDraft=el.value.slice(0,3000);window.NW_DRAFTS?.save?.("free",temporary.draftScope,temporary.freeDraft)}if(el.id==="media-world-name"){temporary.mediaWorldDraft=el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="opening-intent")temporary.openingDraft=window.NW_DRAFTS?.save?.("opening","next-world",el.value.slice(0,1200))||el.value.slice(0,1200);
-if(el.id==="rewrite-note")temporary.rewriteNote=window.NW_DRAFTS?.save?.("rewrite","chapter",el.value.slice(0,700))||el.value.slice(0,700);if(el.id==="original-world-name")temporary.originalWorldDraft=el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=window.NW_DRAFTS?.save?.("premise","new-world",el.value.slice(0,2000))||el.value.slice(0,2000)});
+}if(el.id==="free-action"){temporary.freeDraft=el.value.slice(0,3000);window.NW_DRAFTS?.save?.("free",temporary.draftScope,temporary.freeDraft)}if(el.id==="media-world-name"){temporary.mediaWorldDraft=window.NW_DRAFTS?.save?.("world","media-title",el.value.slice(0,50))||el.value.slice(0,50);temporary.worldMatches=[];temporary.worldLookupError="";}if(el.id==="protagonist-name")temporary.nameDraft=el.value.slice(0,20);if(el.id==="opening-intent")temporary.openingDraft=window.NW_DRAFTS?.save?.("opening","next-world",el.value.slice(0,1200))||el.value.slice(0,1200);
+if(el.id==="rewrite-note")temporary.rewriteNote=window.NW_DRAFTS?.save?.("rewrite","chapter",el.value.slice(0,700))||el.value.slice(0,700);if(el.id==="original-world-name")temporary.originalWorldDraft=window.NW_DRAFTS?.save?.("world","original-title",el.value.slice(0,50))||el.value.slice(0,50);if(el.id==="original-world-premise")temporary.originalPremiseDraft=window.NW_DRAFTS?.save?.("premise","new-world",el.value.slice(0,2000))||el.value.slice(0,2000)});
 R.addEventListener("click",ev=>{let t=ev.target.closest("[data-do]");if(!t||t.disabled)return;handle(t.dataset.do)});
 render();
 checkAiStatus();
