@@ -220,8 +220,8 @@ function missionUI(){
  if(m.finished)return resultUI();
  if(temporary.lastChoiceScene!==aiSceneKey(m)){temporary.lastChoiceScene=aiSceneKey(m);temporary.choicesOpen=false;}
  const scene=N.get(s),novel=m.aiScenes?.[m.phase]||(m.director?null:window.NW_NOVEL?.scene(s))||{title:"世界構築中",mood:"system",blocks:[{type:"system",text:"主神正在續寫輪迴世界。本幕尚未生成，請等待或重試……"}]},w=m.world==="custom"?{name:m.worldName}:world(m.world);
- const choices=scene.actions.map((o,i)=>'<button class="narrative-choice" data-do="act:'+i+'" '+(o.usable?"":"disabled")+'><span class="choice-no">0'+(i+1)+'</span><span class="choice-main"><b>'+esc(o.label)+'</b>'+(o.hint?'<small>'+esc(o.hint)+'</small>':"")+prettyEffects(o)+(o.reasons.length?'<small class="blocked">'+esc(o.reasons.join("、"))+'</small>':"")+'</span></button>').join("");
- const blocks=novel?.blocks||[];
+ const choices=scene.actions.map((o,i)=>({o,i})).filter(x=>x.o.usable).map(({o,i})=>'<button class="narrative-choice" data-do="act:'+i+'"><span class="choice-main"><b>'+esc(o.label)+'</b>'+(o.hint?'<small>'+esc(o.hint)+'</small>':"")+'</span><span class="choice-arrow">→</span></button>').join("");
+  const blocks=novel?.blocks||[];
  const prose=blocks.map((b,i)=>{
   const effect=i<8&&/（警告|警告|危險|主神提示|任務更新|警報）/.test(b.text||"")?"fx-alert":i<8&&/（死亡|斷氣|死了|失去呼吸|倒在血泊）/.test(b.text||"")?"fx-death":i<8&&/（真相|終於明白|我明白了|關鍵線索|原來如此）/.test(b.text||"")?"fx-reveal":"";
   const begin='<div class="novel-beat '+effect+'" style="--beat:'+Math.min(i,10)+'" data-beat="'+i+'">';
@@ -229,10 +229,10 @@ function missionUI(){
   if(b.type==="system")return begin+'<div class="novel-system">'+esc(b.text)+'</div></div>';
   return begin+literaryProse(b.text||"").split(/\n\n/).filter(Boolean).map(p=>'<p class="'+(b.consequence?"novel-choice-consequence":"")+'">'+esc(p)+'</p>').join("")+'</div>';
  }).join("");
- const notice=scene.exertion?'<span class="narrative-condition">持續'+(scene.exertion==="run"?"奔跑":"潛行")+'中</span>':"";
- const bar='<div class="story-top"><span>'+esc(w.name)+' <small>· '+esc(m.title)+'</small></span><button data-do="status">狀態 ◈</button></div>';
- const toolbox='<div class="story-toolbar"><span>第 '+(m.phase+1)+(m.director?' 章 · 輪迴長篇':' / 6 章 · 離線篇')+'　·　'+esc(novel?.title||"輪迴世界")+'</span><div>'+a("任務","taskinfo","tiny ghost")+a("技能","skills","tiny ghost")+a("行囊","items","tiny ghost")+a("記錄","logs","tiny ghost")+a(eplusMode()==="strong"?"E+強":eplusMode()==="standard"?"E+標":"E+關","toggleMotion","tiny ghost")+'</div></div>';
- const popups=[];
+ const notice="";
+ const bar='<div class="story-top literary-top"><span>'+esc(w.name)+' <small>· 第 '+(m.phase+1)+' 章</small></span><button class="story-leave" data-do="leaveStory" aria-label="退出當前故事並開始新故事">退出 · 新故事</button></div>';
+ const toolbox='<div class="story-toolbar literary-toolbar"><span>《'+esc(m.worldName)+'》 · '+esc(novel?.title||"本章")+'</span><div>'+a("故事線索","taskinfo","tiny ghost")+'</div></div>';
+  const popups=[];
  if(temporary.showStatus)popups.push('<div class="mission-popup"><div class="card-heading">輪迴者狀態</div><div class="narrative-stat-grid">'+["hp","sta","mp","san"].map((k,i)=>'<div><span>'+D.stats[i].name+'</span><b>'+Math.round(s.profile[k])+' / '+D.stats[i].max+'</b></div>').join("")+'</div><p class="popup-note">只有發生體力消耗、施展術式或受到傷害時，才需要特別注意數值。</p>'+a("關閉","status","small ghost")+'</div>');
  if(temporary.showItems)popups.push('<div class="mission-popup"><div class="card-heading">本次攜帶的物品</div>'+Object.entries(m.bag).filter(([id,n])=>n>0).map(([id,n])=>'<button class="button-row" data-do="use:'+id+'">'+esc(objId(id)?.name)+' ×'+n+' <span>使用 ›</span></button>').join("")+a("關閉","items","small ghost")+'</div>');
  if(temporary.showSkills)popups.push('<div class="mission-popup"><div class="card-heading">已配置的招式與技能</div><p class="popup-note">招式不會自動取代劇情選項；招式可以在合適的劇情節點使用。</p>'+N.skills(s).map(x=>'<button class="button-row story-skill" data-do="cast:'+x.id+'" '+(x.ok?"":"disabled")+'><div><b>'+esc(x.name)+'</b><small>'+esc(x.desc)+'</small><small>'+(x.sta?"STA −"+x.sta+" ":"")+(x.mp?"MP −"+x.mp:"")+(x.reasons.length?" · "+esc(x.reasons.join("、")):"")+'</small></div><span>使用 ›</span></button>').join("")+a("關閉","skills","small ghost")+'</div>');
@@ -245,19 +245,19 @@ function missionUI(){
 (m.quests||[]).map(q=>'<p class="popup-note"><b>支線：</b>'+esc(q.title)+' · '+(q.status==="completed"?"已完成":q.progress+"/"+q.required)+' · '+esc(q.objective)+(q.evidence?.length?' · 有效線索：'+esc(q.evidence.at(-1).action):'')+'</p>').join("")+
 (m.canon?.url?'<p class="popup-note">公開原作資料：<a href="'+esc(m.canon.url)+'" target="_blank" rel="noopener noreferrer">'+esc(m.canon.title)+' ↗</a></p>':"")+
 (m.hidden?'<p class="popup-note">已發現隱藏任務線索</p>':"")+a("關閉","taskinfo","small ghost")+'</div>');
+ if(temporary.leaveDialog)popups.push('<div class="story-exit-overlay" role="dialog" aria-modal="true" aria-label="退出故事"><div class="story-exit-card"><h2>離開呢個故事？</h2><p>你可以隨時開始新故事。今次閱讀經歷會保留喺歷史紀錄，主角姓名同以前嘅存檔都唔會刪除。</p><div class="story-exit-actions">'+a("繼續閱讀","cancelLeave","block ghost")+a("退出並選新故事","confirmLeave","block main")+'</div></div></div>');
  const isShortChapter=!!novel?.quality?.underlength;
  const freeReview=temporary.freeReview;
  if(freeReview&&freeReview.key===aiSceneKey(m)&&freeReview.phase===m.phase){
-  const effects=freeReview.effects?.length?freeReview.effects.join(" · "):"無即時體力消耗";
-  popups.push('<div class="mission-popup" role="dialog" aria-label="確認自由文字行動"><div class="card-heading">確認小說情節行動</div><p class="popup-note">主角將會：'+esc(freeReview.value)+'</p><p class="popup-note">判定：'+esc(freeReview.label)+' · '+esc(effects)+'</p><p class="popup-note">確認後，劇情同角色資源才會改變。</p><div class="free-confirm-actions">'+a("確認執行","freeConfirm","small main")+a("修改文字","freeCancel","small ghost")+'</div></div>');
+  popups.push('<div class="mission-popup literary-dialog" role="dialog" aria-label="確認主角行動"><div class="card-heading">主角下一步</div><p class="popup-note">'+esc(freeReview.value)+'</p><p class="popup-note">你嘅決定會改變後續情節；唔會扣除任何數值。</p><div class="free-confirm-actions">'+a("確認，繼續故事","freeConfirm","small main")+a("修改","freeCancel","small ghost")+'</div></div>');
  }
  return '<div class="mission-stage narrative-stage novel-first-stage reading-focused">'+bar+
  '<div class="scene-prose '+(eplusMode()==="off"?"motion-off ":"")+'fx-'+temporary.fxPerform+'" data-mood="'+(novel?.mood||"calm")+'" data-eplus="'+eplusMode()+'">'+(temporary.fxPerform!=="static"&&eplusMode()!=="off"?'<button class="eplus-skip" data-do="skipFx">跳過演出 ›</button>':"")+'<div class="scene-eyebrow">'+esc(novel?.title||"輪迴世界")+'　·　'+({solo:"獨行篇",team:"同行篇",versus:"對峙篇"}[novel?.mode]||novel?.mode||"輪迴篇")+'</div>'+prose+(isShortChapter?'<div class="chapter-quality">本章正文只有 '+esc(novel.quality.narrativeChars)+' 字，未達小說篇幅目標。'+a("重新生成完整章節","rewriteChapter","small ghost")+'</div>':"")+'<div class="read-end"><button data-do="toggleChoices">'+(temporary.choicesOpen?"收起行動，繼續閱讀":"已讀完本章 · 選擇下一步")+'</button></div></div>'+((temporary.aiPending&&temporary.aiKey===aiSceneKey(m))?'<div class="ai-state">AI 正在續寫……</div>':temporary.aiError?'<div class="ai-state">'+esc(temporary.aiError)+'　'+a("重試","aiRetry","tiny ghost")+a("檢查 AI","nav:settings","tiny ghost")+(m.world==="custom"?a("取消並退款","cancelCustom","tiny ghost"):"")+'</div>':"")+
  toolbox+
  (temporary.choicesOpen?'<div class="fixed-choices story-choice-panel expanded">'+notice+choices+
- '<div class="free-row"><input id="free-action" maxlength="180" placeholder="主角下一步打算點做？" value="'+esc(temporary.freeDraft)+'" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("預覽行動","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>':
+ '<div class="free-row"><input id="free-action" maxlength="350" placeholder="自由寫下主角下一步會點做……" value="'+esc(temporary.freeDraft)+'" aria-label="自訂行動" '+((m.world==="custom"||m.director)&&!scene.actions.length?"disabled":"")+'>'+a("預覽行動","free","tiny main",m.world==="custom"&&!scene.actions.length?"disabled":"")+'</div></div>':
  '<div class="fixed-choices story-choice-panel collapsed"><button class="story-unfold" data-do="toggleChoices">讀完先揀 · 展開本章選擇 ↓</button></div>')+
-  '<div class="story-footer"><button data-do="nav:profile">角色檔案</button><span>'+(m.mode==="solo"?"單人輪迴":m.mode==="team"?"協同任務":"敵對輪迴者在場")+'</span><button data-do="nav:memory">輪迴紀錄</button></div>'+popups.join("")+'</div>'
+  '<div class="story-footer literary-footer"><button data-do="nav:memory">過往經歷</button><span>每個抉擇，都會留下痕跡</span><button data-do="leaveStory">新故事</button></div>'+popups.join("")+'</div>'
 }
 function resultUI(){
 const m=s.mission,g=m.result,report=m.reward;
@@ -336,6 +336,16 @@ function render(){
  persist();if(inGame)scheduleAiScene()
 }
 function handle(cmd){if(!cmd)return;
+if(cmd==="leaveStory"){temporary.leaveDialog=true;render();return}
+if(cmd==="cancelLeave"){temporary.leaveDialog=false;render();return}
+if(cmd==="confirmLeave"){
+ temporary.leaveDialog=false;
+ const err=E.abandonStory(s);if(err)return notice(err);
+ clearTimeout(temporary.aiRetryTimer);temporary.aiRetryTimer=0;
+ temporary.aiError="";temporary.aiFailedKey="";temporary.freeDraft="";
+ temporary.freeReview=null;temporary.choicesOpen=false;temporary.showTask=false;
+ temporary.worldMatches=[];go("portal");return
+}
 if(cmd.startsWith("nav:")){let dest=cmd.slice(4);go(dest==="portal"&&s.mission?"mission":dest);return}
 if(cmd.startsWith("tab:profile:")){temporary.profileTab=cmd.slice(12);render();return}
 if(cmd.startsWith("tab:memory:")){temporary.memoryTab=cmd.slice(11);render();return}
