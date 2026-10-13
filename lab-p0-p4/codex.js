@@ -54,9 +54,15 @@ function render(s,m,tab,{page=false}={}){
  if(!m)return "";
  const tabs=[["character","人物"],["skills","技能"],["gear","武器與道具"],["npcs","NPC"]];
  const body=tab==="skills"?skills(s):tab==="gear"?equipment(s,m):tab==="npcs"?npcs(s,m):character(s,m);
+ const gear=s.loadout||{},weapon=(global.NW_DATA?.items||[]).find(x=>x.id===gear.weapon);
+ const teammates=(m.crew||[]).map(x=>x.name).filter(Boolean);
+ const banner='<div class="codex-rpg-overview"><div><span>角色等級</span><b>Lv.'+Number(s.profile?.level||1)+'</b></div>'+
+ '<div><span>主武器</span><b>'+esc(weapon?.name||"未裝備")+'</b></div>'+
+ '<div><span>同行輪迴者</span><b>'+esc(m.mode==="team"?(teammates.join("、")||"主神安排中"):"主神裁定單獨行動")+'</b></div></div>';
+
  return '<div class="'+(page?"literary-codex codex-page":"mission-popup literary-codex")+'" role="'+(page?"region":"dialog")+'" aria-label="角色與世界手冊">'+
  '<div class="codex-heading"><h2>人物與世界</h2>'+(page?"":btn("關閉","codexClose"))+'</div>'+
- '<nav class="codex-tabs">'+tabs.map(([id,label])=>'<button data-do="codexTab:'+id+'" class="'+(tab===id?"active":"")+'">'+label+'</button>').join("")+'</nav>'+
+ banner+'<nav class="codex-tabs">'+tabs.map(([id,label])=>'<button data-do="codexTab:'+id+'" class="'+(tab===id?"active":"")+'">'+label+'</button>').join("")+'</nav>'+
  '<div class="codex-body">'+body+'</div><p class="codex-hint">選「用在下一步」只會幫你準備一段行動文字，唔會代你執行。你可以自己修改，再確認。</p></div>';
 }
 global.NW_CODEX={render};
