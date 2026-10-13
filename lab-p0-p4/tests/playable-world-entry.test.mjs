@@ -48,7 +48,7 @@ test("verified work suggestions show source-grounded synopsis, never fabricate l
 });
 test("pre-entry screen has sourced introduction and lets player stage a companion-led prologue",()=>{
  const app=code("app.js"),engine=code("engine.js"),html=code("index.html"),css=code("style.css");
- for(const token of ["WORLD INTRODUCTION / 世界簡介","worldSummary","verifiedSource","opening-intent","entryMode:team","entryMode:solo","original-world-premise","world-suggestion","worldPick:","sourceUrl","請按「核對作品名稱」"])assert.ok(app.includes(token),token);
+ for(const token of ["WORLD INTRODUCTION / 世界簡介","worldSummary","verifiedSource","opening-intent","main-god-decree","主神指派 · 不可更改","original-world-premise","world-suggestion","worldPick:","sourceUrl","請按「核對作品名稱」"])assert.ok(app.includes(token),token);
  assert.ok(engine.includes("openingIntent:"));
  assert.ok(engine.includes("worldSummary:"));
  assert.ok(engine.includes('s.assignment.mode==="team"'));
